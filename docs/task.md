@@ -1,0 +1,4 @@
+- `[x]` Implement `save_studio_state` and `clear_studio_state` helpers in `utils.py`.
+- `[x]` Add state serialization calls inside all agent nodes in `agents.py`.
+- `[x]` Update graph initialization in `app.py` to restore matching state details.
+- `[ ]` Run build validation and verify compilation.

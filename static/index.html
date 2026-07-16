@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Developer Studio</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror Editor Styles -->
+    <link rel="stylesheet" href="lib/codemirror.min.css">
+    <link rel="stylesheet" href="lib/theme/dracula.min.css">
+    
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="style.css?v=39">
+    
+    <!-- Marked.js for markdown rendering -->
+    <script src="lib/marked.min.js"></script>
+    
+    <!-- CodeMirror Core JS -->
+    <script src="lib/codemirror.min.js"></script>
+    
+    <!-- CodeMirror Language Modes -->
+    <script src="lib/mode/python.min.js"></script>
+    <script src="lib/mode/javascript.min.js"></script>
+    <script src="lib/mode/htmlmixed.min.js"></script>
+    <script src="lib/mode/xml.min.js"></script>
+    <script src="lib/mode/css.min.js"></script>
+    <script src="lib/mode/clike.min.js"></script>
+    <script src="lib/mode/htmlembedded.min.js"></script>
+    <!-- Xterm.js for Interactive Terminal -->
+    <link rel="stylesheet" href="lib/xterm.css" />
+    <script src="lib/xterm.js"></script>
+    <script src="lib/xterm-addon-fit.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">🤖</span>
+                <h1>Multi-Agent Developer Studio</h1>
+            </div>
+            
+            <!-- Tabbed Navigation Links -->
+            <nav class="nav-links">
+                <button id="nav-workspace-btn" class="nav-btn active">💻 Workspace</button>
+                <button id="nav-settings-btn" class="nav-btn">⚙️ LLM Settings</button>
+                <button id="nav-history-btn" class="nav-btn">📜 History</button>
+                <button id="nav-telemetry-btn" class="nav-btn">📊 Observability</button>
+            </nav>
+
+            <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+                <button id="theme-toggle-btn" class="text-btn icon-btn" title="Switch Theme" style="font-size: 1.1rem; padding: 0.3rem 0.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 32px; width: 32px; transition: all 0.2s ease;">☀️</button>
+                <div class="status-indicator">
+                    <span class="status-dot" id="global-status-dot"></span>
+                    <span class="status-text" id="global-status-text">Idle</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- WORKSPACE PAGE VIEW -->
+        <div id="view-workspace" class="view-content active">
+            <main class="app-body">
+                <!-- SIDEBAR PANEL: DEVELOPER REQUIREMENTS -->
+                <aside class="control-panel glass-card" id="control-panel">
+                    <div class="panel-header">
+                        <h2>Developer Input</h2>
+                        <button id="toggle-input-btn" class="text-btn icon-btn" title="Collapse Sidebar">◄</button>
+                    </div>
+                    
+                    <div class="panel-form-container">
+                        <div class="panel-form">
+                            <div class="form-group prompt-group">
+                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div></div>
+                                    <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                        <button id="expand-prompt-btn" class="text-btn icon-btn" title="Expand Editor" style="font-size: 0.72rem; padding: 0.15rem 0.4rem;">🔍 Fullscreen</button>
+                                        <div class="recent-prompts-container">
+                                            <button id="recent-prompts-trigger" class="text-btn icon-btn" title="Recent Prompts" style="font-size: 0.72rem; padding: 0.15rem 0.4rem; display: inline-flex; align-items: center; gap: 0.2rem;">📜 Recent Prompts</button>
+                                            <div id="recent-prompts-popover" class="recent-prompts-popover glass-card">
+                                                <div class="popover-header">
+                                                    <span>Recent Prompts</span>
+                                                </div>
+                                                <div class="popover-list" id="recent-prompts-list">
+                                                    <!-- Custom list items loaded here -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <textarea id="prompt-input" placeholder="e.g., Create a Python command line task planner that writes to JSON and include a test script..." style="min-height: 140px; resize: vertical;"></textarea>
+                            </div>
+                            <!-- Agent Flow Visualizer Flowchart -->
+                            <div class="form-group flow-viz-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                <label style="display: block; margin-bottom: 0.6rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 600;">Agent Execution Flow</label>
+                                <div id="agent-flow-viz" style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+                                    <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                        <span>🤖 Orchestrator</span>
+                                        <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-analyst" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                        <span>📝 Business Analyst</span>
+                                        <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-impact" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                        <span>🔍 Impact Analyzer</span>
+                                        <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-programmer" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                        <span>💻 Implementer Coder</span>
+                                        <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-tester" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                        <span>🧪 QA Tester</span>
+                                        <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-deployer" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                        <span>🚀 Deployment Engineer</span>
+                                        <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-action" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
+                            <div style="display: flex; gap: 0.6rem; width: 100%;">
+                                <button id="start-btn" class="action-btn primary-btn" style="flex: 1; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                                    <span class="btn-icon">⚡</span> Run Studio
+                                </button>
+                                <button id="new-create-btn" class="action-btn secondary-btn" style="flex: 1; padding: 0.5rem 1rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 6px; font-weight: bold; cursor: pointer; transition: all var(--transition-speed); display: flex; align-items: center; justify-content: center; gap: 0.4rem;" title="Start Fresh (Ignore saved state)">
+                                    🆕 New Create
+                                </button>
+                            </div>
+                            <button id="retry-btn" class="action-btn secondary-btn" style="display: none; padding: 0.5rem 1rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer; transition: all var(--transition-speed); align-items: center; justify-content: center; gap: 0.4rem;" title="Retry Last Run">
+                                🔄 Retry
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- MAIN WORKSPACE CONTAINER -->
+                <div class="main-content" style="display: grid; grid-template-rows: 1fr 6px 220px; gap: 0; overflow: hidden; height: 100%;">
+                    <!-- TOP HALF: GENERATED WORKSPACE (IDE VIEW) -->
+                    <section class="workspace-area glass-card" style="height: auto; min-height: 0;">
+                        <div class="panel-header">
+                            <div class="panel-title-group">
+                                <span class="folder-icon">📂</span>
+                                <h2>Generated Workspace</h2>
+                                <span id="git-status-badge" style="display: inline-flex; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 20px; font-weight: 500; font-family: monospace; align-items: center; gap: 0.3rem;">
+                                    🌿 <span id="git-branch-name">main</span>
+                                </span>
+                            </div>
+                            <span class="badge" id="file-count">0 Files</span>
+                        </div>
+                        
+                        <div class="workspace-body" id="workspace-body">
+                            <!-- Left-Inner Code Editor with Tabs -->
+                            <div class="code-view-container" style="display: flex; flex-direction: column; height: 100%; min-height: 0;">
+                                <div class="code-view-tabs" style="display: flex; background: rgba(0, 0, 0, 0.15); border-bottom: 1px solid var(--border-color); padding: 0 0.5rem;">
+                                    <button id="tab-editor" class="workspace-tab active" style="background: none; border: none; padding: 0.6rem 1rem; color: var(--text-primary); cursor: pointer; border-bottom: 2px solid var(--accent-blue); font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; outline: none;">
+                                        📁 File Editor
+                                    </button>
+                                    <button id="tab-preview" class="workspace-tab" style="background: none; border: none; padding: 0.6rem 1rem; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; outline: none;">
+                                        🌐 Live Web Preview
+                                    </button>
+                                </div>
+                                
+                                <div id="editor-tab-content" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                                    <div id="editor-tabs-bar" style="display: flex; gap: 6px; overflow-x: auto; background: rgba(5, 8, 15, 0.4); padding: 6px 10px 0 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; min-height: 35px; align-items: flex-end; scrollbar-width: none;"></div>
+                                    <div class="code-view-header">
+                                        <span id="active-filename">Select a file from explorer</span>
+                                        <div class="editor-header-actions">
+                                            <button id="save-code-btn" class="text-btn icon-btn success-btn-text" style="display: none;">💾 Save</button>
+                                            <button id="copy-code-btn" class="text-btn icon-btn" style="display: none;">📋 Copy</button>
+                                            <button id="toggle-explorer-btn" class="text-btn icon-btn" title="Toggle File Explorer">📁 Files</button>
+                                        </div>
+                                    </div>
+                                    <div class="code-view-editor" id="editor-container" style="flex: 1; min-height: 0;">
+                                        <!-- CodeMirror Editor instance will render here -->
+                                    </div>
+                                </div>
+                                
+                                <div id="preview-tab-content" style="display: none; flex-direction: column; flex: 1; height: 100%;">
+                                    <div class="preview-address-bar" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background-color: var(--bg-darker); border-bottom: 1px solid var(--border-color);">
+                                        <input type="text" id="preview-url" value="http://localhost:3000" style="flex: 1; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.35rem 0.6rem; color: var(--text-primary); font-size: 0.8rem; outline: none; font-family: monospace;">
+                                        <button id="preview-reload" class="text-btn icon-btn" title="Reload Preview" style="padding: 0.35rem 0.7rem; font-size: 0.8rem; border-radius: 4px;">🔄 Reload</button>
+                                        <button id="preview-open-tab" class="text-btn icon-btn" title="Open in new tab" style="padding: 0.35rem 0.7rem; font-size: 0.8rem; border-radius: 4px;">↗️ Open Tab</button>
+                                    </div>
+                                    <iframe id="preview-iframe" src="" style="flex: 1; width: 100%; border: none; background: #fff; border-bottom-left-radius: 8px;"></iframe>
+                                </div>
+                            </div>
+
+                            <!-- Resize Divider Handle -->
+                            <div class="resize-handle" id="resize-handle" title="Drag to Resize Explorer"></div>
+
+                            <!-- Right-Inner Explorer Tree -->
+                            <div class="file-explorer" id="file-explorer">
+                                <div class="explorer-title">
+                                    <span>Files Explorer</span>
+                                    <div class="explorer-actions">
+                                        <button id="open-folder-btn" class="text-btn icon-btn" title="Open Repository Folder" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📂</button>
+                                        <button id="new-file-btn" class="text-btn icon-btn" title="New File" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📄+</button>
+                                        <button id="new-folder-btn" class="text-btn icon-btn" title="New Folder" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📁+</button>
+                                        <button id="reveal-os-btn" class="text-btn icon-btn" title="Reveal in OS Explorer" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">🖥️</button>
+                                    </div>
+                                </div>
+                                <div id="active-folder-path" style="font-size: 0.65rem; color: var(--text-secondary); padding: 0.2rem 0.6rem; border-bottom: 1px solid var(--border-color); background-color: rgba(0, 0, 0, 0.08); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Active Workspace Path">
+                                    Loading workspace...
+                                </div>
+                                <div class="file-tree" id="file-tree">
+                                    <div class="tree-placeholder">Scan folder or run prompt to generate files.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Terminal Horizontal Resizer Handle -->
+                    <div class="resize-handle-horizontal" id="resize-handle-terminal" title="Drag to Resize Terminal"></div>
+
+                    <!-- BOTTOM HALF: TERMINAL CONSOLE -->
+                    <section class="log-area-horizontal glass-card" id="log-panel" style="height: 100%; min-height: 0;">
+                        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border-color);">
+                            <div class="panel-title-group" style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
+                                <span class="terminal-icon">🐚</span>
+                                <h2 style="margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Terminal</h2>
+                                <div class="terminal-tabs" style="display: flex; gap: 0.3rem; margin-left: 1rem; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px; border: 1px solid var(--border-color);">
+                                    <button id="term-tab-shell" class="text-btn" style="display: none !important; font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 3px; cursor: pointer; color: var(--text-secondary); background: none; border: none;">🐚 Shell Session</button>
+                                    <button id="term-tab-console" class="text-btn active" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 3px; cursor: pointer; color: var(--accent-cyan); background: rgba(255,255,255,0.03); border: none;">🤖 Agent Console</button>
+                                </div>
+                                <button id="toggle-terminal-btn" class="text-btn icon-btn" title="Collapse Terminal" style="font-size: 0.65rem; padding: 0.15rem 0.35rem; margin-left: 0.6rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px;">▼</button>
+                            </div>
+                            <div class="terminal-header-actions" style="display: flex; align-items: center;">
+                                 <button id="pause-btn" class="text-btn icon-btn success-btn-text" title="Pause Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">⏸️ Pause</button>
+                                 <button id="resume-btn" class="text-btn icon-btn success-btn-text" title="Resume Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">▶️ Resume</button>
+                                 <button id="terminate-btn" class="text-btn icon-btn danger-btn-text" title="Terminate Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">🛑 Terminate</button>
+                                 <button id="clear-logs-btn" class="text-btn">Clear Terminal</button>
+                             </div>
+                        </div>
+                        <div id="terminal-container" style="flex: 1; width: 100%; height: calc(100% - 38px); background-color: #05080f; padding: 0.5rem 0.2rem 0.5rem 0.6rem; box-sizing: border-box; overflow: hidden; border-radius: 0 0 8px 8px; display: none;"></div>
+                        <div id="console-logs-container" style="flex: 1; width: 100%; height: calc(100% - 38px); background-color: #05080f; padding: 0.5rem 0.2rem 0.5rem 0.6rem; box-sizing: border-box; overflow: hidden; border-radius: 0 0 8px 8px; display: block;"></div>
+                    </section>
+                </div>
+            </main>
+        </div>
+
+        <!-- SETTINGS PAGE VIEW -->
+        <div id="view-settings" class="view-content">
+            <main class="settings-body" style="display: grid; grid-template-columns: 220px 1fr; gap: 1.5rem; height: 100%; padding: 1.5rem; box-sizing: border-box; overflow: hidden;">
+                <!-- Left Sidebar Navigation -->
+                <aside class="settings-sidebar glass-card" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(5, 8, 15, 0.4); flex-shrink: 0; height: 100%; box-sizing: border-box;">
+                    <button class="settings-tab-btn active" data-target="settings-sec-llm" style="text-align: left; background: rgba(255, 255, 255, 0.05); border: none; padding: 0.7rem 0.9rem; color: var(--text-primary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; border-left: 2px solid var(--accent-cyan); transition: all 0.2s ease;">⚙️ LLM Config</button>
+                    <button class="settings-tab-btn" data-target="settings-sec-personas" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">📝 Custom Personas</button>
+                    <button class="settings-tab-btn" data-target="settings-sec-cache" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">🧠 Semantic Cache</button>
+                </aside>
+
+                <!-- Right Content Panel -->
+                <section class="settings-content-panel glass-card" style="display: flex; flex-direction: column; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(5, 8, 15, 0.25); overflow: hidden; height: 100%; box-sizing: border-box;">
+                    <div class="panel-header" style="border-bottom: 1px solid var(--border-color); padding: 1rem 1.5rem; flex-shrink: 0; background: rgba(0, 0, 0, 0.1);">
+                        <h2 id="settings-panel-title" style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: #fff; margin: 0; letter-spacing: 0.8px;">⚙️ LLM Config</h2>
+                    </div>
+
+                    <div class="settings-form-scrollable" style="flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; min-height: 0;">
+                        <!-- Section 1: LLM Config -->
+                        <div id="settings-sec-llm" class="settings-section-content">
+                            <div class="settings-form" style="padding: 0; display: flex; flex-direction: column; gap: 1.2rem;">
+                                <div class="form-group">
+                                    <label for="provider-select">LLM Provider</label>
+                                    <select id="provider-select">
+                                        <option value="gemini">Google Gemini</option>
+                                        <option value="openai">OpenAI</option>
+                                        <option value="ollama">Ollama (Local LLM)</option>
+                                        <option value="claude">Anthropic Claude</option>
+                                        <option value="openrouter">OpenRouter AI (Open Source Models)</option>
+                                        <option value="groq">Groq (Ultra-Fast Llama)</option>
+                                        <option value="deepseek">DeepSeek (Official API)</option>
+                                        <option value="together">Together AI</option>
+                                        <option value="mistral">Mistral AI</option>
+                                        <option value="cohere">Cohere Command</option>
+                                        <option value="xai">xAI (Grok)</option>
+                                        <option value="azure">Azure OpenAI</option>
+                                        <option value="bedrock">AWS Bedrock</option>
+                                        <option value="zai">Z.ai (Zhipu GLM)</option>
+                                        <option value="omnirouter">OmniRouter (AI Gateway)</option>
+                                        <option value="nvidia">NVIDIA NIM (API Catalog)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="model-settings-group">
+                                    <label for="model-input" id="model-label">Gemini Model</label>
+                                    <input type="text" id="model-input" value="gemini-2.5-flash">
+                                    
+                                    <select id="openrouter-model-select" style="display: none; background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.85rem; outline: none; transition: border-color var(--transition-speed), box-shadow var(--transition-speed);">
+                                        <option value="google/gemini-2.5-flash">google/gemini-2.5-flash (Gemini 2.5 Flash - Free)</option>
+                                        <option value="meta-llama/llama-3.3-70b-instruct:free">meta-llama/llama-3.3-70b-instruct:free (Llama 3.3 70B - Free)</option>
+                                        <option value="meta-llama/llama-3-8b-instruct:free">meta-llama/llama-3-8b-instruct:free (Llama 3 8B - Free)</option>
+                                        <option value="mistralai/mistral-7b-instruct:free">mistralai/mistral-7b-instruct:free (Mistral 7B - Free)</option>
+                                        <option value="liquid/lfm-40b:free">liquid/lfm-40b:free (Liquid LFM 40B - Free)</option>
+                                        <option value="openchat/openchat-7b:free">openchat/openchat-7b:free (OpenChat 7B - Free)</option>
+                                        <option value="qwen/qwen-2-7b-instruct:free">qwen/qwen-2-7b-instruct:free (Qwen 2 7B - Free)</option>
+                                        <option value="custom">-- Custom OpenRouter Model --</option>
+                                    </select>
+                                    <input type="text" id="openrouter-custom-model-input" placeholder="e.g. deepseek/deepseek-coder" style="display: none; margin-top: 0.4rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.85rem; outline: none;">
+                                </div>
+
+                                <div class="form-group" id="api-key-group">
+                                    <label for="api-key-input" id="api-key-label">Gemini API Key</label>
+                                    <input type="password" id="api-key-input" placeholder="Optional if set in .env">
+                                </div>
+
+                                <div class="form-group" id="base-url-group" style="display: none;">
+                                    <label for="base-url-input" id="base-url-label">Ollama Base URL</label>
+                                    <input type="text" id="base-url-input" value="http://localhost:11434">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="approval-mode-select">Agent Permission & Approval Access</label>
+                                    <select id="approval-mode-select" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.85rem; outline: none; transition: border-color var(--transition-speed), box-shadow var(--transition-speed); width: 100%;">
+                                        <option value="auto">Full Access (Auto-Approve Everything)</option>
+                                        <option value="limited">Limited Access (Ask for Requirements & Deployment)</option>
+                                        <option value="strict">Strict Access (Ask for every plan stage)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="coder-provider-select">Implementer Coder Engine</label>
+                                    <select id="coder-provider-select" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.85rem; outline: none; transition: border-color var(--transition-speed), box-shadow var(--transition-speed); width: 100%;">
+                                        <option value="llm">Standard LLM (Selected Provider)</option>
+                                        <option value="cli">Custom Coding CLI Agent (Aider, Mentat, agy, etc.)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="coder-cli-command-group" style="display: none;">
+                                    <label for="coder-cli-command-input">Coder CLI Command Template</label>
+                                    <input type="text" id="coder-cli-command-input" value='agy run "{prompt}"' placeholder='e.g. aider --message "{prompt}" --auto-commit' style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.85rem; outline: none; width: 100%;">
+                                    <span style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Use <code>{prompt}</code> as placeholder for agent prompt requirements.</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="iterations-slider">Max Correction Loops: <span id="iterations-val">3</span></label>
+                                    <input type="range" id="iterations-slider" min="1" max="10" value="3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Custom Personas -->
+                        <div id="settings-sec-personas" class="settings-section-content" style="display: none;">
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="prompt-orchestrator">Orchestrator Persona</label>
+                                    <textarea id="prompt-orchestrator" rows="3" style="font-family: monospace; font-size: 0.76rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; background: var(--bg-darker); color: var(--text-primary); resize: vertical; outline: none;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="prompt-analyst">Business Analyst Persona</label>
+                                    <textarea id="prompt-analyst" rows="3" style="font-family: monospace; font-size: 0.76rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; background: var(--bg-darker); color: var(--text-primary); resize: vertical; outline: none;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="prompt-impact">Impact Analyzer Persona</label>
+                                    <textarea id="prompt-impact" rows="3" style="font-family: monospace; font-size: 0.76rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; background: var(--bg-darker); color: var(--text-primary); resize: vertical; outline: none;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="prompt-programmer">Implementer Coder Persona</label>
+                                    <textarea id="prompt-programmer" rows="3" style="font-family: monospace; font-size: 0.76rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; background: var(--bg-darker); color: var(--text-primary); resize: vertical; outline: none;"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="prompt-deployer">Deployment Engineer Persona</label>
+                                    <textarea id="prompt-deployer" rows="3" style="font-family: monospace; font-size: 0.76rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; background: var(--bg-darker); color: var(--text-primary); resize: vertical; outline: none;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 3: Semantic Cache -->
+                        <div id="settings-sec-cache" class="settings-section-content" style="display: none;">
+                            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                                <div class="form-group" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.2rem 0;">
+                                    <input type="checkbox" id="semantic-cache-toggle" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-cyan);">
+                                    <label for="semantic-cache-toggle" style="margin: 0; font-size: 0.82rem; cursor: pointer; color: var(--text-primary);">Enable Semantic Caching (Reduces API token cost & execution time)</label>
+                                </div>
+                                
+                                <div class="settings-divider" style="height: 1px; background: var(--border-color); margin: 0.5rem 0;"></div>
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="font-weight: 600; font-size: 0.85rem; color: var(--accent-cyan);">🧠 SQLite Cache Database</label>
+                                    <button id="clear-cache-btn" class="text-btn danger-btn-text" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; color: var(--danger) !important; border-color: rgba(239, 68, 68, 0.2) !important;">🗑️ Purge Cache DB</button>
+                                </div>
+                                <div style="overflow-x: auto; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; max-height: 350px;">
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+                                        <thead>
+                                            <tr style="border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                                                <th style="padding: 6px 10px; color: var(--text-secondary); font-weight: 600;">Provider/Model</th>
+                                                <th style="padding: 6px 10px; color: var(--text-secondary); font-weight: 600;">Prompt Query</th>
+                                                <th style="padding: 6px 10px; color: var(--text-secondary); font-weight: 600; width: 60px; text-align: center;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cache-table-body">
+                                            <!-- Loaded dynamically via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.5rem; background-color: rgba(5, 8, 15, 0.15); border-top: 1px solid var(--border-color); flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <button id="save-settings-btn" class="action-btn primary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; margin: 0;">💾 Save Configurations</button>
+                            <span id="save-status-msg" style="font-size: 0.8rem; color: var(--success); display: none; font-weight: 500;">✓ Settings Saved!</span>
+                        </div>
+                        <p class="settings-tip" style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">ℹ️ Configurations are applied dynamically on "Run Studio".</p>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- HISTORY PAGE VIEW -->
+        <div id="view-history" class="view-content">
+            <main class="history-body">
+                <div class="history-card glass-card animate-fade-in">
+                    <div class="panel-header">
+                        <h2>📜 Requirement History Logs</h2>
+                        <button id="clear-all-history-btn" class="text-btn success-btn-text" style="color: var(--danger) !important; border-color: rgba(239, 68, 68, 0.25) !important; font-size: 0.72rem; padding: 0.2rem 0.5rem;">🗑️ Clear All History</button>
+                    </div>
+                    <div class="history-list-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Provider/Model</th>
+                                    <th>Requirements Prompt</th>
+                                    <th>Loops</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- SQLite history list dynamically loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- TELEMETRY / OBSERVABILITY PAGE VIEW -->
+        <div id="view-telemetry" class="view-content">
+            <main class="telemetry-body" style="padding: 1.5rem; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+                
+                <!-- SUMMARY STATS CARD GRID -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem;">
+                    <!-- Stat Card: Total Cost -->
+                    <div class="stat-box glass-card" style="padding: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; border-left: 4px solid var(--accent-cyan);">
+                        <span style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;">Total Cost (USD)</span>
+                        <h1 id="telemetry-total-cost" style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary); margin: 0;">$0.000000</h1>
+                    </div>
+                    <!-- Stat Card: Total Tokens -->
+                    <div class="stat-box glass-card" style="padding: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; border-left: 4px solid var(--accent-purple);">
+                        <span style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;">Total Tokens Used</span>
+                        <h1 id="telemetry-total-tokens" style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary); margin: 0;">0</h1>
+                    </div>
+                    <!-- Stat Card: Avg Latency -->
+                    <div class="stat-box glass-card" style="padding: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; border-left: 4px solid var(--accent-teal);">
+                        <span style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;">Average Latency</span>
+                        <h1 id="telemetry-avg-latency" style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary); margin: 0;">0.00s</h1>
+                    </div>
+                    <!-- Stat Card: Total Calls -->
+                    <div class="stat-box glass-card" style="padding: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; border-left: 4px solid var(--accent-orange);">
+                        <span style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;">Total API Calls</span>
+                        <h1 id="telemetry-total-calls" style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary); margin: 0;">0</h1>
+                    </div>
+                </div>
+
+                <!-- MAIN WORKSPACE CONTAINER -->
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+                    <!-- Panel: Telemetry Logs Table -->
+                    <div class="glass-card" style="padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="font-size: 1.1rem; font-weight: 600; color: var(--accent-cyan); display: flex; align-items: center; gap: 0.5rem; margin: 0;">📊 LLM Call Trace Logs</h2>
+                            <button id="reset-telemetry-btn" class="text-btn success-btn-text" style="color: var(--danger) !important; border-color: rgba(239, 68, 68, 0.25) !important; font-size: 0.72rem; padding: 0.2rem 0.5rem;">🗑️ Reset Telemetry Logs</button>
+                        </div>
+                        
+                        <div style="overflow-x: auto; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.25);">
+                                        <th style="padding: 10px; width: 40px; text-align: center;"></th>
+                                        <th style="padding: 10px; color: var(--text-secondary); font-weight: 600;">Timestamp</th>
+                                        <th style="padding: 10px; color: var(--text-secondary); font-weight: 600;">Requirement Prompt</th>
+                                        <th style="padding: 10px; color: var(--text-secondary); font-weight: 600;">LLM Engine</th>
+                                        <th style="padding: 10px; color: var(--text-secondary); font-weight: 600; text-align: center;">API Calls</th>
+                                        <th style="padding: 10px; color: var(--text-secondary); font-weight: 600; text-align: right;">Total Tokens</th>
+                                        <th style="padding: 10px; color: var(--text-secondary); font-weight: 600; text-align: right;">Total Cost (USD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="telemetry-table-body">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No telemetry logs captured yet. Run a workflow to populate this dashboard!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIDE DRAWER: RAW PROMPT & RESPONSE TRACE INSPECTOR -->
+                <div id="telemetry-drawer" class="telemetry-drawer glass-card" style="display: none; flex-direction: column; gap: 1rem; padding: 1.5rem; position: fixed; right: 0; top: 0; bottom: 0; width: 45%; max-width: 600px; z-index: 1000; border-left: 2px solid var(--border-color); box-shadow: -10px 0 30px rgba(0,0,0,0.5); background: var(--bg-dark); transition: transform 0.3s ease;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem;">
+                        <div style="display: flex; flex-direction: column;">
+                            <h3 id="telemetry-drawer-agent" style="font-size: 0.85rem; text-transform: uppercase; color: var(--accent-cyan); font-weight: 600; margin: 0;">Orchestrator Node</h3>
+                            <span id="telemetry-drawer-model" style="font-size: 0.78rem; color: var(--text-secondary);">gemini-2.5-flash</span>
+                        </div>
+                        <button id="close-telemetry-drawer-btn" class="text-btn icon-btn" style="font-size: 1.1rem; width: 28px; height: 28px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px;">✖</button>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1.2rem; flex: 1; overflow-y: auto; padding-right: 0.4rem;">
+                        <!-- Section: Request Prompt -->
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <label style="font-weight: 600; font-size: 0.82rem; color: var(--accent-purple);">📥 Input System/User Prompt</label>
+                            <pre id="telemetry-drawer-prompt" style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.75rem; background: var(--bg-darker); border: 1px solid var(--border-color); padding: 0.6rem; border-radius: 6px; color: var(--text-primary); max-height: 250px; overflow-y: auto;"></pre>
+                        </div>
+                        <!-- Section: Response Output -->
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <label style="font-weight: 600; font-size: 0.82rem; color: var(--accent-teal);">📤 Output Completion Content</label>
+                            <pre id="telemetry-drawer-response" style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.75rem; background: var(--bg-darker); border: 1px solid var(--border-color); padding: 0.6rem; border-radius: 6px; color: var(--text-primary); max-height: 350px; overflow-y: auto;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- HITL GATE APPROVAL MODAL -->
+    <div class="modal-overlay" id="hitl-modal">
+        <div class="modal-card glass-card animate-fade-in">
+            <div class="modal-header">
+                <span class="modal-badge">Approval Checkpoint</span>
+                <h2 id="hitl-stage-title">Review Specifications</h2>
+            </div>
+            <div class="modal-body markdown-body" id="hitl-markdown-content">
+                <!-- Rendered Markdown goes here -->
+            </div>
+            <div class="modal-footer">
+                <div class="feedback-group">
+                    <textarea id="hitl-feedback-input" placeholder="Type revision instructions here if you want to modify these specifications..."></textarea>
+                </div>
+                <div class="btn-group">
+                    <button id="hitl-reject-btn" class="action-btn danger-btn">❌ Revise specs</button>
+                    <button id="hitl-approve-btn" class="action-btn success-btn">✓ Approve & Proceed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+                <!-- GIT CONTROL MODAL -->
+                <div class="modal-overlay" id="git-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+                    <div class="modal-card glass-card animate-fade-in" style="width: 80%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">🌿</span>
+                                <h2 style="font-size: 1.1rem; margin: 0; font-weight: 600;">Git Version Control Center</h2>
+                            </div>
+                            <button id="close-git-modal" class="text-btn" style="font-size: 1.2rem; cursor: pointer; background: none; border: none; color: var(--text-primary);">✕</button>
+                        </div>
+                        <div class="modal-body" style="padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.5rem;">
+                            <!-- Branch Information & Switcher -->
+                            <div style="display: flex; flex-direction: column; gap: 1rem; background: rgba(255, 255, 255, 0.02); padding: 1rem 1.2rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; width: 100%;">
+                                    <div style="flex: 1; min-width: 150px;">
+                                        <span style="color: var(--text-secondary); font-size: 0.8rem;">Current Active Branch</span>
+                                        <div style="font-size: 1rem; font-weight: bold; color: var(--accent-cyan); font-family: monospace;" id="git-modal-branch">studio-task-12</div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.6rem; min-width: 250px;">
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <span style="color: var(--text-secondary); font-size: 0.8rem;">Switch Branch</span>
+                                            <select id="git-modal-branch-select" style="background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.35rem 0.6rem; color: var(--text-primary); font-size: 0.8rem; outline: none; min-width: 150px; cursor: pointer;"></select>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 1.1rem;">
+                                            <button id="git-modal-new-branch-btn" class="text-btn icon-btn" style="font-size: 0.76rem; padding: 0.35rem 0.8rem; border-color: rgba(0, 223, 216, 0.25) !important; color: var(--accent-cyan) !important;" title="Create New Task Branch">➕ New Branch</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 0.6rem;">
+                                    <span style="color: var(--text-secondary); font-size: 0.8rem;">Local Repository Status</span>
+                                    <div style="font-size: 0.85rem; font-weight: 500; color: var(--success);" id="git-modal-status-summary">Clean (All changes committed)</div>
+                                </div>
+                            </div>
+
+                            <!-- Modified / Untracked Files -->
+                            <div>
+                                <h3 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.6rem; font-weight: 600; letter-spacing: 0.5px;">Pending Local Changes</h3>
+                                <div id="git-modal-changes-list" style="background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.8rem 1rem; font-family: monospace; font-size: 0.8rem; max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
+                                    <div style="color: var(--text-secondary); font-style: italic;">No uncommitted modifications in workspace.</div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Commits Logs -->
+                            <div>
+                                <h3 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.6rem; font-weight: 600; letter-spacing: 0.5px;">Recent Commits History</h3>
+                                <div id="git-modal-commits-list" style="background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.8rem 1rem; font-family: monospace; font-size: 0.8rem; max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
+                                    <div style="color: var(--text-secondary); font-style: italic;">No commit history logs available yet.</div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Diff -->
+                            <div style="flex: 1; display: flex; flex-direction: column; min-height: 200px;">
+                                <h3 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.6rem; font-weight: 600; letter-spacing: 0.5px;">Active Code Diff (VS Base State)</h3>
+                                <pre id="git-modal-diff-box" style="flex: 1; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.5; overflow: auto; white-space: pre-wrap; word-break: break-all; margin: 0; color: #a1b0cb; text-align: left;"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FULLSCREEN REQUIREMENT EDITOR MODAL -->
+                <div class="modal-overlay" id="prompt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+                    <div class="modal-card glass-card animate-fade-in" style="width: 80%; max-width: 900px; height: 80vh; display: flex; flex-direction: column; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.2rem;">📝</span>
+                                <h2 style="font-size: 1.1rem; margin: 0; font-weight: 600; color: #fff;">Fullscreen Requirements Editor</h2>
+                            </div>
+                            <button id="close-prompt-modal" class="text-btn" style="font-size: 1.2rem; cursor: pointer; background: none; border: none; color: var(--text-primary);">✕</button>
+                        </div>
+                        <div class="modal-body" style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 1rem; min-height: 0;">
+                            <textarea id="prompt-modal-textarea" style="flex: 1; width: 100%; font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; padding: 1rem; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); outline: none; resize: none;" placeholder="Write your complex prompt or copy-paste requirements details here..."></textarea>
+                            <div style="display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 0.5rem; flex-shrink: 0;">
+                                <button id="cancel-prompt-modal-btn" class="action-btn secondary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
+                                <button id="save-prompt-modal-btn" class="action-btn primary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem;">💾 Apply Requirements</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WORK SUMMARY MODAL -->
+                <div id="work-summary-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000;">
+                    <div class="modal-card glass-card animate-fade-in" style="width: 80%; max-width: 850px; height: 80vh; max-height: 650px; display: flex; flex-direction: column; padding: 1.5rem; gap: 1rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.8rem; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <span style="font-size: 1.25rem;">🎉</span>
+                                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Simulation Work Summary</h3>
+                            </div>
+                            <button id="close-work-summary-modal-btn" class="text-btn" style="font-size: 1.2rem; cursor: pointer; background: none; border: none; color: var(--text-primary);">✕</button>
+                        </div>
+                        <div id="work-summary-content" class="markdown-body" style="flex: 1; overflow-y: auto; padding: 0.5rem; font-size: 0.9rem; line-height: 1.6; border-radius: 6px; text-align: left;">
+                            <!-- Walkthrough content will be rendered here -->
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; padding-top: 0.5rem; border-top: 1px solid var(--border-color); flex-shrink: 0;">
+                            <button id="ok-work-summary-modal-btn" class="action-btn primary-btn" style="width: auto; padding: 0.6rem 1.8rem; font-size: 0.85rem; font-weight: bold; border-radius: 6px; cursor: pointer;">Awesome!</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TELEMETRY RESET CONFIRMATION MODAL -->
+                <div id="telemetry-reset-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000;">
+                    <div class="modal-card glass-card animate-fade-in" style="width: 90%; max-width: 400px; display: flex; flex-direction: column; padding: 1.5rem; gap: 1rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); text-align: center;">
+                        <div style="font-size: 2.5rem; margin-top: 0.5rem;">⚠️</div>
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-primary);">Reset Telemetry Logs?</h3>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">This action will permanently delete all captured LLM request traces, latency statistics, and token cost records. This cannot be undone.</p>
+                        <div style="display: flex; justify-content: center; gap: 0.8rem; margin-top: 0.5rem;">
+                            <button id="cancel-telemetry-reset-btn" class="action-btn secondary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">Cancel</button>
+                            <button id="confirm-telemetry-reset-btn" class="action-btn primary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; background-color: var(--danger) !important; color: #fff !important; border-color: var(--danger) !important; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">Confirm Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILE DELETE CONFIRMATION MODAL -->
+                <div id="file-delete-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000;">
+                    <div class="modal-card glass-card animate-fade-in" style="width: 90%; max-width: 400px; display: flex; flex-direction: column; padding: 1.5rem; gap: 1rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); text-align: center;">
+                        <div style="font-size: 2.5rem; margin-top: 0.5rem;">🗑️</div>
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-primary);">Delete File?</h3>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Are you sure you want to delete <strong id="delete-file-name" style="color: var(--accent-cyan);">filename.txt</strong>? This will remove the file from your local workspace disk permanently.</p>
+                        <div style="display: flex; justify-content: center; gap: 0.8rem; margin-top: 0.5rem;">
+                            <button id="cancel-file-delete-btn" class="action-btn secondary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">Cancel</button>
+                            <button id="confirm-file-delete-btn" class="action-btn primary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; background-color: var(--danger) !important; color: #fff !important; border-color: var(--danger) !important; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">Delete Permanent</button>
+                        </div>
+                    </div>
+                </div>
+
+                <script src="script.js?v=39"></script>
+            </body>
+            </html>
