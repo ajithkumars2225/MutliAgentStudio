@@ -239,22 +239,58 @@ def run_agent_in_thread(prompt: str, max_iterations: int, provider: str, model_n
         except Exception as e:
             print(f"[State Resumer Warning] Failed to load previous state: {e}")
             
+    # ── Smart State Resume Logic ─────────────────────────────────────────────
+    # Case 1: Same prompt → resume from exact saved checkpoint
+    # Case 2: New prompt on existing codebase → detect intent:
+    #   - Bug report / fix request → inject prompt as error → ImplementEngineer
+    #   - New feature on same project → fresh BA run but carry requirements context
+    
+    # Keywords indicating the user is reporting a bug or issue to fix
+    BUG_INTENT_PHRASES = [
+        "fix", "bug", "error", "issue", "problem", "not working", "broken",
+        "fails", "failing", "crash", "exception", "incorrect", "wrong",
+        "doesn't work", "does not work", "cant", "cannot", "unable to",
+        "facing issue", "getting error", "shows error", "why is", "why does",
+    ]
+    
+    new_prompt_lower = comp_prompt.lower()
+    is_bug_report = any(phrase in new_prompt_lower for phrase in BUG_INTENT_PHRASES)
+    has_existing_code = bool(existing_codebase)
+    is_new_prompt = not loaded_state  # True when no state was resumed
+    
+    # If it's a new prompt describing a bug on an existing codebase,
+    # load requirements/impact context from saved state (if present) but
+    # treat the new prompt description as the error to fix
+    context_state = {}
+    if is_new_prompt and is_bug_report and has_existing_code and os.path.exists(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                context_state = json.load(f)
+            print(f"🐛 [Smart Resume] Bug-report detected on existing codebase. Loading context from previous run.")
+            print(f"🐛 [Smart Resume] Routing to ImplementEngineer to fix: '{comp_prompt[:120]}...'")
+        except Exception:
+            context_state = {}
+
     initial_state = {
         "prompt": prompt,
-        "requirements": loaded_state.get("requirements", ""),
-        "impact_analysis": loaded_state.get("impact_analysis", ""),
-        "files_to_modify": loaded_state.get("files_to_modify", []),
+        # Carry requirements & impact from saved state so agents have full context
+        "requirements": loaded_state.get("requirements", "") or context_state.get("requirements", ""),
+        "impact_analysis": loaded_state.get("impact_analysis", "") or context_state.get("impact_analysis", ""),
+        "files_to_modify": loaded_state.get("files_to_modify", []) or context_state.get("files_to_modify", []),
         "codebase": existing_codebase,
         "test_plan": "",
         "test_results": "",
         "deployment_plan": "",
         "deployment_logs": "",
-        "errors": loaded_state.get("errors", ""),
-        "iterations": loaded_state.get("iterations", 0),
+        # Bug report: inject the user's description as the error to fix
+        # Normal resume: carry forward the saved errors
+        "errors": f"User reported issue:\n{comp_prompt}" if (is_new_prompt and is_bug_report and has_existing_code) else loaded_state.get("errors", ""),
+        "iterations": loaded_state.get("iterations", 0) if loaded_state else 0,
         "max_iterations": max_iterations,
         "next_agent": loaded_state.get("next_agent", "BusinessAnalyst"),
         "incidents": []
     }
+
     
     try:
         from main import build_graph
