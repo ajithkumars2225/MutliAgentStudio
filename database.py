@@ -325,7 +325,7 @@ def get_telemetry_data() -> dict:
     FROM telemetry_logs
     """)
     totals_row = cursor.fetchone()
-    totals = {
+    summary = {
         "total_cost": totals_row["total_cost"] or 0.0,
         "total_tokens": totals_row["total_tokens"] or 0,
         "total_calls": totals_row["total_calls"] or 0,
@@ -386,6 +386,7 @@ def get_telemetry_data() -> dict:
     conn.close()
     return {
         "summary": summary,
+        "agent_breakdown": agent_breakdown,
         "grouped_runs": grouped_runs,
         "orphaned_logs": orphaned_logs
     }
