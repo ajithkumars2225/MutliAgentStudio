@@ -209,6 +209,10 @@ def get_all_settings():
     conn.close()
     return {row["key"]: row["value"] for row in rows}
 
+def get_setting(key: str, default_value: str = "") -> str:
+    settings = get_all_settings()
+    return settings.get(key, default_value)
+
 def update_db_settings(settings_dict: dict):
     conn = get_db_connection()
     cursor = conn.cursor()

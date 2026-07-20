@@ -754,6 +754,10 @@ Reasoning and Decision:"""
     if next_agent == "ImplementEngineer" and state.get("iterations", 0) >= int(state.get("max_iterations", 3)):
         print("[Orchestrator Safeguard] Max iterations reached. Overriding decision to 'FINISH' to prevent infinite coding loops.")
         next_agent = "FINISH"
+
+    if next_agent == "Tester" and state.get("test_results") and not state.get("errors"):
+        print("[Orchestrator Safeguard] Tester has already run successfully and no active errors exist. Progressing to 'Deployer'.")
+        next_agent = "Deployer"
         
     if next_agent == "BusinessAnalyst" and state.get("requirements"):
         prompt_lower = state.get("prompt", "").lower()

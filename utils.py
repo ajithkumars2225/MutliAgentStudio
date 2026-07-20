@@ -234,7 +234,7 @@ def run_tests(directory: str) -> Tuple[bool, str]:
             return False, f"Local Go execution failed: {str(e)}"
             
     # Check for C# / .NET Core (.csproj or .sln)
-    elif list(base_path.glob("*.csproj")) or list(base_path.glob("*.sln")):
+    elif list(base_path.rglob("*.csproj")) or list(base_path.rglob("*.sln")):
         logs.append(".NET Core project detected. Running local .NET validation...")
         try:
             # dotnet test
