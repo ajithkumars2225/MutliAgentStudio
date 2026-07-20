@@ -66,6 +66,20 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    # 4. Create Codebase RAG Vector table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS codebase_rag (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        workspace TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        chunk_index INTEGER NOT NULL,
+        symbol_name TEXT,
+        chunk_text TEXT NOT NULL,
+        embedding TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
     
     # Populate settings default values if empty or missing
     defaults = {
@@ -367,11 +381,38 @@ def get_telemetry_data() -> dict:
     
     conn.close()
     return {
-        "totals": totals,
-        "agent_breakdown": agent_breakdown,
+        "summary": summary,
         "grouped_runs": grouped_runs,
         "orphaned_logs": orphaned_logs
     }
+
+# ----------------- CODEBASE RAG DATABASE HELPERS -----------------
+
+def clear_rag_chunks(workspace: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM codebase_rag WHERE workspace = ?", (workspace,))
+    conn.commit()
+    conn.close()
+
+def save_rag_chunks(workspace: str, chunks: list):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    for idx, item in enumerate(chunks):
+        cursor.execute("""
+        INSERT INTO codebase_rag (workspace, filepath, chunk_index, symbol_name, chunk_text, embedding)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (workspace, item["filepath"], idx, item.get("symbol_name"), item["chunk_text"], item.get("embedding")))
+    conn.commit()
+    conn.close()
+
+def get_rag_chunks(workspace: str) -> list:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM codebase_rag WHERE workspace = ? ORDER BY filepath, chunk_index", (workspace,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 def reset_telemetry_logs():
     conn = get_db_connection()

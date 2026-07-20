@@ -535,6 +535,18 @@ def get_relevant_contents(codebase_metadata: dict, prompt: str) -> str:
                         relevant_files.append(cls_info["file"])
     except Exception:
         pass
+
+    # Enterprise Codebase RAG Vector Semantic Search
+    try:
+        from rag_engine import CodebaseRAGEngine
+        from database import get_setting
+        provider = get_setting("llm_provider", "google")
+        rag_matches = CodebaseRAGEngine.search_codebase_rag(workspace_dir, prompt, top_k=4, provider=provider)
+        for match in rag_matches:
+            if match.get("filepath") in codebase_metadata:
+                relevant_files.append(match["filepath"])
+    except Exception as e:
+        print(f"[RAG Retrieval Warning] {e}")
             
     # Deduplicate while preserving order & cap to max 6 files
     seen = set()

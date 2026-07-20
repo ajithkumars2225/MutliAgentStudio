@@ -644,6 +644,22 @@ def clear_react_trace_endpoint():
     EnterpriseReActEngine.clear_trace_history()
     return {"status": "cleared"}
 
+@app.get("/api/rag/search")
+def search_rag_endpoint(q: str = "", top_k: int = 4):
+    from rag_engine import CodebaseRAGEngine
+    workspace_dir = database.get_active_workspace()
+    provider = database.get_setting("llm_provider", "google")
+    results = CodebaseRAGEngine.search_codebase_rag(workspace_dir, q, top_k=top_k, provider=provider)
+    return {"query": q, "results": results}
+
+@app.post("/api/rag/index")
+def index_rag_endpoint():
+    from rag_engine import CodebaseRAGEngine
+    workspace_dir = database.get_active_workspace()
+    provider = database.get_setting("llm_provider", "google")
+    count = CodebaseRAGEngine.index_workspace(workspace_dir, provider=provider)
+    return {"status": "indexed", "chunks": count}
+
 @app.get("/api/history")
 def get_history():
     return database.get_all_history()
