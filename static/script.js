@@ -1610,9 +1610,10 @@ if (resizeHandleTerminal && mainContent) {
 }
 
 
-// SQLite Settings Persistence and History Logs Helpers
+let isInitialSettingsLoad = false;
 
 function saveSettingsOnUIChange() {
+    if (isInitialSettingsLoad) return;
     const val = providerSelect.value;
     currentLoadedSettings.provider = val;
     currentLoadedSettings.max_iterations = parseInt(iterationsSlider.value);
@@ -1746,10 +1747,14 @@ function saveSettingsOnUIChange() {
 }
 
 function loadSettings() {
+    isInitialSettingsLoad = true;
     fetch("/api/settings")
     .then(r => r.json())
     .then(settings => {
-        if (!settings || Object.keys(settings).length === 0) return;
+        if (!settings || Object.keys(settings).length === 0) {
+            isInitialSettingsLoad = false;
+            return;
+        }
         currentLoadedSettings = settings;
         
         providerSelect.value = settings.provider || "gemini";
@@ -1850,9 +1855,14 @@ function loadSettings() {
                 saveSettingsOnUIChange();
             });
         }
+
+        isInitialSettingsLoad = false;
     })
     .then(() => loadCustomPrompts())
-    .catch(err => console.error("Failed to load settings: ", err));
+    .catch(err => {
+        isInitialSettingsLoad = false;
+        console.error("Failed to load settings: ", err);
+    });
 }
 
 function loadHistory() {
