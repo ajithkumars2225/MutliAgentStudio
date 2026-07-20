@@ -961,29 +961,45 @@ def implement_engineer_node(state: dict) -> dict:
         workspace_dir = database.get_active_workspace()
         
         # Ensure .studio folder exists in workspace
-        os.makedirs(os.path.join(workspace_dir, ".studio"), exist_ok=True)
-        prompt_txt_path = os.path.join(workspace_dir, ".studio", "prompt.txt")
+        studio_dir = os.path.join(workspace_dir, ".studio")
+        os.makedirs(studio_dir, exist_ok=True)
+        prompt_txt_path = os.path.join(studio_dir, "prompt.txt")
         
+        # Build the full prompt content
         reqs = state.get("requirements", "")
-        cli_prompt = f"Implement these requirements: {reqs}\nFiles to modify: {', '.join(files_list)}"
+        impact = state.get("impact_analysis", "")
+        files_joined = ", ".join(files_list) if files_list else "N/A"
+        cli_prompt_parts = [f"Implement these requirements:\n{reqs}"]
+        if impact:
+            cli_prompt_parts.append(f"\nImpact Plan:\n{impact}")
+        cli_prompt_parts.append(f"\nFiles to modify: {files_joined}")
         if state.get("errors"):
-            cli_prompt += f"\nFix these errors/bugs from the previous test run:\n{state.get('errors')}"
-            
-        # Write prompt to file to support {prompt_file} safely
+            pruned_errors = state["errors"][-4000:] if len(state["errors"]) > 4000 else state["errors"]
+            cli_prompt_parts.append(f"\nFix these errors/bugs from the previous test run:\n{pruned_errors}")
+        cli_prompt = "\n".join(cli_prompt_parts)
+        
+        # ALWAYS write full prompt to file to avoid "command line too long" on Windows
         with open(prompt_txt_path, "w", encoding="utf-8") as f:
             f.write(cli_prompt)
-            
-        # Get custom command template
-        cli_cmd_template = settings.get("coder_cli_command") or 'agy run "{prompt}"'
         
-        # Replace placeholders
-        relative_prompt_file = os.path.join(".studio", "prompt.txt")
+        # Use forward-slash relative path for cross-shell compatibility
+        relative_prompt_file = ".studio/prompt.txt"
+        
+        # Get custom command template
+        cli_cmd_template = settings.get("coder_cli_command") or 'agy run "{prompt_file}"'
+        
+        # Replace {prompt_file} placeholder
         cmd_str = cli_cmd_template.replace("{prompt_file}", relative_prompt_file)
         
-        # Replace {prompt} with simple escaping
-        escaped_prompt = cli_prompt.replace('"', '\\"')
-        cmd_str = cmd_str.replace("{prompt}", escaped_prompt)
+        # Safety net: if user template still uses {prompt} (inline), replace with file path reference
+        # to avoid Windows command line length limit (~32KB)
+        if "{prompt}" in cmd_str:
+            print("[CLI Coder ⚠️] Warning: '{prompt}' in command template may exceed Windows command line limit. "
+                  "Auto-upgrading to use prompt file path instead. "
+                  "Update your CLI command template to use '{prompt_file}' to suppress this warning.")
+            cmd_str = cmd_str.replace("{prompt}", relative_prompt_file)
         
+        print(f"[CLI Coder] Prompt written to: {prompt_txt_path} ({len(cli_prompt)} chars)")
         print(f"[CLI Coder] Executing command in workspace: {cmd_str}")
         try:
             result = subprocess.run(
@@ -991,12 +1007,20 @@ def implement_engineer_node(state: dict) -> dict:
                 cwd=workspace_dir,
                 capture_output=True,
                 text=True,
-                shell=True
+                shell=True,
+                timeout=600  # 10 minute timeout for large codegen
             )
             success = (result.returncode == 0)
-            cli_errors = "" if success else result.stderr or result.stdout
+            cli_output = result.stdout or ""
+            cli_errors = "" if success else (result.stderr or result.stdout or "Unknown CLI error")
+            if cli_output:
+                print(f"[CLI Coder] Output:\n{cli_output[-2000:]}")
             if not success:
-                print(f"[CLI Coder Warning] Coder CLI exited with code {result.returncode}. Output:\n{cli_errors}")
+                print(f"[CLI Coder Warning] Coder CLI exited with code {result.returncode}. Error:\n{cli_errors[-1000:]}")
+        except subprocess.TimeoutExpired:
+            print("[CLI Coder Error] Command timed out after 600 seconds.")
+            success = False
+            cli_errors = "CLI Coder timed out after 600 seconds."
         except Exception as e:
             print(f"[CLI Coder Error] Failed to launch custom CLI command: {e}")
             success = False
