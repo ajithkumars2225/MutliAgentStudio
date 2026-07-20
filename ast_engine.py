@@ -182,3 +182,54 @@ class EnterpriseASTEngine:
             warnings.append(f"AST diff analysis warning: {str(e)}")
 
         return warnings
+
+    @classmethod
+    def get_workspace_symbol_index(cls, workspace_directory: str) -> Dict[str, Any]:
+        """
+        Builds a comprehensive workspace-wide Symbol Index mapping every function,
+        class, method, and table back to its defining file and line number.
+        """
+        base = Path(workspace_directory)
+        if not base.exists():
+            return {}
+
+        symbol_index = {
+            "functions": {},
+            "classes": {},
+            "tables": {}
+        }
+
+        for root, dirs, files in os.walk(base):
+            dirs[:] = [d for d in dirs if d not in {".git", ".venv", "venv", "__pycache__", "node_modules", "dist", "build"}]
+            for file in files:
+                filepath = Path(root) / file
+                rel_path = str(filepath.relative_to(base)).replace("\\", "/")
+                ext = filepath.suffix.lower()
+                if ext in [".py", ".js", ".ts", ".jsx", ".tsx", ".sql"]:
+                    try:
+                        content = filepath.read_text(encoding="utf-8", errors="ignore")
+                        syms = cls.parse_polyglot_symbols(rel_path, content)
+                        
+                        for f in syms.get("functions", []):
+                            fname = f["name"]
+                            symbol_index["functions"][fname] = {
+                                "file": rel_path,
+                                "line": f.get("line"),
+                                "params": f.get("params", [])
+                            }
+                        for c in syms.get("classes", []):
+                            cname = c["name"]
+                            symbol_index["classes"][cname] = {
+                                "file": rel_path,
+                                "line": c.get("line"),
+                                "methods": c.get("methods", [])
+                            }
+                        for t in syms.get("tables", []):
+                            symbol_index["tables"][t] = {
+                                "file": rel_path
+                            }
+                    except Exception:
+                        pass
+
+        return symbol_index
+

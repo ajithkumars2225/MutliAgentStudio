@@ -596,6 +596,12 @@ def get_git_diff_route():
     from utils import git_get_diff
     workspace_dir = database.get_active_workspace()
     return {"diff": git_get_diff(workspace_dir)}
+@app.get("/api/symbols")
+def get_symbols_endpoint():
+    from ast_engine import EnterpriseASTEngine
+    workspace_dir = database.get_active_workspace()
+    return EnterpriseASTEngine.get_workspace_symbol_index(workspace_dir)
+
 @app.get("/api/history")
 def get_history():
     return database.get_all_history()

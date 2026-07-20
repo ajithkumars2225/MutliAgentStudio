@@ -518,9 +518,25 @@ def get_relevant_contents(codebase_metadata: dict, prompt: str) -> str:
         # Check if file matches query terms (longer than 3 chars)
         if any(kw in filepath.lower() or kw in basename for kw in keywords if len(kw) > 3):
             relevant_files.append(filepath)
+
+    # Symbol Index Resolution (Function & Class symbol matching)
+    try:
+        from ast_engine import EnterpriseASTEngine
+        sym_index = EnterpriseASTEngine.get_workspace_symbol_index(workspace_dir)
+        for kw in keywords:
+            if len(kw) > 3:
+                for fn_name, fn_info in sym_index.get("functions", {}).items():
+                    if kw in fn_name.lower() and fn_info.get("file") in codebase_metadata:
+                        relevant_files.append(fn_info["file"])
+                for cls_name, cls_info in sym_index.get("classes", {}).items():
+                    if kw in cls_name.lower() and cls_info.get("file") in codebase_metadata:
+                        relevant_files.append(cls_info["file"])
+    except Exception:
+        pass
             
-    # Cap to max 6 files to prevent context window bloat
-    relevant_files = relevant_files[:6]
+    # Deduplicate while preserving order & cap to max 6 files
+    seen = set()
+    relevant_files = [f for f in relevant_files if not (f in seen or seen.add(f))][:6]
             
     # Fallback: if no files match but codebase has files, fetch up to 4 files to provide context
     if not relevant_files and codebase_metadata:
