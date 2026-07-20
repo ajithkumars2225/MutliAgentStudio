@@ -241,9 +241,15 @@ def run_tests(directory: str) -> Tuple[bool, str]:
     elif list(base_path.rglob("*.csproj")) or list(base_path.rglob("*.sln")):
         logs.append(".NET Core project detected. Running local .NET validation...")
         try:
-            # dotnet test
+            # Prefer .sln if available, else use the first .csproj found (handles nested subfolders)
+            sln_files = list(base_path.rglob("*.sln"))
+            csproj_files = list(base_path.rglob("*.csproj"))
+            dotnet_target = str(sln_files[0]) if sln_files else str(csproj_files[0])
+            logs.append(f"Using project file: {dotnet_target}")
+
+            # dotnet test with explicit project/solution path
             test_result = subprocess.run(
-                ["dotnet", "test"],
+                ["dotnet", "test", dotnet_target],
                 capture_output=True,
                 text=True,
                 cwd=str(base_path),
@@ -253,7 +259,7 @@ def run_tests(directory: str) -> Tuple[bool, str]:
             if test_result.returncode != 0:
                 logs.append("dotnet test failed or not found. Running dotnet build as fallback...")
                 build_result = subprocess.run(
-                    ["dotnet", "build"],
+                    ["dotnet", "build", dotnet_target],
                     capture_output=True,
                     text=True,
                     cwd=str(base_path),

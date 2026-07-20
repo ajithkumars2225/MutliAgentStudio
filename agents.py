@@ -669,16 +669,27 @@ def orchestrator_node(state: dict) -> dict:
     check_pause()
     print("\n[Orchestrator] Analyzing system state and selecting next step...")
 
-    prompt_lower = state.get("prompt", "").lower()
+    prompt_lower      = state.get("prompt", "").lower()
+    errors_text       = state.get("errors", "") or ""
     has_requirements  = bool(state.get("requirements"))
     has_impact        = bool(state.get("impact_analysis"))
-    has_errors        = bool(state.get("errors"))
+    has_errors        = bool(errors_text)
     has_test_results  = bool(state.get("test_results"))
     has_deploy_logs   = bool(state.get("deployment_logs"))
     iterations        = int(state.get("iterations", 0))
     max_iterations    = int(state.get("max_iterations", 3))
     codebase_files    = list(state.get("codebase", {}).keys())
     has_code          = bool(codebase_files)
+
+    # ── Fatal error short-circuit: stop retrying if error cannot be fixed by code ─
+    if has_errors and "FATAL:" in errors_text:
+        fatal_line = next((l for l in errors_text.splitlines() if "FATAL:" in l), errors_text[:200])
+        print(f"[Orchestrator ⛔] Fatal non-retryable error detected: {fatal_line}")
+        print("[Orchestrator ⛔] Stopping pipeline immediately to avoid wasting iterations.")
+        from utils import clear_studio_state
+        from database import get_active_workspace
+        clear_studio_state(get_active_workspace())
+        return {"next_agent": "FINISH"}
 
     # ── Explicit single-stage override keywords ────────────────────────────────
     SPEC_ONLY_PHRASES    = ["write requirements", "write spec", "business analysis only",
@@ -999,23 +1010,35 @@ def implement_engineer_node(state: dict) -> dict:
         
         resolved_exe = _shutil.which(base_exe)
         if not resolved_exe:
-            # Search common Windows installation locations
+            # Also try common variant names (agy installs as agy-node.cmd on Windows)
+            exe_variants = [base_exe, f"{base_exe}-node.cmd", f"{base_exe}.cmd", f"{base_exe}.exe"]
+            
+            # Common Windows installation directories including Antigravity-specific paths
             common_dirs = [
+                os.path.expandvars(r"%APPDATA%\Antigravity\bin"),       # agy-node.cmd lives here
                 os.path.expandvars(r"%APPDATA%\npm"),
+                os.path.expandvars(r"%LOCALAPPDATA%\Programs\Antigravity IDE\bin"),
+                os.path.expandvars(r"%LOCALAPPDATA%\Programs\Antigravity\bin"),
                 os.path.expandvars(r"%LOCALAPPDATA%\Programs\antigravity"),
-                os.path.expandvars(r"%LOCALAPPDATA%\Programs"),
                 os.path.expandvars(r"%LOCALAPPDATA%\antigravity\bin"),
                 os.path.expanduser(r"~\.local\bin"),
                 os.path.expanduser(r"~\AppData\Roaming\npm"),
+                os.path.expanduser(r"~\AppData\Roaming\Antigravity\bin"),
                 r"C:\Program Files\antigravity\bin",
                 r"C:\Program Files (x86)\antigravity\bin",
             ]
             for search_dir in common_dirs:
                 if os.path.isdir(search_dir):
-                    candidate = _shutil.which(base_exe, path=search_dir)
-                    if candidate:
-                        resolved_exe = candidate
-                        break
+                    for variant in exe_variants:
+                        candidate = _shutil.which(variant, path=search_dir)
+                        if candidate:
+                            resolved_exe = candidate
+                            # If variant differs from base_exe, update the command template too
+                            if variant != base_exe:
+                                cli_cmd_template = cli_cmd_template.replace(base_exe, variant, 1)
+                            break
+                if resolved_exe:
+                    break
         
         if not resolved_exe:
             print(f"[CLI Coder Error] Cannot find '{base_exe}' in PATH or common install locations.")
@@ -1023,9 +1046,10 @@ def implement_engineer_node(state: dict) -> dict:
             print(f"[CLI Coder] You can verify by running: where {base_exe}")
             success = False
             cli_errors = (
-                f"Executable '{base_exe}' not found in PATH.\n"
+                f"FATAL: Executable '{base_exe}' not found in PATH. This error cannot be fixed by retrying.\n"
                 f"Fix: Add '{base_exe}' install directory to System PATH, then restart the server.\n"
-                f"You can find the install path by running:  where {base_exe}  in a terminal."
+                f"You can find the install path by running:  where {base_exe}  in a terminal.\n"
+                f"NOTE: Antigravity CLI installs as 'agy-node.cmd' in %APPDATA%\\Antigravity\\bin"
             )
         else:
             print(f"[CLI Coder] Resolved '{base_exe}' → {resolved_exe}")
