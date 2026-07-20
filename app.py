@@ -620,6 +620,19 @@ def get_dependencies_endpoint():
     workspace_dir = database.get_active_workspace()
     return EnterpriseASTEngine.get_full_dependency_graph(workspace_dir)
 
+@app.get("/api/dependencies/circular")
+def get_circular_dependencies_endpoint():
+    from ast_engine import EnterpriseASTEngine
+    workspace_dir = database.get_active_workspace()
+    return {"circular_cycles": EnterpriseASTEngine.detect_circular_dependencies(workspace_dir)}
+
+@app.get("/api/dependencies/impact-radius")
+def get_impact_radius_endpoint(files: str = ""):
+    from ast_engine import EnterpriseASTEngine
+    workspace_dir = database.get_active_workspace()
+    target_files = [f.strip() for f in files.split(",") if f.strip()]
+    return EnterpriseASTEngine.calculate_impact_radius(workspace_dir, target_files)
+
 @app.get("/api/history")
 def get_history():
     return database.get_all_history()

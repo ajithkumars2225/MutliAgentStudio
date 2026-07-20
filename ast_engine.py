@@ -185,7 +185,81 @@ class EnterpriseASTEngine:
 
         return {
             "internal_call_graph": internal,
-            "external_packages": external
+            "external_packages": external,
+            "circular_dependencies": cls.detect_circular_dependencies(workspace_directory)
+        }
+
+    @classmethod
+    def detect_circular_dependencies(cls, workspace_directory: str) -> List[List[str]]:
+        """
+        Dependency Graph v2: DFS Cycle Detection.
+        Finds circular import loops across workspace modules (e.g. A -> B -> C -> A).
+        """
+        call_graph = cls.build_workspace_call_graph(workspace_directory)
+        cycles = []
+
+        visited = set()
+        rec_stack = set()
+
+        def dfs(node, path):
+            visited.add(node)
+            rec_stack.add(node)
+            path.append(node)
+
+            for neighbor in call_graph.get(node, []):
+                if neighbor not in visited:
+                    dfs(neighbor, path)
+                elif neighbor in rec_stack:
+                    # Found cycle
+                    cycle_start = path.index(neighbor)
+                    cycle_path = path[cycle_start:] + [neighbor]
+                    if cycle_path not in cycles:
+                        cycles.append(cycle_path)
+
+            rec_stack.remove(node)
+            path.pop()
+
+        for file_node in call_graph.keys():
+            if file_node not in visited:
+                dfs(file_node, [])
+
+        return cycles
+
+    @classmethod
+    def calculate_impact_radius(cls, workspace_directory: str, target_files: List[str]) -> Dict[str, Any]:
+        """
+        Dependency Graph v2: Transitive Impact Radius Calculator.
+        Calculates direct and indirect downstream files affected by modifying target_files.
+        """
+        call_graph = cls.build_workspace_call_graph(workspace_directory)
+        
+        # Build inverted graph: file -> files that depend on it
+        dependants = {}
+        for src, deps in call_graph.items():
+            for d in deps:
+                dependants.setdefault(d, []).append(src)
+
+        direct_impacted = set()
+        indirect_impacted = set()
+
+        for tf in target_files:
+            tf_clean = tf.replace("\\", "/")
+            # Direct dependants
+            directs = set(dependants.get(tf_clean, []))
+            direct_impacted.update(directs)
+
+            # Indirect dependants (BFS 2-hops)
+            for d in directs:
+                indirects = set(dependants.get(d, []))
+                indirect_impacted.update(indirects - direct_impacted - set(target_files))
+
+        total_affected = list(direct_impacted | indirect_impacted)
+        return {
+            "target_files": target_files,
+            "direct_dependants": list(direct_impacted),
+            "indirect_dependants": list(indirect_impacted),
+            "total_affected_files": total_affected,
+            "impact_score": len(total_affected)
         }
 
     @classmethod

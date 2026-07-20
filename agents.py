@@ -864,6 +864,18 @@ Impact Assessment:"""
     file_list_str = "\n".join([f"- {f}" for f in files_to_modify])
     plan_desc = f"{output}\n\nProposed Files to Create/Modify:\n{file_list_str}"
     
+    # Enterprise Transitive Impact Radius Calculation
+    try:
+        from ast_engine import EnterpriseASTEngine
+        from database import get_active_workspace
+        impact_radius = EnterpriseASTEngine.calculate_impact_radius(get_active_workspace(), files_to_modify)
+        if impact_radius.get("total_affected_files"):
+            affected_str = ", ".join(impact_radius["total_affected_files"])
+            print(f"[Impact Analyzer 🌐] Calculated Transitive Impact Radius ({impact_radius['impact_score']} downstream files affected): {affected_str}")
+            plan_desc += f"\n\n🌐 Transitive Impact Blast Radius ({impact_radius['impact_score']} affected files):\n- Direct dependants: {', '.join(impact_radius['direct_dependants']) or 'None'}\n- Indirect dependants: {', '.join(impact_radius['indirect_dependants']) or 'None'}"
+    except Exception as e:
+        print(f"[Impact Radius Warning] {e}")
+    
     check_pause()
     feedback = ask_user_approval("Impact & Code Modification Plan", plan_desc)
     if feedback:
