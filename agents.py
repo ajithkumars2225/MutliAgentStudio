@@ -661,134 +661,143 @@ def load_custom_prompts() -> dict:
 
 def orchestrator_node(state: dict) -> dict:
     """
-    Orchestrator Agent Node.
+    Orchestrator Agent Node — Deterministic Rule-Based Router.
+    No LLM call. Routes to the correct agent purely based on current pipeline state.
     """
     global active_agent_name
     active_agent_name = "orchestrator"
     check_pause()
     print("\n[Orchestrator] Analyzing system state and selecting next step...")
-    llm = get_llm()
-    
-    codebase_files = list(state.get("codebase", {}).keys())
-    files_str = ", ".join(codebase_files) if codebase_files else "None (Empty Repository)"
-    
-    # Enterprise Episodic Memory Recall
-    memories_str = ""
-    try:
-        from episodic_memory import EpisodicMemoryEngine
-        memories = EpisodicMemoryEngine.recall_relevant_memories(state.get("prompt", ""), top_k=3)
-        if memories:
-            mem_items = [f"  - [{m['category']}] {m['concept']}: {m['value']}" for m in memories]
-            memories_str = "\nRecalled Long-Term Episodic Memories & User Preferences:\n" + "\n".join(mem_items)
-            print(f"[Episodic Memory 🧠] Recalled {len(memories)} relevant user preferences/memories.")
-    except Exception:
-        pass
 
-    custom_prompts = load_custom_prompts()
-    default_orchestrator = "You are the central Orchestrator Supervisor. Your task is to coordinate a team of developer agents."
-    orchestrator_header = (custom_prompts.get("orchestrator") or "").strip() or default_orchestrator
-    
-    prompt = f"""{orchestrator_header}
-{memories_str}
-Analyze the current state below and decide which agent should be invoked next.
+    prompt_lower = state.get("prompt", "").lower()
+    has_requirements  = bool(state.get("requirements"))
+    has_impact        = bool(state.get("impact_analysis"))
+    has_errors        = bool(state.get("errors"))
+    has_test_results  = bool(state.get("test_results"))
+    has_deploy_logs   = bool(state.get("deployment_logs"))
+    iterations        = int(state.get("iterations", 0))
+    max_iterations    = int(state.get("max_iterations", 3))
+    codebase_files    = list(state.get("codebase", {}).keys())
+    has_code          = bool(codebase_files)
 
-Available Agents:
-* 'BusinessAnalyst': Analyzes requirement prompt and writes detailed specifications.
-* 'ImpactAnalyzer': Inspects the codebase, identifies which files are affected, and makes a plan.
-* 'ImplementEngineer': Writes/updates files on disk based on the plan, or fixes syntax/testing bugs.
-* 'Tester': Runs local compilation check, unit tests, security audits, and reports results.
-* 'Deployer': Executes docker-compose or custom deploy scripts.
-* 'FINISH': Call this when the task is fully completed.
+    # ── Explicit single-stage override keywords ────────────────────────────────
+    SPEC_ONLY_PHRASES    = ["write requirements", "write spec", "business analysis only",
+                            "requirements only", "spec only", "only write spec", "only write requirement"]
+    IMPACT_ONLY_PHRASES  = ["impact analysis only", "analyze impact only", "impact only"]
+    CODE_ONLY_PHRASES    = ["directly implement", "coder only", "write code only", "implement only"]
+    TEST_ONLY_PHRASES    = ["test only", "run tests only", "test this project", "run security check only"]
+    DEPLOY_ONLY_PHRASES  = ["deploy only", "deploy this project", "run deployment"]
 
-Routing Guidelines (Prioritize Explicit User Command Overrides):
-1. If the user prompt explicitly requests to ONLY write specifications, analyze requirements, or do business analysis (e.g. 'write requirements for X', 'do business analysis', 'write specifications only'), route to 'BusinessAnalyst'. Once the BA outputs the specification, route to 'FINISH'.
-2. If the user prompt explicitly requests to ONLY perform impact analysis, assess risks, or plan file modifications (e.g. 'do impact analysis only', 'analyze impact of X'), route to 'ImpactAnalyzer'. Once completed, route to 'FINISH'.
-3. If the user prompt explicitly requests to ONLY write code, execute direct coding, or implement (e.g. 'directly implement X', 'write code for Y', 'coder only'), route to 'ImplementEngineer' (bypassing BA/Impact steps). Once completed, route to 'Tester' to verify syntax/security, then to 'FINISH'.
-4. If the user prompt explicitly requests to ONLY test or audit the codebase (e.g. 'test this project', 'run security check'), route to 'Tester'. Once completed, route to 'FINISH'.
-5. If the user prompt explicitly requests to ONLY deploy the application (e.g. 'deploy this project', 'run deployment'), route to 'Tester' to verify code integrity, then to 'Deployer', then to 'FINISH'.
-6. Otherwise, if it is a general new feature request or general requirement, follow the standard workflow step-by-step:
-   - If 'Requirements Spec' is missing, route to 'BusinessAnalyst'.
-   - If 'Requirements Spec' is established but 'Impact Spec' is missing, route to 'ImpactAnalyzer'.
-   - If both specs are established but code has not been written (or Coder Iterations is 0), route to 'ImplementEngineer'.
-   - If 'Errors' is not empty (contains compile, test, or security errors), route to 'ImplementEngineer' to fix them.
-   - If code has been written and there are no active errors, route to 'Tester' to check.
-   - If 'Tester' has run successfully (Validation Success is True or logs confirm tests passed) and there are no new errors on disk, DO NOT run 'Tester' or any previous steps. Route to 'Deployer'.
-   - If 'Deployer' has successfully run, route to 'FINISH'.
-7. Max Iterations Safeguard: If Coder Iterations is equal to or greater than Max Iterations, DO NOT route to 'ImplementEngineer'. Route to 'FINISH'.
+    if any(p in prompt_lower for p in SPEC_ONLY_PHRASES):
+        if not has_requirements:
+            next_agent = "BusinessAnalyst"
+            reason = "User requested spec-only. Requirements missing → BusinessAnalyst."
+        else:
+            next_agent = "FINISH"
+            reason = "User requested spec-only. Requirements already written → FINISH."
 
-Current Execution Logs / Context:
-- If 'Errors' is not empty (contains compile, test, or security errors), ALWAYS route to 'ImplementEngineer' to fix the bugs (unless Max Iterations is reached).
-- If 'Test Logs' show successful validation and 'Errors' is empty, progress to 'Deployer' (do not loop on 'Tester').
+    elif any(p in prompt_lower for p in IMPACT_ONLY_PHRASES):
+        if not has_impact:
+            next_agent = "ImpactAnalyzer"
+            reason = "User requested impact-only. Impact missing → ImpactAnalyzer."
+        else:
+            next_agent = "FINISH"
+            reason = "User requested impact-only. Impact already written → FINISH."
 
---- CURRENT STATE ---
-User Prompt: {state.get('prompt')}
-Requirements Spec: {"Established (Not Empty)" if state.get('requirements') else "Missing"}
-Impact Spec: {"Established (Not Empty)" if state.get('impact_analysis') else "Missing"}
-Codebase Files: {files_str}
-Errors: {state.get('errors') or 'None'}
-Test Logs: {state.get('test_results') or 'None'}
-Deployment Logs: {state.get('deployment_logs') or 'None'}
-Coder Iterations: {state.get('iterations', 0)}/{state.get('max_iterations', 3)}
----------------------
+    elif any(p in prompt_lower for p in CODE_ONLY_PHRASES):
+        if has_errors and iterations < max_iterations:
+            next_agent = "ImplementEngineer"
+            reason = "User requested code-only. Errors present → ImplementEngineer to fix."
+        elif iterations >= max_iterations:
+            next_agent = "FINISH"
+            reason = "Code-only mode: Max iterations reached → FINISH."
+        elif not has_test_results:
+            next_agent = "Tester"
+            reason = "Code-only mode: Code written, no test results yet → Tester."
+        else:
+            next_agent = "FINISH"
+            reason = "Code-only mode: Code written and tested → FINISH."
 
-Based on this state, decide the next agent. Output your decision in this exact JSON format:
-```json
-{{
-  "thought": "Reasoning explaining why this next agent is selected based on state and observations...",
-  "next_agent": "AgentName"
-}}
-```
+    elif any(p in prompt_lower for p in TEST_ONLY_PHRASES):
+        if not has_test_results:
+            next_agent = "Tester"
+            reason = "User requested test-only → Tester."
+        else:
+            next_agent = "FINISH"
+            reason = "User requested test-only. Tests already ran → FINISH."
 
-Reasoning and Decision:"""
-    
-    check_pause()
-    response = invoke_llm(llm, prompt, bypass_cache=True)
-    check_pause()
-    output = response.content if hasattr(response, 'content') else str(response)
-    
-    next_agent, thought = parse_orchestrator_decision(output)
-    if thought:
-        print(f"[ReAct Loop 🧠] Thought: {thought}")
-    
-    # Deterministic safeguard overrides to prevent loops
-    if next_agent == "ImplementEngineer" and state.get("iterations", 0) >= int(state.get("max_iterations", 3)):
-        print("[Orchestrator Safeguard] Max iterations reached. Overriding decision to 'FINISH' to prevent infinite coding loops.")
-        next_agent = "FINISH"
+    elif any(p in prompt_lower for p in DEPLOY_ONLY_PHRASES):
+        if not has_test_results:
+            next_agent = "Tester"
+            reason = "User requested deploy-only. No test results yet → Tester first."
+        elif has_errors:
+            next_agent = "ImplementEngineer"
+            reason = "Deploy-only mode: Errors exist → ImplementEngineer to fix before deploy."
+        elif not has_deploy_logs:
+            next_agent = "Deployer"
+            reason = "Deploy-only mode: Tests passed → Deployer."
+        else:
+            next_agent = "FINISH"
+            reason = "Deploy-only mode: Already deployed → FINISH."
 
-    if next_agent == "Tester" and state.get("test_results") and not state.get("errors"):
-        print("[Orchestrator Safeguard] Tester has already run successfully and no active errors exist. Progressing to 'Deployer'.")
-        next_agent = "Deployer"
-        
-    if next_agent == "BusinessAnalyst" and state.get("requirements"):
-        prompt_lower = state.get("prompt", "").lower()
-        is_spec_only = any(phrase in prompt_lower for phrase in ["spec only", "requirements only", "only write spec", "only write requirement"])
-        if not is_spec_only:
-            if not state.get("impact_analysis"):
-                print("[Orchestrator Safeguard] Requirements already established. Progressing to 'ImpactAnalyzer'.")
-                next_agent = "ImpactAnalyzer"
-            else:
-                print("[Orchestrator Safeguard] Requirements already established. Progressing to 'ImplementEngineer'.")
-                next_agent = "ImplementEngineer"
-                
-    print(f"[ReAct Loop ⚙️] Action -> {next_agent}")
+    # ── Standard full-pipeline workflow ───────────────────────────────────────
+    else:
+        if iterations >= max_iterations:
+            next_agent = "FINISH"
+            reason = f"Max iterations ({max_iterations}) reached → FINISH to prevent infinite loop."
 
-    # Enterprise ReAct Trace Recorder
+        elif has_deploy_logs and not has_errors:
+            next_agent = "FINISH"
+            reason = "Deployment complete, no errors → FINISH."
+
+        elif has_test_results and not has_errors and not has_deploy_logs:
+            next_agent = "Deployer"
+            reason = "Tests passed, no errors, not yet deployed → Deployer."
+
+        elif has_errors and iterations < max_iterations:
+            next_agent = "ImplementEngineer"
+            reason = f"Errors present (iteration {iterations}/{max_iterations}) → ImplementEngineer to fix."
+
+        elif has_code and not has_test_results and not has_errors:
+            next_agent = "Tester"
+            reason = "Code written, no errors, no test results yet → Tester."
+
+        elif has_requirements and has_impact and (not has_code or iterations == 0):
+            next_agent = "ImplementEngineer"
+            reason = "Requirements + Impact established, no code yet → ImplementEngineer."
+
+        elif has_requirements and not has_impact:
+            next_agent = "ImpactAnalyzer"
+            reason = "Requirements established, Impact missing → ImpactAnalyzer."
+
+        elif not has_requirements:
+            next_agent = "BusinessAnalyst"
+            reason = "Requirements missing → BusinessAnalyst."
+
+        else:
+            next_agent = "FINISH"
+            reason = "All stages complete → FINISH."
+
+    print(f"[Orchestrator 🧭] Decision: {next_agent}")
+    print(f"[Orchestrator 📋] Reason: {reason}")
+
+    # Enterprise ReAct Trace Recorder (kept for telemetry/audit)
     try:
         from react_engine import EnterpriseReActEngine
         EnterpriseReActEngine.record_step(
             agent_name="orchestrator",
-            thought=thought,
+            thought=reason,
             action=next_agent,
-            observation=f"Reqs: {'Yes' if state.get('requirements') else 'No'} | Impact: {'Yes' if state.get('impact_analysis') else 'No'} | Errors: {bool(state.get('errors'))}"
+            observation=f"Reqs: {'Yes' if has_requirements else 'No'} | Impact: {'Yes' if has_impact else 'No'} | Errors: {has_errors} | Tests: {has_test_results} | Iterations: {iterations}/{max_iterations}"
         )
     except Exception:
         pass
-    
+
     if next_agent == "FINISH":
         from utils import clear_studio_state
         from database import get_active_workspace
         clear_studio_state(get_active_workspace())
-        
+
     return {"next_agent": next_agent}
 
 def business_analyst_node(state: dict) -> dict:
