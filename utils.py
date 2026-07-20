@@ -1,9 +1,11 @@
+import ast
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, Tuple, Any
+
 
 def scan_workspace(directory: str) -> Dict[str, Dict[str, Any]]:
     """
@@ -50,6 +52,17 @@ def scan_workspace(directory: str) -> Dict[str, Dict[str, Any]]:
                         "size": stat.st_size,
                         "lines": line_count
                     }
+
+                    # AST Symbol Indexing for Python files
+                    if file_path.suffix.lower() == ".py":
+                        try:
+                            tree = ast.parse(content)
+                            funcs = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+                            classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+                            if funcs or classes:
+                                metadata[relative_name]["symbols"] = {"functions": funcs[:15], "classes": classes[:10]}
+                        except Exception:
+                            pass
                 except Exception as e:
                     print(f"Skipped indexing metadata for {file}: {e}")
                     
@@ -255,9 +268,21 @@ def run_tests(directory: str) -> Tuple[bool, str]:
     success = True
     py_files = list(base_path.rglob("*.py"))
     
-    # Syntax check
+    # AST & Compiler Syntax Check
     for py_file in py_files:
         relative_path = py_file.relative_to(base_path)
+        # 1. AST In-Memory Zero-Subprocess Syntax Validation
+        try:
+            source = py_file.read_text(encoding="utf-8", errors="ignore")
+            ast.parse(source, filename=str(py_file))
+        except SyntaxError as se:
+            success = False
+            logs.append(f"AST Syntax Error in {relative_path} (Line {se.lineno}, Col {se.offset}):\n{se.msg}\n-> {se.text}\n")
+            continue
+        except Exception:
+            pass
+
+        # 2. Subprocess compilation validation
         try:
             result = subprocess.run(
                 [sys.executable, "-m", "py_compile", str(py_file)],
@@ -391,7 +416,48 @@ def run_security_scan(directory: str) -> dict:
                 "code": ""
             })
 
-    # 2. Generic Regex Secret/Security Vulnerability Scan (applies to HTML/JS/Python/SQL)
+    # 2. AST Static Code Security Inspector for Python files
+    for py_file in py_files:
+        if any(p in py_file.parts for p in [".venv", "venv", "node_modules", "dist", "build"]):
+            continue
+        rel_name = str(py_file.relative_to(base_path)).replace("\\", "/")
+        try:
+            code_text = py_file.read_text(encoding="utf-8", errors="ignore")
+            tree = ast.parse(code_text)
+            for node in ast.walk(tree):
+                # Detect eval / exec calls via AST
+                if isinstance(node, ast.Call):
+                    func_name = ""
+                    if isinstance(node.func, ast.Name):
+                        func_name = node.func.id
+                    elif isinstance(node.func, ast.Attribute):
+                        func_name = node.func.attr
+                    
+                    if func_name in ("eval", "exec"):
+                        results["vulnerabilities"].append({
+                            "file": rel_name,
+                            "line": getattr(node, "lineno", 1),
+                            "severity": "HIGH",
+                            "confidence": "HIGH",
+                            "issue_text": f"AST Security Audit: Unsafe call to `{func_name}()` detected.",
+                            "code": f"{func_name}(...)"
+                        })
+                    elif func_name == "run" or func_name == "Popen":
+                        # Check shell=True keyword arg in subprocess
+                        for kw in node.keywords:
+                            if kw.arg == "shell" and isinstance(kw.value, ast.Constant) and kw.value.value is True:
+                                results["vulnerabilities"].append({
+                                    "file": rel_name,
+                                    "line": getattr(node, "lineno", 1),
+                                    "severity": "HIGH",
+                                    "confidence": "HIGH",
+                                    "issue_text": "AST Security Audit: Subprocess execution with `shell=True` (Command Injection Risk).",
+                                    "code": "subprocess.run(..., shell=True)"
+                                })
+        except Exception:
+            pass
+
+    # 3. Generic Regex Secret/Security Vulnerability Scan (applies to HTML/JS/Python/SQL)
     secret_patterns = {
         "API_KEY": r'(?i)(api_key|apikey|secret|password|passwd|token)\s*=\s*[\'"][a-zA-Z0-9_\-\.]{12,}[\'"]',
         "Hardcoded Password": r'(?i)password\s*=\s*[\'"][^\'"]{4,}[\'"]',
