@@ -111,6 +111,8 @@ def init_db():
         "coder_provider": "llm",
         "coder_cli_command": 'agy run "{prompt}"',
         "semantic_cache": "true",
+        "enable_free_limit": "false",
+        "free_limit_rpm": "15",
         "active_workspace": os.path.abspath(os.path.join(os.getcwd(), "workspace"))
     }
     

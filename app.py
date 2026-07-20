@@ -650,6 +650,13 @@ class UpdateSettingsRequest(BaseModel):
     coder_provider: Optional[str] = None
     coder_cli_command: Optional[str] = None
     semantic_cache: Optional[str] = None
+    # Network settings
+    network_port: Optional[int] = None
+    network_host: Optional[str] = None
+    network_cors_origins: Optional[str] = None
+    # Free Tier Quota Pacing settings
+    enable_free_limit: Optional[str] = None
+    free_limit_rpm: Optional[int] = None
 
 @app.post("/api/settings")
 def update_settings(req: UpdateSettingsRequest):
@@ -698,11 +705,26 @@ def update_settings(req: UpdateSettingsRequest):
     if req.coder_provider is not None: payload["coder_provider"] = req.coder_provider
     if req.coder_cli_command is not None: payload["coder_cli_command"] = req.coder_cli_command
     if req.semantic_cache is not None: payload["semantic_cache"] = req.semantic_cache
+    # Network settings
+    if req.network_port is not None: payload["network_port"] = req.network_port
+    if req.network_host is not None: payload["network_host"] = req.network_host
+    if req.network_cors_origins is not None: payload["network_cors_origins"] = req.network_cors_origins
+    # Free Tier Quota Pacing settings
+    if req.enable_free_limit is not None: payload["enable_free_limit"] = req.enable_free_limit
+    if req.free_limit_rpm is not None: payload["free_limit_rpm"] = req.free_limit_rpm
     
     database.update_db_settings(payload)
     return {"status": "updated"}
 
 # --- PREMIUM UPGRADE ENDPOINTS ---
+
+DEFAULT_PERSONA_PROMPTS = {
+    "orchestrator": "You are the central Orchestrator Supervisor. Your task is to coordinate a team of developer agents.",
+    "analyst": "You are an expert Business Analyst.\nAnalyze the following request and detail the user requirements, criteria, and edge cases.",
+    "impact": "You are a Software Architect and Impact Analyzer.\nCompare the new requirements against the existing codebase files. Determine which files are affected, what new files must be created, and any risks or dependency issues.",
+    "programmer": "You are a senior Software Implementation Engineer.\nYour task is to write clean, operational, and well-commented code files according to the requirements and impact plan.\nWrite the complete code for each target file. Do not use placeholders or skip details.",
+    "deployer": "You are a DevOps and Deployment Engineer.\nFor the application built under these requirements, write:\n1. A local deployment script:\n   - On Windows systems, write a `deploy.bat` file.\n   - For other platforms, write a `deploy.sh` script or a python script `deploy.py`.\n2. A CI/CD Pipeline configuration file:\n   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.\n   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines.\n   - Both pipelines should be configured to install dependencies, run linting/compilation checks, execute your unit tests, and trigger static security/vulnerability scans (e.g. Bandit for Python)."
+}
 
 class UpdatePromptsRequest(BaseModel):
     orchestrator: Optional[str] = ""
@@ -713,21 +735,19 @@ class UpdatePromptsRequest(BaseModel):
 
 @app.get("/api/settings/prompts")
 def get_prompts_endpoint():
+    res = dict(DEFAULT_PERSONA_PROMPTS)
     workspace = database.get_active_workspace()
     config_path = os.path.join(workspace, ".studio", "prompts.json")
     if os.path.exists(config_path):
         try:
             with open(config_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                saved = json.load(f)
+                for k, v in saved.items():
+                    if v and str(v).strip():
+                        res[k] = v
         except Exception:
             pass
-    return {
-        "orchestrator": "You are the central Orchestrator Supervisor. Your task is to coordinate a team of developer agents.",
-        "analyst": "You are an expert Business Analyst.\nAnalyze the following request and detail the user requirements, criteria, and edge cases.",
-        "impact": "You are a Software Architect and Impact Analyzer.\nCompare the new requirements against the existing codebase files. Determine which files are affected, what new files must be created, and any risks or dependency issues.",
-        "programmer": "You are a senior Software Implementation Engineer.\nYour task is to write clean, operational, and well-commented code files according to the requirements and impact plan.\nWrite the complete code for each target file. Do not use placeholders or skip details.",
-        "deployer": "You are a DevOps and Deployment Engineer.\nFor the application built under these requirements, write:\n1. A local deployment script:\n   - On Windows systems, write a `deploy.bat` file.\n   - For other platforms, write a `deploy.sh` script or a python script `deploy.py`.\n2. A CI/CD Pipeline configuration file:\n   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.\n   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines.\n   - Both pipelines should be configured to install dependencies, run linting/compilation checks, execute your unit tests, and trigger static security/vulnerability scans (e.g. Bandit for Python)."
-    }
+    return res
 
 @app.post("/api/settings/prompts")
 def update_prompts_endpoint(req: UpdatePromptsRequest):
@@ -1074,5 +1094,18 @@ app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
-    print("Starting Multi-Agent Developer Studio Server on http://localhost:8000...")
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)
+    # Read network settings from DB (falls back to defaults if not set)
+    try:
+        import database as _db
+        _net = _db.get_all_settings()
+        _port = int(_net.get("network_port", 8000))
+        _host = _net.get("network_host", "0.0.0.0")
+        if not (1024 <= _port <= 65535):
+            _port = 8000
+        if _host not in ("0.0.0.0", "127.0.0.1"):
+            _host = "0.0.0.0"
+    except Exception:
+        _port = 8000
+        _host = "0.0.0.0"
+    print(f"Starting Multi-Agent Developer Studio Server on http://localhost:{_port}...")
+    uvicorn.run("app:app", host=_host, port=_port, reload=False)

@@ -516,17 +516,19 @@ clearLogsBtn.addEventListener("click", () => {
     lastLogCount = 0;
 });
 
+const retryBtnWrap = document.getElementById("retry-btn-wrap");
+
 // Run agent trigger
 function triggerAgentRun(promptText, startFresh = false) {
     startBtn.disabled = true;
-    startBtn.className = "action-btn primary-btn";
-    startBtn.innerHTML = '<span class="btn-spinner"></span> Running Simulation...';
+    startBtn.className = "studio-action-icon-btn studio-action-run";
+    startBtn.innerHTML = '<span class="btn-spinner" style="width:18px;height:18px;"></span><span class="action-label">Running...</span>';
     
     runningPrompt = promptText;
     isAgentRunning = true;
     wasAgentRunning = true;
     
-    if (retryBtn) retryBtn.style.display = "none";
+    if (retryBtnWrap) retryBtnWrap.style.display = "none";
     
     fetch("/api/start", {
         method: "POST",
@@ -572,7 +574,8 @@ function triggerAgentRun(promptText, startFresh = false) {
     .catch(err => {
         alert(err.message);
         startBtn.disabled = false;
-        startBtn.innerHTML = '<span class="btn-icon">⚡</span> Run Developer Studio';
+        startBtn.className = "studio-action-icon-btn studio-action-run";
+        startBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M13 2L4.09 12.26a1 1 0 0 0-.09 1.05A1 1 0 0 0 5 14h6v8l8.91-10.26a1 1 0 0 0 .09-1.05A1 1 0 0 0 19 10h-6V2z"/></svg><span class="action-label">Run Studio</span><div class="studio-action-tooltip">⚡ Run Studio<br><small>Execute agents on your requirements</small></div>';
         isAgentRunning = false;
     });
 }
@@ -623,13 +626,12 @@ if (promptInput) {
             if (currentPrompt !== runningPrompt) {
                 // User has modified the prompt while the agent is running
                 startBtn.disabled = false;
-                startBtn.className = "action-btn warning-btn";
-                startBtn.innerHTML = '<span class="btn-icon">🔄</span> Apply & Restart';
+                startBtn.className = "studio-action-icon-btn studio-action-retry";
+                startBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><span class="action-label">Apply & Restart</span><div class="studio-action-tooltip">🔄 Apply &amp; Restart<br><small>Stop running and re-run with new prompt</small></div>';
             } else {
-                // Text matches the running prompt, keep button disabled
                 startBtn.disabled = true;
-                startBtn.className = "action-btn primary-btn";
-                startBtn.innerHTML = '<span class="btn-spinner"></span> Running Simulation...';
+                startBtn.className = "studio-action-icon-btn studio-action-run";
+                startBtn.innerHTML = '<span class="btn-spinner" style="width:18px;height:18px;"></span><span class="action-label">Running...</span>';
             }
         }
     });
@@ -812,11 +814,11 @@ function pollStatus() {
                 pollingInterval = null;
             }
             startBtn.disabled = false;
-            startBtn.className = "action-btn primary-btn";
-            startBtn.innerHTML = '<span class="btn-icon">⚡</span> Run Developer Studio';
+            startBtn.className = "studio-action-icon-btn studio-action-run";
+            startBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M13 2L4.09 12.26a1 1 0 0 0-.09 1.05A1 1 0 0 0 5 14h6v8l8.91-10.26a1 1 0 0 0 .09-1.05A1 1 0 0 0 19 10h-6V2z"/></svg><span class="action-label">Run Studio</span><div class="studio-action-tooltip">⚡ Run Studio<br><small>Execute agents on your requirements</small></div>';
             
-            if (runningPrompt !== "" && retryBtn) {
-                retryBtn.style.display = "inline-flex";
+            if (runningPrompt !== "" && retryBtnWrap) {
+                retryBtnWrap.style.display = "flex";
             }
             
             // Load and display live web app preview on successful run
@@ -1249,11 +1251,23 @@ function renderTabs() {
 
 function closeFileTab(filepath) {
     if (openFiles[filepath] && openFiles[filepath].isDirty) {
-        if (!confirm(`Discard unsaved changes to ${filepath.split(/[\\/]/).pop()}?`)) {
-            return;
-        }
+        appConfirm(
+            `Discard unsaved changes to ${filepath.split(/[\\/]/).pop()}?`,
+            () => {
+                performCloseFileTab(filepath);
+            },
+            null,
+            "Discard Changes",
+            "Keep Editing",
+            "Unsaved Changes",
+            "⚠️"
+        );
+    } else {
+        performCloseFileTab(filepath);
     }
-    
+}
+
+function performCloseFileTab(filepath) {
     delete openFiles[filepath];
     
     if (currentActiveFile === filepath) {
@@ -1673,6 +1687,32 @@ function saveSettingsOnUIChange() {
 
     currentLoadedSettings.semantic_cache = semanticCacheToggle ? (semanticCacheToggle.checked ? "true" : "false") : "false";
 
+    // Network settings
+    const networkPortInput = document.getElementById('network-port-input');
+    const networkHostInput = document.getElementById('network-host-input');
+    const networkCorsInput = document.getElementById('network-cors-input');
+    if (networkPortInput) {
+        const portVal = parseInt(networkPortInput.value, 10);
+        if (!isNaN(portVal) && portVal >= 1024 && portVal <= 65535) {
+            currentLoadedSettings.network_port = portVal;
+        }
+    }
+    if (networkHostInput) currentLoadedSettings.network_host = networkHostInput.value;
+    if (networkCorsInput) currentLoadedSettings.network_cors_origins = networkCorsInput.value.trim();
+
+    // Free Tier Rate Limiter settings
+    const enableFreeLimitToggle = document.getElementById('enable-free-limit-toggle');
+    const freeLimitRpmInput = document.getElementById('free-limit-rpm-input');
+    if (enableFreeLimitToggle) {
+        currentLoadedSettings.enable_free_limit = enableFreeLimitToggle.checked ? "true" : "false";
+    }
+    if (freeLimitRpmInput) {
+        const rpmVal = parseInt(freeLimitRpmInput.value, 10);
+        if (!isNaN(rpmVal) && rpmVal >= 1) {
+            currentLoadedSettings.free_limit_rpm = rpmVal;
+        }
+    }
+
     fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1735,6 +1775,77 @@ function loadSettings() {
         if (semanticCacheToggle) {
             semanticCacheToggle.checked = settings.semantic_cache === "true";
         }
+
+        // Network settings
+        const networkPortInput = document.getElementById('network-port-input');
+        const networkHostInput = document.getElementById('network-host-input');
+        const networkCorsInput = document.getElementById('network-cors-input');
+        const networkCurrentUrl = document.getElementById('network-current-url');
+        const networkUrlPreview = document.getElementById('network-url-preview');
+
+        const savedPort = settings.network_port || 8000;
+        const savedHost = settings.network_host || '0.0.0.0';
+        const savedCors = settings.network_cors_origins || '*';
+
+        if (networkPortInput) networkPortInput.value = savedPort;
+        if (networkHostInput) networkHostInput.value = savedHost;
+        if (networkCorsInput) networkCorsInput.value = savedCors;
+
+        const currentUrl = `http://localhost:${savedPort}`;
+        if (networkCurrentUrl) networkCurrentUrl.textContent = currentUrl;
+        if (networkUrlPreview) networkUrlPreview.textContent = currentUrl;
+
+        // Live port preview: update URL preview as user types
+        if (networkPortInput && !networkPortInput._previewBound) {
+            networkPortInput._previewBound = true;
+            networkPortInput.addEventListener('input', () => {
+                const p = parseInt(networkPortInput.value, 10);
+                const previewUrl = (!isNaN(p) && p >= 1024 && p <= 65535)
+                    ? `http://localhost:${p}` : 'Invalid port';
+                if (networkUrlPreview) networkUrlPreview.textContent = previewUrl;
+                // Highlight invalid
+                networkPortInput.style.borderColor = (!isNaN(p) && p >= 1024 && p <= 65535)
+                    ? 'var(--border-color)' : 'var(--danger)';
+            });
+        }
+
+        // Free Tier Rate Limiter settings
+        const enableFreeLimitToggle = document.getElementById('enable-free-limit-toggle');
+        const freeLimitConfigPanel = document.getElementById('free-limit-config-panel');
+        const freeLimitRpmInput = document.getElementById('free-limit-rpm-input');
+        const freeLimitDelayPreview = document.getElementById('free-limit-delay-preview');
+
+        const isFreeLimitEnabled = settings.enable_free_limit === "true";
+        const savedRpm = settings.free_limit_rpm || 15;
+
+        if (enableFreeLimitToggle) enableFreeLimitToggle.checked = isFreeLimitEnabled;
+        if (freeLimitConfigPanel) freeLimitConfigPanel.style.display = isFreeLimitEnabled ? "flex" : "none";
+        if (freeLimitRpmInput) freeLimitRpmInput.value = savedRpm;
+
+        const updateFreeLimitPreview = () => {
+            if (!freeLimitRpmInput || !freeLimitDelayPreview) return;
+            const rpm = parseInt(freeLimitRpmInput.value, 10);
+            if (!isNaN(rpm) && rpm >= 1) {
+                const delay = (60.0 / rpm).toFixed(1);
+                freeLimitDelayPreview.textContent = `~${delay} seconds / call`;
+            } else {
+                freeLimitDelayPreview.textContent = `Invalid RPM`;
+            }
+        };
+        updateFreeLimitPreview();
+
+        if (enableFreeLimitToggle && !enableFreeLimitToggle._bound) {
+            enableFreeLimitToggle._bound = true;
+            enableFreeLimitToggle.addEventListener('change', () => {
+                if (freeLimitConfigPanel) {
+                    freeLimitConfigPanel.style.display = enableFreeLimitToggle.checked ? "flex" : "none";
+                }
+            });
+        }
+        if (freeLimitRpmInput && !freeLimitRpmInput._bound) {
+            freeLimitRpmInput._bound = true;
+            freeLimitRpmInput.addEventListener('input', updateFreeLimitPreview);
+        }
     })
     .then(() => loadCustomPrompts())
     .catch(err => console.error("Failed to load settings: ", err));
@@ -1782,9 +1893,17 @@ function loadHistory() {
             delBtn.style.color = "var(--danger)";
             delBtn.textContent = "🗑️ Delete";
             delBtn.addEventListener("click", () => {
-                if (confirm("Delete this requirement history record?")) {
-                    deleteHistoryItem(item.id);
-                }
+                appConfirm(
+                    "Delete this requirement history record?",
+                    () => {
+                        deleteHistoryItem(item.id);
+                    },
+                    null,
+                    "Delete Record",
+                    "Cancel",
+                    "Delete History Record",
+                    "🗑️"
+                );
             });
             actionCell.appendChild(delBtn);
             
@@ -1809,12 +1928,20 @@ function deleteHistoryItem(id) {
 
 if (clearAllHistoryBtn) {
     clearAllHistoryBtn.addEventListener("click", () => {
-        if (confirm("Are you sure you want to clear all requirements history records? This cannot be undone.")) {
-            fetch("/api/history", { method: "DELETE" })
-            .then(r => r.json())
-            .then(() => loadHistory())
-            .catch(err => alert("Failed to clear history: " + err));
-        }
+        appConfirm(
+            "Are you sure you want to clear all requirements history records? This cannot be undone.",
+            () => {
+                fetch("/api/history", { method: "DELETE" })
+                .then(r => r.json())
+                .then(() => loadHistory())
+                .catch(err => alert("Failed to clear history: " + err));
+            },
+            null,
+            "Clear History",
+            "Cancel",
+            "Clear Requirements History",
+            "⚠️"
+        );
     });
 }
 
@@ -2363,6 +2490,14 @@ window.addEventListener("resize", () => {
 // ==========================================
 
 // 1. Custom Agent Personas Configuration
+const DEFAULT_PERSONA_PROMPTS = {
+    orchestrator: "You are the central Orchestrator Supervisor. Your task is to coordinate a team of developer agents.",
+    analyst: "You are an expert Business Analyst.\nAnalyze the following request and detail the user requirements, criteria, and edge cases.",
+    impact: "You are a Software Architect and Impact Analyzer.\nCompare the new requirements against the existing codebase files. Determine which files are affected, what new files must be created, and any risks or dependency issues.",
+    programmer: "You are a senior Software Implementation Engineer.\nYour task is to write clean, operational, and well-commented code files according to the requirements and impact plan.\nWrite the complete code for each target file. Do not use placeholders or skip details.",
+    deployer: "You are a DevOps and Deployment Engineer.\nFor the application built under these requirements, write:\n1. A local deployment script:\n   - On Windows systems, write a `deploy.bat` file.\n   - For other platforms, write a `deploy.sh` script or a python script `deploy.py`.\n2. A CI/CD Pipeline configuration file:\n   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.\n   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines.\n   - Both pipelines should be configured to install dependencies, run linting/compilation checks, execute your unit tests, and trigger static security/vulnerability scans (e.g. Bandit for Python)."
+};
+
 function loadCustomPrompts() {
     fetch("/api/settings/prompts")
     .then(r => r.json())
@@ -2372,14 +2507,31 @@ function loadCustomPrompts() {
         const iInput = document.getElementById("prompt-impact");
         const pInput = document.getElementById("prompt-programmer");
         const dInput = document.getElementById("prompt-deployer");
-        if (oInput) oInput.value = prompts.orchestrator || "";
-        if (aInput) aInput.value = prompts.analyst || "";
-        if (iInput) iInput.value = prompts.impact || "";
-        if (pInput) pInput.value = prompts.programmer || "";
-        if (dInput) dInput.value = prompts.deployer || "";
+        if (oInput) oInput.value = (prompts.orchestrator && prompts.orchestrator.trim()) ? prompts.orchestrator : DEFAULT_PERSONA_PROMPTS.orchestrator;
+        if (aInput) aInput.value = (prompts.analyst && prompts.analyst.trim()) ? prompts.analyst : DEFAULT_PERSONA_PROMPTS.analyst;
+        if (iInput) iInput.value = (prompts.impact && prompts.impact.trim()) ? prompts.impact : DEFAULT_PERSONA_PROMPTS.impact;
+        if (pInput) pInput.value = (prompts.programmer && prompts.programmer.trim()) ? prompts.programmer : DEFAULT_PERSONA_PROMPTS.programmer;
+        if (dInput) dInput.value = (prompts.deployer && prompts.deployer.trim()) ? prompts.deployer : DEFAULT_PERSONA_PROMPTS.deployer;
     })
     .catch(err => console.error("Failed to load prompts:", err));
 }
+
+const resetPersonasBtn = document.getElementById("reset-personas-btn");
+if (resetPersonasBtn) {
+    resetPersonasBtn.addEventListener("click", () => {
+        const oInput = document.getElementById("prompt-orchestrator");
+        const aInput = document.getElementById("prompt-analyst");
+        const iInput = document.getElementById("prompt-impact");
+        const pInput = document.getElementById("prompt-programmer");
+        const dInput = document.getElementById("prompt-deployer");
+        if (oInput) oInput.value = DEFAULT_PERSONA_PROMPTS.orchestrator;
+        if (aInput) aInput.value = DEFAULT_PERSONA_PROMPTS.analyst;
+        if (iInput) iInput.value = DEFAULT_PERSONA_PROMPTS.impact;
+        if (pInput) pInput.value = DEFAULT_PERSONA_PROMPTS.programmer;
+        if (dInput) dInput.value = DEFAULT_PERSONA_PROMPTS.deployer;
+    });
+}
+
 
 const agentPersonasToggle = document.getElementById("agent-personas-toggle");
 const agentPersonasContainer = document.getElementById("agent-personas-container");
@@ -2460,20 +2612,38 @@ function loadCacheList() {
 }
 
 function deleteCacheItem(itemId) {
-    if (!confirm("Remove this entry from semantic cache?")) return;
-    fetch(`/api/cache/delete/${itemId}`, { method: "DELETE" })
-    .then(r => r.json())
-    .then(() => loadCacheList())
-    .catch(err => alert("Failed to delete cache item: " + err));
+    appConfirm(
+        "Remove this entry from semantic cache?",
+        () => {
+            fetch(`/api/cache/delete/${itemId}`, { method: "DELETE" })
+            .then(r => r.json())
+            .then(() => loadCacheList())
+            .catch(err => alert("Failed to delete cache item: " + err));
+        },
+        null,
+        "Remove Entry",
+        "Cancel",
+        "Delete Cache Entry",
+        "🗑️"
+    );
 }
 
 if (clearCacheBtn) {
     clearCacheBtn.addEventListener("click", () => {
-        if (!confirm("Are you sure you want to purge the entire semantic cache database?")) return;
-        fetch("/api/cache/clear", { method: "POST" })
-        .then(r => r.json())
-        .then(() => loadCacheList())
-        .catch(err => alert("Failed to clear cache: " + err));
+        appConfirm(
+            "Are you sure you want to purge the entire semantic cache database?",
+            () => {
+                fetch("/api/cache/clear", { method: "POST" })
+                .then(r => r.json())
+                .then(() => loadCacheList())
+                .catch(err => alert("Failed to clear cache: " + err));
+            },
+            null,
+            "Purge Cache",
+            "Cancel",
+            "Purge Semantic Cache",
+            "⚠️"
+        );
     });
 }
 
@@ -2559,28 +2729,35 @@ if (gitModalNewBranchBtn) {
 
 // Rollback triggers hook inside populate commit logs modal
 function executeGitRollback(commitHash) {
-    if (!confirm(`Are you sure you want to perform a hard rollback of all files to commit: ${commitHash}? Unsaved changes in your workspace will be lost.`)) {
-        return;
-    }
-    fetch("/api/git/rollback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commit: commitHash })
-    })
-    .then(r => {
-        if (!r.ok) return r.json().then(e => { throw new Error(e.detail) });
-        return r.json();
-    })
-    .then(() => {
-        openFiles = {};
-        if (codeEditor) codeEditor.setValue("");
-        renderTabs();
-        pollStatus();
-        alert(`Successfully rolled back repository workspace to commit ${commitHash}!`);
-        const gitModal = document.getElementById("git-modal");
-        if (gitModal) gitModal.style.display = "none";
-    })
-    .catch(err => alert("Rollback failed: " + err.message));
+    appConfirm(
+        `Are you sure you want to perform a hard rollback of all files to commit: ${commitHash}? Unsaved changes in your workspace will be lost.`,
+        () => {
+            fetch("/api/git/rollback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ commit: commitHash })
+            })
+            .then(r => {
+                if (!r.ok) return r.json().then(e => { throw new Error(e.detail) });
+                return r.json();
+            })
+            .then(() => {
+                openFiles = {};
+                if (codeEditor) codeEditor.setValue("");
+                renderTabs();
+                pollStatus();
+                alert(`Successfully rolled back repository workspace to commit ${commitHash}!`);
+                const gitModal = document.getElementById("git-modal");
+                if (gitModal) gitModal.style.display = "none";
+            })
+            .catch(err => alert("Rollback failed: " + err.message));
+        },
+        null,
+        "Rollback Workspace",
+        "Cancel",
+        "Perform Git Rollback",
+        "⚠️"
+    );
 }
 
 // 4. Fullscreen Prompt / Requirements Editor Modal
@@ -3074,6 +3251,119 @@ if (confirmFileDeleteBtn && fileDeleteModal) {
         }
     });
 }
+
+// ==========================================
+// SYSTEM DIALOG MODAL (Alert & Confirm Replacements)
+// ==========================================
+let currentDialogConfirmCallback = null;
+let currentDialogCancelCallback = null;
+
+function showSystemDialog({ title = "Notification", message = "", icon = "🔔", showCancel = false, confirmText = "OK", cancelText = "Cancel", onConfirm = null, onCancel = null }) {
+    const modal = document.getElementById("system-dialog-modal");
+    const iconEl = document.getElementById("system-dialog-icon");
+    const titleEl = document.getElementById("system-dialog-title");
+    const msgEl = document.getElementById("system-dialog-message");
+    const cancelBtn = document.getElementById("system-dialog-cancel-btn");
+    const confirmBtn = document.getElementById("system-dialog-confirm-btn");
+    
+    if (!modal) return;
+    
+    if (iconEl) iconEl.textContent = icon;
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.textContent = message;
+    
+    if (confirmBtn) {
+        confirmBtn.textContent = confirmText;
+        if (confirmText.toLowerCase().includes("delete") || confirmText.toLowerCase().includes("discard") || confirmText.toLowerCase().includes("rollback") || confirmText.toLowerCase().includes("clear") || confirmText.toLowerCase().includes("purge") || confirmText.toLowerCase().includes("reset")) {
+            confirmBtn.style.backgroundColor = "var(--danger)";
+            confirmBtn.style.borderColor = "var(--danger)";
+            confirmBtn.style.color = "#fff";
+        } else {
+            confirmBtn.style.backgroundColor = "";
+            confirmBtn.style.borderColor = "";
+            confirmBtn.style.color = "";
+        }
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.textContent = cancelText;
+        cancelBtn.style.display = showCancel ? "inline-flex" : "none";
+    }
+    
+    currentDialogConfirmCallback = onConfirm;
+    currentDialogCancelCallback = onCancel;
+    
+    modal.style.display = "flex";
+}
+
+// Bind System Dialog Modal Buttons
+const sysDialogConfirmBtn = document.getElementById("system-dialog-confirm-btn");
+const sysDialogCancelBtn = document.getElementById("system-dialog-cancel-btn");
+const sysDialogModal = document.getElementById("system-dialog-modal");
+
+if (sysDialogConfirmBtn) {
+    sysDialogConfirmBtn.addEventListener("click", () => {
+        if (sysDialogModal) sysDialogModal.style.display = "none";
+        if (currentDialogConfirmCallback) {
+            currentDialogConfirmCallback();
+        }
+        currentDialogConfirmCallback = null;
+        currentDialogCancelCallback = null;
+    });
+}
+
+if (sysDialogCancelBtn) {
+    sysDialogCancelBtn.addEventListener("click", () => {
+        if (sysDialogModal) sysDialogModal.style.display = "none";
+        if (currentDialogCancelCallback) {
+            currentDialogCancelCallback();
+        }
+        currentDialogConfirmCallback = null;
+        currentDialogCancelCallback = null;
+    });
+}
+
+if (sysDialogModal) {
+    sysDialogModal.addEventListener("click", (e) => {
+        if (e.target === sysDialogModal) {
+            sysDialogModal.style.display = "none";
+            if (currentDialogCancelCallback) {
+                currentDialogCancelCallback();
+            }
+            currentDialogConfirmCallback = null;
+            currentDialogCancelCallback = null;
+        }
+    });
+}
+
+// Global short-hands
+function appAlert(message, title = "Developer Studio Alert", icon = "⚠️") {
+    showSystemDialog({
+        title: title,
+        message: message,
+        icon: icon,
+        showCancel: false,
+        confirmText: "OK"
+    });
+}
+
+function appConfirm(message, onConfirm, onCancel = null, confirmText = "Confirm", cancelText = "Cancel", title = "Confirmation Requested", icon = "❓") {
+    showSystemDialog({
+        title: title,
+        message: message,
+        icon: icon,
+        showCancel: true,
+        confirmText: confirmText,
+        cancelText: cancelText,
+        onConfirm: onConfirm,
+        onCancel: onCancel
+    });
+}
+
+// Override window.alert to automatically use our premium modal layout!
+window.alert = function(message) {
+    appAlert(message);
+};
 
 
 

@@ -15,11 +15,12 @@
     <link rel="stylesheet" href="lib/theme/dracula.min.css">
     
     <!-- Main Styles -->
-    <link rel="stylesheet" href="style.css?v=39">
+    <link rel="stylesheet" href="style.css?v=46">
     
     <!-- Marked.js for markdown rendering -->
     <script src="lib/marked.min.js"></script>
-    
+    <script src="lib/highlight.min.js"></script>
+    <script src="lib/theme/dracula.min.js" defer></script>
     <!-- CodeMirror Core JS -->
     <script src="lib/codemirror.min.js"></script>
     
@@ -75,12 +76,22 @@
                     <div class="panel-form-container">
                         <div class="panel-form">
                             <div class="form-group prompt-group">
-                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <div></div>
-                                    <div style="display: flex; gap: 0.4rem; align-items: center;">
-                                        <button id="expand-prompt-btn" class="text-btn icon-btn" title="Expand Editor" style="font-size: 0.72rem; padding: 0.15rem 0.4rem;">🔍 Fullscreen</button>
-                                        <div class="recent-prompts-container">
-                                            <button id="recent-prompts-trigger" class="text-btn icon-btn" title="Recent Prompts" style="font-size: 0.72rem; padding: 0.15rem 0.4rem; display: inline-flex; align-items: center; gap: 0.2rem;">📜 Recent Prompts</button>
+                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.4rem;">
+                                    <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Requirements</span>
+                                    <div style="display: flex; gap: 0.3rem; align-items: center;">
+                                        <!-- Fullscreen icon button -->
+                                        <div class="studio-icon-btn-wrap">
+                                            <button id="expand-prompt-btn" class="studio-icon-btn" aria-label="Fullscreen Editor">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                                            </button>
+                                            <div class="studio-tooltip">Fullscreen Editor</div>
+                                        </div>
+                                        <!-- Recent Prompts icon button -->
+                                        <div class="studio-icon-btn-wrap recent-prompts-container">
+                                            <button id="recent-prompts-trigger" class="studio-icon-btn" aria-label="Recent Prompts">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            </button>
+                                            <div class="studio-tooltip">Recent Prompts</div>
                                             <div id="recent-prompts-popover" class="recent-prompts-popover glass-card">
                                                 <div class="popover-header">
                                                     <span>Recent Prompts</span>
@@ -92,12 +103,12 @@
                                         </div>
                                     </div>
                                 </div>
-                                <textarea id="prompt-input" placeholder="e.g., Create a Python command line task planner that writes to JSON and include a test script..." style="min-height: 140px; resize: vertical;"></textarea>
+                                <textarea id="prompt-input" placeholder="e.g., Create a Python command line task planner that writes to JSON and include a test script..." style="min-height: 100px; max-height: 160px; resize: none; overflow-y: auto;"></textarea>
                             </div>
                             <!-- Agent Flow Visualizer Flowchart -->
-                            <div class="form-group flow-viz-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <div class="form-group flow-viz-group" style="margin-top: 0.6rem; border-top: 1px solid var(--border-color); padding-top: 0.6rem; flex-shrink: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
                                 <label style="display: block; margin-bottom: 0.6rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 600;">Agent Execution Flow</label>
-                                <div id="agent-flow-viz" style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px;">
+                                <div id="agent-flow-viz" style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; overflow-y: auto; flex: 1; min-height: 0;">
                                     <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
                                         <span>🤖 Orchestrator</span>
                                         <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
@@ -126,18 +137,34 @@
                             </div>
                         </div>
 
-                        <div class="panel-action" style="display: flex; flex-direction: column; gap: 0.6rem; width: 100%;">
-                            <div style="display: flex; gap: 0.6rem; width: 100%;">
-                                <button id="start-btn" class="action-btn primary-btn" style="flex: 1; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-                                    <span class="btn-icon">⚡</span> Run Studio
-                                </button>
-                                <button id="new-create-btn" class="action-btn secondary-btn" style="flex: 1; padding: 0.5rem 1rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--accent-cyan); border-radius: 6px; font-weight: bold; cursor: pointer; transition: all var(--transition-speed); display: flex; align-items: center; justify-content: center; gap: 0.4rem;" title="Start Fresh (Ignore saved state)">
-                                    🆕 New Create
+                        <!-- ACTION ICON BUTTONS ROW -->
+                        <div class="panel-action" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; margin-top: 0.6rem; flex-shrink: 0;">
+                            <div style="display: flex; gap: 0.5rem; width: 100%; align-items: stretch;">
+                                <!-- Run Studio button: lightning bolt icon -->
+                                <div class="studio-action-btn-wrap" style="flex: 1;">
+                                    <button id="start-btn" class="studio-action-icon-btn studio-action-run" title="Run Studio — Execute agents on your requirements">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M13 2L4.09 12.26a1 1 0 0 0-.09 1.05A1 1 0 0 0 5 14h6v8l8.91-10.26a1 1 0 0 0 .09-1.05A1 1 0 0 0 19 10h-6V2z"/></svg>
+                                        <span class="action-label">Run Studio</span>
+                                        <div class="studio-action-tooltip">⚡ Run Studio<br><small>Execute agents on your requirements</small></div>
+                                    </button>
+                                </div>
+                                <!-- New Create button: sparkle / new file icon -->
+                                <div class="studio-action-btn-wrap" style="flex: 1;">
+                                    <button id="new-create-btn" class="studio-action-icon-btn studio-action-new" title="New Create — Start fresh, ignore saved state">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                        <span class="action-label">New Create</span>
+                                        <div class="studio-action-tooltip">🆕 New Create<br><small>Start fresh, ignores saved checkpoint state</small></div>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Retry button: circular arrows icon -->
+                            <div class="studio-action-btn-wrap" style="width: 100%; display: none;" id="retry-btn-wrap">
+                                <button id="retry-btn" class="studio-action-icon-btn studio-action-retry" style="width: 100%;" title="Retry — Re-run last failed attempt">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                    <span class="action-label">Retry Last Run</span>
+                                    <div class="studio-action-tooltip">🔄 Retry<br><small>Re-run the last failed attempt</small></div>
                                 </button>
                             </div>
-                            <button id="retry-btn" class="action-btn secondary-btn" style="display: none; padding: 0.5rem 1rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer; transition: all var(--transition-speed); align-items: center; justify-content: center; gap: 0.4rem;" title="Retry Last Run">
-                                🔄 Retry
-                            </button>
                         </div>
                     </div>
                 </aside>
@@ -255,6 +282,7 @@
                     <button class="settings-tab-btn active" data-target="settings-sec-llm" style="text-align: left; background: rgba(255, 255, 255, 0.05); border: none; padding: 0.7rem 0.9rem; color: var(--text-primary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; border-left: 2px solid var(--accent-cyan); transition: all 0.2s ease;">⚙️ LLM Config</button>
                     <button class="settings-tab-btn" data-target="settings-sec-personas" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">📝 Custom Personas</button>
                     <button class="settings-tab-btn" data-target="settings-sec-cache" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">🧠 Semantic Cache</button>
+                    <button class="settings-tab-btn" data-target="settings-sec-network" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">🌐 Network</button>
                 </aside>
 
                 <!-- Right Content Panel -->
@@ -343,12 +371,47 @@
                                     <label for="iterations-slider">Max Correction Loops: <span id="iterations-val">3</span></label>
                                     <input type="range" id="iterations-slider" min="1" max="10" value="3">
                                 </div>
+
+                                <!-- Free Tier Quota Pacing & Rate Limiter -->
+                                <div class="form-group" style="background: rgba(0, 223, 216, 0.03); border: 1px solid rgba(0, 223, 216, 0.18); border-radius: 8px; padding: 1rem; margin-top: 0.5rem;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+                                        <label for="enable-free-limit-toggle" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-weight: 600; color: var(--text-primary); margin: 0; font-size: 0.85rem;">
+                                            <input type="checkbox" id="enable-free-limit-toggle" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-cyan);">
+                                            <span>⚡ Free Tier Quota Pacing &amp; Rate Limiter</span>
+                                        </label>
+                                        <span style="font-size: 0.68rem; background: rgba(0, 223, 216, 0.12); color: var(--accent-cyan); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(0, 223, 216, 0.25); font-weight: 600;">Free Plan Protection</span>
+                                    </div>
+                                    <p style="font-size: 0.74rem; color: var(--text-secondary); margin: 0 0 0.8rem 0; line-height: 1.4;">
+                                        Prevents <code>429 ResourceExhausted / Rate Limit Exceeded</code> errors on free API keys (e.g. Gemini 15 RPM free tier) by introducing calculated sleep delays between agent LLM calls.
+                                    </p>
+
+                                    <div id="free-limit-config-panel" style="display: none; flex-direction: column; gap: 0.8rem; border-top: 1px solid var(--border-color); padding-top: 0.8rem;">
+                                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                                            <div style="flex: 1;">
+                                                <label for="free-limit-rpm-input" style="font-size: 0.78rem; color: var(--text-primary); font-weight: 500;">Free Quota RPM (Requests / Minute)</label>
+                                                <input type="number" id="free-limit-rpm-input" value="15" min="1" max="120" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.7rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.85rem; outline: none; width: 100%; margin-top: 0.3rem;">
+                                            </div>
+                                            <div style="flex: 1.3; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem 0.8rem;">
+                                                <span style="font-size: 0.71rem; color: var(--text-secondary); display: block;">Calculated Pacing Delay:</span>
+                                                <span id="free-limit-delay-preview" style="font-size: 0.88rem; font-weight: bold; color: var(--accent-cyan); font-family: var(--font-mono);">~4.0 seconds / call</span>
+                                                <span style="font-size: 0.68rem; color: var(--text-secondary); display: block; margin-top: 2px;">(60s / 15 RPM = 4.0s gap between requests)</span>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 0.71rem; color: var(--text-secondary); background: rgba(255, 255, 255, 0.02); padding: 0.55rem 0.7rem; border-radius: 5px; border: 1px dashed var(--border-color); line-height: 1.4;">
+                                            💡 <strong>Reference Limits:</strong> Gemini Free = 15 RPM / 250k TPM (~4s delay) | Groq Free = 30 RPM (~2s delay) | OpenAI Tier 1 = 500 RPM.
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Section 2: Custom Personas -->
                         <div id="settings-sec-personas" class="settings-section-content" style="display: none;">
                             <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.2rem;">
+                                    <span style="font-size: 0.78rem; color: var(--text-secondary);">Customize system instructions and roles for each agent.</span>
+                                    <button id="reset-personas-btn" class="text-btn secondary-btn-text" style="font-size: 0.74rem; padding: 0.25rem 0.6rem; color: var(--text-secondary);">↺ Reset to Defaults</button>
+                                </div>
                                 <div class="form-group">
                                     <label for="prompt-orchestrator">Orchestrator Persona</label>
                                     <textarea id="prompt-orchestrator" rows="3" style="font-family: monospace; font-size: 0.76rem; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; background: var(--bg-darker); color: var(--text-primary); resize: vertical; outline: none;"></textarea>
@@ -400,6 +463,86 @@
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 4: Network Settings -->
+                        <div id="settings-sec-network" class="settings-section-content" style="display: none;">
+                            <div style="display: flex; flex-direction: column; gap: 1.4rem;">
+
+                                <!-- Restart notice banner -->
+                                <div style="display: flex; align-items: flex-start; gap: 0.7rem; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 0.75rem 1rem;">
+                                    <span style="font-size: 1rem; flex-shrink: 0; margin-top: 1px;">⚠️</span>
+                                    <span style="font-size: 0.78rem; color: var(--warning); line-height: 1.5;">Network settings take effect after restarting the application server. Changes are saved to the database and applied on next startup.</span>
+                                </div>
+
+                                <!-- Server Address group -->
+                                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                                        <span style="font-size: 0.85rem;">🖥️</span>
+                                        <label style="font-weight: 700; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px;">Server Address</label>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="network-host-input" style="display: flex; align-items: center; gap: 0.4rem;">
+                                            Listening Host / Bind Address
+                                            <span style="font-size: 0.68rem; background: rgba(0,223,216,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,223,216,0.2); border-radius: 4px; padding: 1px 6px;">Server</span>
+                                        </label>
+                                        <select id="network-host-input" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.85rem; outline: none; width: 100%; transition: border-color 0.15s;">
+                                            <option value="0.0.0.0">0.0.0.0 — All interfaces (LAN accessible)</option>
+                                            <option value="127.0.0.1">127.0.0.1 — Localhost only (private)</option>
+                                        </select>
+                                        <span style="font-size: 0.71rem; color: var(--text-secondary); margin-top: 0.2rem; display: block;">
+                                            Use <code style="color: var(--accent-cyan);">0.0.0.0</code> to access from other devices on your network. Use <code style="color: var(--accent-cyan);">127.0.0.1</code> for local-only access.
+                                        </span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="network-port-input" style="display: flex; align-items: center; gap: 0.4rem;">
+                                            Listening Port
+                                            <span style="font-size: 0.68rem; background: rgba(0,223,216,0.1); color: var(--accent-cyan); border: 1px solid rgba(0,223,216,0.2); border-radius: 4px; padding: 1px 6px;">Server</span>
+                                        </label>
+                                        <div style="display: flex; gap: 0.6rem; align-items: center;">
+                                            <input type="number" id="network-port-input" value="8000" min="1024" max="65535"
+                                                style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.9rem; outline: none; width: 140px; transition: border-color 0.15s; -moz-appearance: textfield;">
+                                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                <span id="network-port-preview" style="font-size: 0.78rem; color: var(--text-secondary);">
+                                                    Access at: <code id="network-url-preview" style="color: var(--accent-cyan); font-family: var(--font-mono);">http://localhost:8000</code>
+                                                </span>
+                                                <span style="font-size: 0.71rem; color: var(--text-secondary);">Valid range: 1024 – 65535</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- CORS group -->
+                                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                                        <span style="font-size: 0.85rem;">🔒</span>
+                                        <label style="font-weight: 700; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px;">CORS / Access Control</label>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="network-cors-input">Allowed Origins <span style="font-weight: 400; color: var(--text-secondary); font-size: 0.75rem;">(comma-separated, * for all)</span></label>
+                                        <input type="text" id="network-cors-input" value="*"
+                                            placeholder="e.g. http://localhost:3000, https://yourdomain.com"
+                                            style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.82rem; outline: none; width: 100%; transition: border-color 0.15s;">
+                                        <span style="font-size: 0.71rem; color: var(--text-secondary); margin-top: 0.2rem; display: block;">
+                                            Restrict which origins can make cross-origin requests to the Studio API. Use <code style="color: var(--accent-cyan);">*</code> to allow all (default, suitable for local dev).
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Current server info pill -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0; box-shadow: 0 0 6px rgba(16,185,129,0.5);"></span>
+                                        <span style="font-size: 0.78rem; color: var(--text-secondary);">Server currently running at</span>
+                                        <code id="network-current-url" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-cyan);">http://localhost:8000</code>
+                                    </div>
+                                    <button onclick="window.open(document.getElementById('network-current-url').textContent, '_blank')" style="background: rgba(0,223,216,0.08); border: 1px solid rgba(0,223,216,0.2); color: var(--accent-cyan); border-radius: 5px; padding: 0.25rem 0.65rem; font-size: 0.72rem; cursor: pointer; font-family: var(--font-sans);">Open ↗</button>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -613,24 +756,28 @@
                 </div>
 
                 <!-- FULLSCREEN REQUIREMENT EDITOR MODAL -->
-                <div class="modal-overlay" id="prompt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-                    <div class="modal-card glass-card animate-fade-in" style="width: 80%; max-width: 900px; height: 80vh; display: flex; flex-direction: column; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color);">
-                            <div style="display: flex; align-items: center; gap: 0.6rem;">
-                                <span style="font-size: 1.2rem;">📝</span>
-                                <h2 style="font-size: 1.1rem; margin: 0; font-weight: 600; color: #fff;">Fullscreen Requirements Editor</h2>
+                <div class="modal-overlay" id="prompt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+                    <div class="modal-card glass-card animate-fade-in" style="width: 88%; max-width: 1000px; height: 92vh; display: flex; flex-direction: column; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); overflow: hidden;">
+                        <!-- Header bar -->
+                        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1.2rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background: rgba(255,255,255,0.02);">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1rem;">📝</span>
+                                <h2 style="font-size: 0.95rem; margin: 0; font-weight: 600; color: #fff; letter-spacing: 0.2px;">Fullscreen Requirements Editor</h2>
                             </div>
-                            <button id="close-prompt-modal" class="text-btn" style="font-size: 1.2rem; cursor: pointer; background: none; border: none; color: var(--text-primary);">✕</button>
+                            <button id="close-prompt-modal" class="text-btn" style="font-size: 1rem; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; transition: background 0.15s;">✕</button>
                         </div>
-                        <div class="modal-body" style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column; gap: 1rem; min-height: 0;">
-                            <textarea id="prompt-modal-textarea" style="flex: 1; width: 100%; font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.6; padding: 1rem; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); outline: none; resize: none;" placeholder="Write your complex prompt or copy-paste requirements details here..."></textarea>
-                            <div style="display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 0.5rem; flex-shrink: 0;">
-                                <button id="cancel-prompt-modal-btn" class="action-btn secondary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
-                                <button id="save-prompt-modal-btn" class="action-btn primary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem;">💾 Apply Requirements</button>
-                            </div>
+                        <!-- Textarea fills all remaining height -->
+                        <div class="modal-body" style="flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0;">
+                            <textarea id="prompt-modal-textarea" style="flex: 1; width: 100%; height: 100%; font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.65; padding: 1.1rem 1.3rem; background: transparent; border: none; border-bottom: 1px solid var(--border-color); color: var(--text-primary); outline: none; resize: none; overflow-y: auto;" placeholder="Write your complex prompt or copy-paste requirements details here..."></textarea>
+                        </div>
+                        <!-- Slim footer action bar -->
+                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.7rem; padding: 0.6rem 1.1rem; flex-shrink: 0; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-color);">
+                            <button id="cancel-prompt-modal-btn" class="action-btn secondary-btn" style="width: auto; padding: 0.4rem 1.1rem; font-size: 0.82rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
+                            <button id="save-prompt-modal-btn" class="action-btn primary-btn" style="width: auto; padding: 0.4rem 1.1rem; font-size: 0.82rem;">💾 Apply Requirements</button>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- WORK SUMMARY MODAL -->
                 <div id="work-summary-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000;">
@@ -677,6 +824,19 @@
                     </div>
                 </div>
 
-                <script src="script.js?v=39"></script>
+                <!-- GENERAL SYSTEM DIALOG MODAL (Alert & Confirm Replacements) -->
+                <div id="system-dialog-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 2000;">
+                    <div class="modal-card glass-card animate-fade-in" style="width: 90%; max-width: 420px; display: flex; flex-direction: column; padding: 1.5rem; gap: 1rem; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); text-align: center;">
+                        <div id="system-dialog-icon" style="font-size: 2.2rem; margin-top: 0.5rem;">🔔</div>
+                        <h3 id="system-dialog-title" style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-primary);">Notification</h3>
+                        <p id="system-dialog-message" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; word-break: break-word;"></p>
+                        <div style="display: flex; justify-content: center; gap: 0.8rem; margin-top: 0.5rem;">
+                            <button id="system-dialog-cancel-btn" class="action-btn secondary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; background-color: var(--bg-darker); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; font-weight: bold; cursor: pointer; display: none; align-items: center; justify-content: center;">Cancel</button>
+                            <button id="system-dialog-confirm-btn" class="action-btn primary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">OK</button>
+                        </div>
+                    </div>
+                </div>
+
+                <script src="script.js?v=46"></script>
             </body>
             </html>

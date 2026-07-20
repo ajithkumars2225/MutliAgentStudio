@@ -281,13 +281,20 @@ def get_model_name_for_provider(provider: str) -> str:
         return os.getenv("NVIDIA_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct")
     return "unknown"
 
+import threading
+
+_last_llm_call_timestamp = 0.0
+_llm_call_lock = threading.Lock()
+
 def invoke_llm(llm, prompt: str, bypass_cache: bool = False) -> str:
     """
     Invokes the LLM with semantic caching if enabled, and records telemetry.
+    Supports Free Tier Quota Pacing (RPM rate limiter) if enabled in settings.
     """
     import database
     import semantic_cache_engine
     import time
+    global _last_llm_call_timestamp, _llm_call_lock
     
     global active_agent_name, active_history_id
     current_agent = active_agent_name or "idle"
@@ -319,9 +326,48 @@ def invoke_llm(llm, prompt: str, bypass_cache: bool = False) -> str:
                 print(f"[Telemetry Warning] Failed to log cached hit: {e}")
             return CachedResponse(cached_res)
             
+    # Free Tier Quota Pacing & Rate Limiting
+    is_free_limit = settings.get("enable_free_limit", "false") == "true"
+    if is_free_limit:
+        try:
+            rpm = int(settings.get("free_limit_rpm", "15"))
+        except Exception:
+            rpm = 15
+        rpm = max(rpm, 1)
+        min_interval = 60.0 / rpm
+        with _llm_call_lock:
+            now = time.time()
+            elapsed = now - _last_llm_call_timestamp
+            if elapsed < min_interval:
+                wait_sec = min_interval - elapsed
+                print(f"[Free Tier Rate Limiter ⏳] Enforcing {rpm} RPM limit for {provider}. Pacing request with {wait_sec:.2f}s delay...")
+                time.sleep(wait_sec)
+            _last_llm_call_timestamp = time.time()
+            
+    max_attempts = 4 if is_free_limit else 1
+    response = None
     start_time = time.time()
-    response = llm.invoke(prompt)
-    latency = time.time() - start_time
+    
+    for attempt in range(max_attempts):
+        try:
+            response = llm.invoke(prompt)
+            latency = time.time() - start_time
+            if is_free_limit:
+                with _llm_call_lock:
+                    _last_llm_call_timestamp = time.time()
+            break
+        except Exception as err:
+            err_msg = str(err)
+            is_rate_limit = any(term in err_msg.lower() for term in ["429", "resourceexhausted", "rate limit", "quota", "too many requests"])
+            if is_rate_limit and attempt < max_attempts - 1:
+                backoff_sec = (attempt + 1) * 6.0 + 4.0  # 10s, 16s, 22s
+                print(f"[Free Tier Rate Limiter ⚠️] Quota / Rate limit (429) hit: {err_msg[:100]}...\n[Free Tier Rate Limiter ⏳] Retrying attempt {attempt+2}/{max_attempts} after {backoff_sec:.1f}s backoff...")
+                time.sleep(backoff_sec)
+                with _llm_call_lock:
+                    _last_llm_call_timestamp = time.time()
+            else:
+                raise err
+
     
     response_content = ""
     if hasattr(response, "content"):
@@ -579,7 +625,7 @@ def orchestrator_node(state: dict) -> dict:
     
     custom_prompts = load_custom_prompts()
     default_orchestrator = "You are the central Orchestrator Supervisor. Your task is to coordinate a team of developer agents."
-    orchestrator_header = custom_prompts.get("orchestrator", default_orchestrator)
+    orchestrator_header = (custom_prompts.get("orchestrator") or "").strip() or default_orchestrator
     
     prompt = f"""{orchestrator_header}
 Analyze the current state below and decide which agent should be invoked next.
@@ -679,7 +725,7 @@ def business_analyst_node(state: dict) -> dict:
         
     custom_prompts = load_custom_prompts()
     default_analyst = "You are an expert Business Analyst.\nAnalyze the following request and detail the user requirements, criteria, and edge cases."
-    analyst_header = custom_prompts.get("analyst", default_analyst)
+    analyst_header = (custom_prompts.get("analyst") or "").strip() or default_analyst
     
     prompt = f"""{analyst_header}
 If there are existing files, consider how the request interacts with them.
@@ -736,7 +782,7 @@ def impact_analyzer_node(state: dict) -> dict:
             
     custom_prompts = load_custom_prompts()
     default_impact = "You are a Software Architect and Impact Analyzer.\nCompare the new requirements against the existing codebase files. Determine which files are affected, what new files must be created, and any risks or dependency issues."
-    impact_header = custom_prompts.get("impact", default_impact)
+    impact_header = (custom_prompts.get("impact") or "").strip() or default_impact
     
     prompt = f"""{impact_header}
 
@@ -885,7 +931,7 @@ IMPORTANT: The previous execution or test validation failed with the following e
 
     custom_prompts = load_custom_prompts()
     default_programmer = "You are a senior Software Implementation Engineer.\nYour task is to write clean, operational, and well-commented code files according to the requirements and impact plan.\nWrite the complete code for each target file. Do not use placeholders or skip details."
-    programmer_header = custom_prompts.get("programmer", default_programmer)
+    programmer_header = (custom_prompts.get("programmer") or "").strip() or default_programmer
     
     prompt = f"""{programmer_header}
 
@@ -910,8 +956,14 @@ For EACH file to implement or update, output it in this exact format:
 Write all necessary code now:"""
     
     check_pause()
+    # Always bypass cache for ImplementEngineer:
+    # - When errors exist: stale cached code would reproduce the same bugs
+    # - On any iteration > 0: the codebase has changed so the same prompt
+    #   would produce a different correct answer; a cache hit returns stale code
     has_errors = bool(state.get("errors"))
-    response = invoke_llm(llm, prompt, bypass_cache=has_errors)
+    is_subsequent_iteration = state.get("iterations", 0) > 0
+    should_bypass = has_errors or is_subsequent_iteration
+    response = invoke_llm(llm, prompt, bypass_cache=should_bypass)
     check_pause()
     coder_output = response.content if hasattr(response, 'content') else str(response)
     
@@ -1025,7 +1077,7 @@ def deployment_node(state: dict) -> dict:
     
     custom_prompts = load_custom_prompts()
     default_deployer = "You are a DevOps and Deployment Engineer.\nFor the application built under these requirements, write:\n1. A local deployment script:\n   - On Windows systems, write a `deploy.bat` file.\n   - For other platforms, write a `deploy.sh` script or a python script `deploy.py`.\n2. A CI/CD Pipeline configuration file:\n   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.\n   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines.\n   - Both pipelines should be configured to install dependencies, run linting/compilation checks, execute your unit tests, and trigger static security/vulnerability scans (e.g. Bandit for Python)."
-    deployer_header = custom_prompts.get("deployer", default_deployer)
+    deployer_header = (custom_prompts.get("deployer") or "").strip() or default_deployer
     
     prompt = f"""{deployer_header}
 
@@ -1054,7 +1106,9 @@ Generate each file in this exact format:
 Write the deployment scripts:"""
     
     check_pause()
-    response = invoke_llm(llm, prompt)
+    # Always bypass cache: deployment scripts reference the current file list
+    # which changes every run; a cached script would deploy stale/wrong files.
+    response = invoke_llm(llm, prompt, bypass_cache=True)
     check_pause()
     deploy_output = response.content if hasattr(response, 'content') else str(response)
     

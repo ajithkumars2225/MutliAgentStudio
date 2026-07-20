@@ -92,8 +92,19 @@ def get_embedding_vector(text: str, provider: str) -> Optional[List[float]]:
 def check_cache_hit(prompt: str, provider: str, model: str) -> Optional[str]:
     """
     Checks the local SQLite semantic_cache for similarities.
-    Returns cached response if similarity >= 0.90, else None.
+    Returns cached response if similarity >= 0.92 (vector) or 0.88 (lexical).
+    
+    Prompts longer than 2500 characters are skipped — these are typically
+    full agent code-generation prompts whose slight variations (different
+    iteration number, updated error logs, changed codebase) would produce
+    semantically different outputs. Caching them causes agents to receive
+    stale code/decisions and get stuck in infinite loops.
     """
+    # Skip caching for large prompts to avoid false hits on agent code prompts
+    if len(prompt) > 2500:
+        print("[Semantic Cache] Prompt exceeds 2500 chars — skipping cache lookup to prevent false hits.")
+        return None
+    
     import database
     records = database.get_semantic_cache(provider, model)
     if not records:
@@ -110,6 +121,10 @@ def check_cache_hit(prompt: str, provider: str, model: str) -> Optional[str]:
         rec_prompt = rec["prompt"]
         rec_vector_str = rec["embedding"]
         rec_response = rec["response"]
+        
+        # Skip cached entries that were themselves large prompts
+        if len(rec_prompt) > 2500:
+            continue
         
         # If we successfully retrieved an API vector, and the record has a vector, check vector similarity
         if new_vector and rec_vector_str:
@@ -132,11 +147,13 @@ def check_cache_hit(prompt: str, provider: str, model: str) -> Optional[str]:
             best_response = rec_response
             is_best_vector = False
             
-    # Match threshold check: 0.90 for vectors, 0.70 for lexical backup
-    threshold = 0.90 if is_best_vector else 0.70
+    # Raised thresholds: 0.92 for vectors, 0.88 for lexical (was 0.90/0.70)
+    # The old 0.70 lexical threshold was too loose — agent prompts that differ
+    # only by iteration count or error messages would match and return stale responses.
+    threshold = 0.92 if is_best_vector else 0.88
     if best_similarity >= threshold:
         match_type = "vector" if is_best_vector else "lexical"
-        print(f"\n[Semantic Cache Hit] Found {match_type} match with similarity {best_similarity:.2f}. Bypassing LLM call.")
+        print(f"\n[Semantic Cache Hit] Found {match_type} match with similarity {best_similarity:.3f}. Bypassing LLM call.")
         return best_response
         
     return None
@@ -144,7 +161,15 @@ def check_cache_hit(prompt: str, provider: str, model: str) -> Optional[str]:
 def save_cache_entry(prompt: str, provider: str, model: str, response: str):
     """
     Saves a query prompt and response details into semantic_cache.
+    Large prompts (>2500 chars) are never cached — they are full agent
+    code-generation prompts that change per-iteration and would cause
+    false cache hits on subsequent iterations, leading to agent loops.
     """
+    # Do not cache large agent prompts
+    if len(prompt) > 2500:
+        print("[Semantic Cache] Prompt exceeds 2500 chars — skipping cache save to prevent false hits.")
+        return
+    
     import database
     vector = get_embedding_vector(prompt, provider)
     vector_json = json.dumps(vector) if vector else None
