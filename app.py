@@ -614,6 +614,12 @@ def get_symbol_references_endpoint(name: str = ""):
     workspace_dir = database.get_active_workspace()
     return {"symbol": name, "references": EnterpriseASTEngine.find_symbol_references(workspace_dir, name)}
 
+@app.get("/api/dependencies")
+def get_dependencies_endpoint():
+    from ast_engine import EnterpriseASTEngine
+    workspace_dir = database.get_active_workspace()
+    return EnterpriseASTEngine.get_full_dependency_graph(workspace_dir)
+
 @app.get("/api/history")
 def get_history():
     return database.get_all_history()

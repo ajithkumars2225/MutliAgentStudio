@@ -149,6 +149,46 @@ class EnterpriseASTEngine:
         return call_graph
 
     @classmethod
+    def get_full_dependency_graph(cls, workspace_directory: str) -> Dict[str, Any]:
+        """
+        Full Enterprise Dependency Graph Engine.
+        Returns internal file-to-file call dependencies AND external package dependencies.
+        """
+        base = Path(workspace_directory)
+        if not base.exists():
+            return {"internal_call_graph": {}, "external_packages": {}}
+
+        internal = cls.build_workspace_call_graph(workspace_directory)
+        external = {"python": [], "npm": []}
+
+        # Python packages (requirements.txt / pyproject.toml)
+        req_txt = base / "requirements.txt"
+        if req_txt.exists():
+            try:
+                for line in req_txt.read_text(encoding="utf-8", errors="ignore").splitlines():
+                    clean = line.strip().split("#")[0].split("==")[0].split(">=")[0].strip()
+                    if clean:
+                        external["python"].append(clean)
+            except Exception:
+                pass
+
+        # NPM packages (package.json)
+        pkg_json = base / "package.json"
+        if pkg_json.exists():
+            try:
+                import json
+                data = json.loads(pkg_json.read_text(encoding="utf-8", errors="ignore"))
+                deps = list(data.get("dependencies", {}).keys()) + list(data.get("devDependencies", {}).keys())
+                external["npm"] = deps
+            except Exception:
+                pass
+
+        return {
+            "internal_call_graph": internal,
+            "external_packages": external
+        }
+
+    @classmethod
     def analyze_ast_refactoring_diff(cls, old_code: str, new_code: str) -> List[str]:
         """
         Structural AST Diff Inspector.
