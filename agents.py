@@ -672,11 +672,24 @@ def orchestrator_node(state: dict) -> dict:
     codebase_files = list(state.get("codebase", {}).keys())
     files_str = ", ".join(codebase_files) if codebase_files else "None (Empty Repository)"
     
+    # Enterprise Episodic Memory Recall
+    memories_str = ""
+    try:
+        from episodic_memory import EpisodicMemoryEngine
+        memories = EpisodicMemoryEngine.recall_relevant_memories(state.get("prompt", ""), top_k=3)
+        if memories:
+            mem_items = [f"  - [{m['category']}] {m['concept']}: {m['value']}" for m in memories]
+            memories_str = "\nRecalled Long-Term Episodic Memories & User Preferences:\n" + "\n".join(mem_items)
+            print(f"[Episodic Memory 🧠] Recalled {len(memories)} relevant user preferences/memories.")
+    except Exception:
+        pass
+
     custom_prompts = load_custom_prompts()
     default_orchestrator = "You are the central Orchestrator Supervisor. Your task is to coordinate a team of developer agents."
     orchestrator_header = (custom_prompts.get("orchestrator") or "").strip() or default_orchestrator
     
     prompt = f"""{orchestrator_header}
+{memories_str}
 Analyze the current state below and decide which agent should be invoked next.
 
 Available Agents:
@@ -1159,6 +1172,38 @@ def tester_node(state: dict) -> dict:
     # Generate Markdown and HTML reports in the workspace
     print("\n[QA Tester] Generating comprehensive QA and Security Reports...")
     generate_test_report(workspace_dir, state, security_results, test_logs, success)
+
+    # Enterprise Visual UI Auditor
+    try:
+        from visual_auditor import VisualUIAuditorEngine
+        ui_audits = VisualUIAuditorEngine.audit_workspace_ui(workspace_dir)
+        if ui_audits:
+            print("\n[Visual UI Auditor 🎨] Audited frontend files:")
+            for audit in ui_audits:
+                print(f"  - {audit['filepath']} (Score: {audit['aesthetic_score']}/100)")
+                if audit["findings"]:
+                    for f in audit["findings"]:
+                        print(f"    ⚠️ {f}")
+    except Exception as e:
+        print(f"[Visual UI Auditor Warning] {e}")
+
+    # Enterprise Mutation Testing Engine (runs on passing test suites)
+    if success:
+        try:
+            from mutation_testing import MutationTestingEngine
+            from pathlib import Path
+            base_p = Path(workspace_dir)
+            py_files = list(base_p.rglob("*.py"))
+            t_files = [f for f in py_files if f.name.startswith("test_") or f.name.endswith("_test.py")]
+            m_files = [f for f in py_files if f not in t_files]
+            if t_files and m_files:
+                target_rel = str(m_files[0].relative_to(base_p))
+                test_rel = str(t_files[0].relative_to(base_p))
+                m_res = MutationTestingEngine.run_mutation_test_suite(workspace_dir, target_rel, test_rel)
+                if m_res.get("status") == "completed":
+                    print(f"\n[Mutation Testing 🔬] Result for {target_rel}: {m_res['summary']}")
+        except Exception as e:
+            print(f"[Mutation Testing Warning] {e}")
     
     # Re-scan workspace so that the reports are indexed in the state's codebase list
     updated_metadata = scan_workspace(workspace_dir)

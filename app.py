@@ -660,6 +660,32 @@ def index_rag_endpoint():
     count = CodebaseRAGEngine.index_workspace(workspace_dir, provider=provider)
     return {"status": "indexed", "chunks": count}
 
+@app.get("/api/memory/recall")
+def recall_memory_endpoint(q: str = ""):
+    from episodic_memory import EpisodicMemoryEngine
+    provider = database.get_setting("llm_provider", "google")
+    memories = EpisodicMemoryEngine.recall_relevant_memories(q, top_k=5, provider=provider)
+    return {"query": q, "memories": memories}
+
+@app.post("/api/memory/store")
+def store_memory_endpoint(category: str, concept: str, value: str):
+    from episodic_memory import EpisodicMemoryEngine
+    provider = database.get_setting("llm_provider", "google")
+    EpisodicMemoryEngine.store_memory(category, concept, value, provider=provider)
+    return {"status": "saved"}
+
+@app.get("/api/visual-audit")
+def visual_audit_endpoint():
+    from visual_auditor import VisualUIAuditorEngine
+    workspace_dir = database.get_active_workspace()
+    return {"audits": VisualUIAuditorEngine.audit_workspace_ui(workspace_dir)}
+
+@app.post("/api/mutation-test")
+def mutation_test_endpoint(target_file: str, test_file: str):
+    from mutation_testing import MutationTestingEngine
+    workspace_dir = database.get_active_workspace()
+    return MutationTestingEngine.run_mutation_test_suite(workspace_dir, target_file, test_file)
+
 @app.get("/api/history")
 def get_history():
     return database.get_all_history()
