@@ -903,6 +903,14 @@ def reset_telemetry_endpoint():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/telemetry/export")
+def export_telemetry_endpoint():
+    try:
+        logs = database.get_all_telemetry_logs()
+        return {"count": len(logs), "logs": logs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/git/branches")
 def list_git_branches():
     workspace = database.get_active_workspace()

@@ -425,3 +425,11 @@ def reset_telemetry_logs():
     cursor.execute("DELETE FROM telemetry_logs")
     conn.commit()
     conn.close()
+
+def get_all_telemetry_logs() -> list:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM telemetry_logs ORDER BY timestamp DESC")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]

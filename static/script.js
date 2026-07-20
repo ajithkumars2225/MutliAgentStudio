@@ -3188,8 +3188,57 @@ if (confirmTelemetryResetBtn && telemetryResetModal) {
                 setTimeout(() => { telemetryDrawer.style.display = "none"; }, 300);
             }
         })
-        .catch(err => console.error("Failed to reset telemetry: ", err));
+        .catch(err => console.error("Failed to reset telemetry logs: ", err));
     });
+
+    // Telemetry Copy, Export & Search Handlers
+    const copyPromptBtn = document.getElementById("copy-telemetry-prompt-btn");
+    const copyResponseBtn = document.getElementById("copy-telemetry-response-btn");
+    const exportTelemetryBtn = document.getElementById("export-telemetry-btn");
+    const telemetrySearchInput = document.getElementById("telemetry-search-input");
+
+    if (copyPromptBtn) {
+        copyPromptBtn.addEventListener("click", () => {
+            const promptText = document.getElementById("telemetry-drawer-prompt").textContent;
+            navigator.clipboard.writeText(promptText);
+            copyPromptBtn.textContent = "✅ Copied!";
+            setTimeout(() => { copyPromptBtn.textContent = "📋 Copy Prompt"; }, 2000);
+        });
+    }
+    if (copyResponseBtn) {
+        copyResponseBtn.addEventListener("click", () => {
+            const responseText = document.getElementById("telemetry-drawer-response").textContent;
+            navigator.clipboard.writeText(responseText);
+            copyResponseBtn.textContent = "✅ Copied!";
+            setTimeout(() => { copyResponseBtn.textContent = "📋 Copy Response"; }, 2000);
+        });
+    }
+    if (exportTelemetryBtn) {
+        exportTelemetryBtn.addEventListener("click", () => {
+            fetch("/api/telemetry/export")
+            .then(r => r.json())
+            .then(data => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `telemetry_prompt_history_${Date.now()}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            })
+            .catch(err => console.error("Failed to export telemetry: ", err));
+        });
+    }
+    if (telemetrySearchInput) {
+        telemetrySearchInput.addEventListener("input", () => {
+            const query = telemetrySearchInput.value.toLowerCase().trim();
+            const rows = document.querySelectorAll("#telemetry-table-body tr");
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = (!query || text.includes(query)) ? "" : "none";
+            });
+        });
+    }
 }
 
 setInterval(() => {
