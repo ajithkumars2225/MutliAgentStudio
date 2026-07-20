@@ -490,6 +490,16 @@ def parse_impact_files(text: str) -> List[str]:
 
 # ----------------- DYNAMIC CONTEXT HELPERS -----------------
 
+def truncate_context(text: str, max_chars: int = 8000) -> str:
+    """
+    Context Engineering Helper: Truncates oversized text blocks to fit LLM context limits.
+    Preserves top and bottom windows of the file/log content.
+    """
+    if not text or len(text) <= max_chars:
+        return text
+    half = max_chars // 2
+    return f"{text[:half]}\n\n... [Middle content truncated for Context Window Optimization (Original Size: {len(text)} chars)] ...\n\n{text[-half:]}"
+
 def get_relevant_contents(codebase_metadata: dict, prompt: str) -> str:
     """
     Queries and reads the contents of workspace files that are relevant to the user prompt.
@@ -509,20 +519,25 @@ def get_relevant_contents(codebase_metadata: dict, prompt: str) -> str:
         if any(kw in filepath.lower() or kw in basename for kw in keywords if len(kw) > 3):
             relevant_files.append(filepath)
             
-    # Fallback: if no files match but codebase has files, fetch up to 5 files to provide context
+    # Cap to max 6 files to prevent context window bloat
+    relevant_files = relevant_files[:6]
+            
+    # Fallback: if no files match but codebase has files, fetch up to 4 files to provide context
     if not relevant_files and codebase_metadata:
-        relevant_files = list(codebase_metadata.keys())[:5]
+        relevant_files = list(codebase_metadata.keys())[:4]
         
     result = ""
     for filename in relevant_files:
         content = read_workspace_file(workspace_dir, filename)
-        result += f"\n---FILE: {filename}---\n{content}\n"
+        truncated = truncate_context(content, max_chars=8000)
+        result += f"\n---FILE: {filename}---\n{truncated}\n"
         
     return result
 
 def get_target_files_contents(files_to_modify: List[str]) -> str:
     """
     Retrieves the actual contents of the target files slated for modification.
+    Applies context window truncation if files are large.
     """
     from utils import read_workspace_file
     from database import get_active_workspace
@@ -531,7 +546,8 @@ def get_target_files_contents(files_to_modify: List[str]) -> str:
     result = ""
     for filename in files_to_modify:
         content = read_workspace_file(workspace_dir, filename)
-        result += f"\n---FILE: {filename}---\n```python\n{content}\n```\n"
+        truncated = truncate_context(content, max_chars=12000)
+        result += f"\n---FILE: {filename}---\n```python\n{truncated}\n```\n"
     return result
 
 def ask_user_approval(stage: str, plan_text: str) -> str:
@@ -539,53 +555,53 @@ def ask_user_approval(stage: str, plan_text: str) -> str:
     Interactive checkpoint for Human-in-the-Loop approvals.
     Supports console inputs, automated testing bypass, and FastAPI web event locks.
     """
-    global web_mode, approval_event, pending_approval_stage, pending_approval_text, web_feedback
+    import database
+    settings = database.get_all_settings()
+    approval_mode = settings.get("approval_mode", "strict")
     
-    # Check configured approval mode
-    approval_mode = os.getenv("APPROVAL_MODE", "strict").lower()
-    
-    # 1. Full access / Auto-Approval override
-    if approval_mode == "auto" or os.getenv("AUTOPROCEED") == "true":
-        print(f"\n[HITL Gate] Auto-Approving stage '{stage}' (APPROVAL_MODE={approval_mode}).")
+    # Auto-approve mode bypasses all checkpoints
+    if approval_mode == "auto":
+        print(f"[Approval Gate] Mode 'auto': Automatically approving stage '{stage}'.")
         return ""
         
-    # 2. Limited access (Skip coder plan approval, but ask requirements & deployment)
-    if approval_mode == "limited" and stage == "Impact & Code Modification Plan":
-        print(f"\n[HITL Gate] Skipping approval for intermediate stage '{stage}' (APPROVAL_MODE=limited).")
+    # Limited mode only asks for Business Analyst & Deployment stages
+    if approval_mode == "limited" and stage not in ["Business Analyst Specifications", "Deployment Plan & Approval"]:
+        print(f"[Approval Gate] Mode 'limited': Auto-approving stage '{stage}'.")
         return ""
-        
-    # 2. FastAPI Web mode execution
-    if web_mode:
-        print(f"\n[Web HITL Gate] Awaiting web UI approval for stage '{stage}'...")
-        pending_approval_stage = stage
-        pending_approval_text = plan_text
-        web_feedback = ""
-        
-        # Reset the event (blocked)
-        approval_event.clear()
-        
-        # Block this background thread until API thread calls approval_event.set()
-        approval_event.wait()
-        
-        print(f"[Web HITL Gate] Resuming agent execution. Feedback: '{web_feedback}'")
-        stage_feedback = web_feedback
-        
-        # Reset variables
-        pending_approval_stage = ""
-        pending_approval_text = ""
-        web_feedback = ""
-        
-        return stage_feedback
-        
-    # 3. Traditional CLI console input
-    print("\n" + "=" * 60)
-    print(f"ENTERPRISE GATE: APPROVE {stage.upper()}")
-    print("=" * 60)
+
+    if os.getenv("STUDIO_AUTO_APPROVE", "false").lower() == "true":
+        print(f"[Approval Gate] Automated mode active. Auto-approving stage '{stage}'.")
+        return ""
+
+    print(f"\n==================== [HUMAN-IN-THE-LOOP APPROVAL REQUIRED] ====================")
+    print(f"Stage: {stage}")
+    print("--------------------------------------------------------------------------------")
     print(plan_text)
-    print("=" * 60)
+    print("================================================================================")
     
-    feedback = input(f"Press [Enter] to approve, or type your feedback to modify: ").strip()
-    return feedback
+    # Web Event Lock for FastAPI UI
+    global pending_approval_event, pending_approval_data
+    with approval_lock:
+        pending_approval_data = {
+            "stage": stage,
+            "plan_text": plan_text,
+            "user_response": None
+        }
+        pending_approval_event.clear()
+        
+    print("[Approval Gate] Waiting for user approval via Web UI or Terminal...")
+    pending_approval_event.wait()
+    
+    with approval_lock:
+        user_input = pending_approval_data["user_response"]
+        pending_approval_data = None
+        
+    if not user_input or user_input.strip().lower() in ["y", "yes", "approve", "ok", ""]:
+        print("[Approval Gate] Stage Approved! Continuing execution...\n")
+        return ""
+    else:
+        print(f"[Approval Gate] Rejection/Feedback received: '{user_input}'\n")
+        return user_input.strip()
 
 # ----------------- PROMPT CONFIGURATION OVERRIDES -----------------
 
@@ -922,10 +938,12 @@ def implement_engineer_node(state: dict) -> dict:
 
     error_feedback = ""
     if state.get("errors"):
+        raw_errors = state["errors"]
+        pruned_errors = raw_errors[-4000:] if len(raw_errors) > 4000 else raw_errors
         error_feedback = f"""
 IMPORTANT: The previous execution or test validation failed with the following errors. You MUST fix these bugs:
 --- ERROR LOGS ---
-{state['errors']}
+{pruned_errors}
 ------------------
 """
 

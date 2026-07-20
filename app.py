@@ -309,18 +309,27 @@ def start_agent(req: StartRequest):
     if req.parent_id:
         chain = database.get_prompt_chain(req.parent_id)
         if chain:
+            # Context Engineering: Window long history chains (Keep initial turn 1 + last 4 turns)
+            pruned_chain = chain
+            if len(chain) > 6:
+                pruned_chain = [chain[0]] + chain[-4:]
+            
             history_blocks = []
-            for idx, past_prompt in enumerate(chain, 1):
-                # Clean prompt to remove older header boxes if any
+            for idx, past_prompt in enumerate(pruned_chain, 1):
                 clean_prompt = past_prompt
                 if "=== CONVERSATION CHAT HISTORY ===" in past_prompt:
                     parts = past_prompt.split("Current follow-up request to execute:\n")
                     if len(parts) > 1:
                         clean_prompt = parts[-1]
                 history_blocks.append(f"Turn {idx}: {clean_prompt}")
+            
             history_text = "\n".join(history_blocks)
+            if len(history_text) > 5000:
+                history_text = history_text[-5000:] + "\n[Older history truncated for Context Window Optimization]"
+                
             prompt_to_run = f"=== CONVERSATION CHAT HISTORY ===\n{history_text}\n=================================\n\nCurrent follow-up request to execute:\n{req.prompt}"
-            print(f"[Chat History] Prepend history context chain ({len(chain)} turns)")
+            print(f"[Chat History] Prepend history context chain ({len(chain)} turns -> {len(pruned_chain)} active windowed turns)")
+
 
     # Write history entry with 'running' status and parent link
     history_id = database.add_history_record(
