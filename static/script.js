@@ -1840,11 +1840,15 @@ function loadSettings() {
                 if (freeLimitConfigPanel) {
                     freeLimitConfigPanel.style.display = enableFreeLimitToggle.checked ? "flex" : "none";
                 }
+                saveSettingsOnUIChange();
             });
         }
         if (freeLimitRpmInput && !freeLimitRpmInput._bound) {
             freeLimitRpmInput._bound = true;
-            freeLimitRpmInput.addEventListener('input', updateFreeLimitPreview);
+            freeLimitRpmInput.addEventListener('input', () => {
+                updateFreeLimitPreview();
+                saveSettingsOnUIChange();
+            });
         }
     })
     .then(() => loadCustomPrompts())

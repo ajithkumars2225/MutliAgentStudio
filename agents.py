@@ -327,7 +327,7 @@ def invoke_llm(llm, prompt: str, bypass_cache: bool = False) -> str:
             return CachedResponse(cached_res)
             
     # Free Tier Quota Pacing & Rate Limiting
-    is_free_limit = settings.get("enable_free_limit", "false") == "true"
+    is_free_limit = str(settings.get("enable_free_limit", "false")).lower() in ["true", "1", "yes"]
     if is_free_limit:
         try:
             rpm = int(settings.get("free_limit_rpm", "15"))
