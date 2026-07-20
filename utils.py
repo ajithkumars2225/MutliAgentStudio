@@ -164,15 +164,18 @@ def run_tests(directory: str) -> Tuple[bool, str]:
     # 2. Local Fallback Execution (Multi-language project detection)
     
     # Check for Node.js (package.json)
-    if (base_path / "package.json").exists():
-        logs.append("Node.js project detected. Running local Node.js validation...")
+    pkg_files = list(base_path.rglob("package.json"))
+    if pkg_files:
+        pkg_file = pkg_files[0]
+        pkg_dir = pkg_file.parent
+        logs.append(f"Node.js project detected at {pkg_dir.relative_to(base_path) if pkg_dir != base_path else '.'}. Running local Node.js validation...")
         try:
             # npm install
             install_result = subprocess.run(
                 ["npm", "install"],
                 capture_output=True,
                 text=True,
-                cwd=str(base_path),
+                cwd=str(pkg_dir),
                 shell=True,
                 check=False
             )
@@ -182,9 +185,8 @@ def run_tests(directory: str) -> Tuple[bool, str]:
                 
             # npm test (or fallback to npm run build)
             test_cmd = ["npm", "test"]
-            # Read package.json to check if test script is defined
             import json
-            pkg_data = json.loads((base_path / "package.json").read_text(encoding="utf-8", errors="ignore"))
+            pkg_data = json.loads(pkg_file.read_text(encoding="utf-8", errors="ignore"))
             if "scripts" not in pkg_data or "test" not in pkg_data["scripts"] or "no test specified" in pkg_data["scripts"]["test"]:
                 logs.append("No custom test script defined. Running npm run build as fallback verification...")
                 test_cmd = ["npm", "run", "build"]
@@ -193,7 +195,7 @@ def run_tests(directory: str) -> Tuple[bool, str]:
                 test_cmd,
                 capture_output=True,
                 text=True,
-                cwd=str(base_path),
+                cwd=str(pkg_dir),
                 shell=True,
                 check=False
             )
@@ -204,15 +206,17 @@ def run_tests(directory: str) -> Tuple[bool, str]:
             return False, f"Local Node.js execution failed: {str(e)}"
             
     # Check for Go (go.mod)
-    elif (base_path / "go.mod").exists():
-        logs.append("Go project detected. Running local Go validation...")
+    go_files = list(base_path.rglob("go.mod"))
+    if go_files:
+        go_dir = go_files[0].parent
+        logs.append(f"Go project detected at {go_dir.relative_to(base_path) if go_dir != base_path else '.'}. Running local Go validation...")
         try:
             # go test ./...
             test_result = subprocess.run(
                 ["go", "test", "./..."],
                 capture_output=True,
                 text=True,
-                cwd=str(base_path),
+                cwd=str(go_dir),
                 check=False
             )
             logs.append(f"go test Log:\n{test_result.stdout}\n{test_result.stderr}")
@@ -223,7 +227,7 @@ def run_tests(directory: str) -> Tuple[bool, str]:
                     ["go", "build", "-o", "bin_check_output"],
                     capture_output=True,
                     text=True,
-                    cwd=str(base_path),
+                    cwd=str(go_dir),
                     check=False
                 )
                 success = (build_result.returncode == 0)
