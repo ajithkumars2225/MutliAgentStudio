@@ -967,6 +967,7 @@ def implement_engineer_node(state: dict) -> dict:
     if coder_provider == "cli":
         print("\n[Implement Engineer] Provider configured to CLI. Invoking custom coding agent CLI...")
         import subprocess
+        import shutil as _shutil
         workspace_dir = database.get_active_workspace()
         
         # Ensure .studio folder exists in workspace
@@ -987,53 +988,115 @@ def implement_engineer_node(state: dict) -> dict:
             cli_prompt_parts.append(f"\nFix these errors/bugs from the previous test run:\n{pruned_errors}")
         cli_prompt = "\n".join(cli_prompt_parts)
         
-        # ALWAYS write full prompt to file to avoid "command line too long" on Windows
+        # ALWAYS write full prompt to file
         with open(prompt_txt_path, "w", encoding="utf-8") as f:
             f.write(cli_prompt)
-        
-        # Use forward-slash relative path for cross-shell compatibility
-        relative_prompt_file = ".studio/prompt.txt"
-        
-        # Get custom command template
-        cli_cmd_template = settings.get("coder_cli_command") or 'agy run "{prompt_file}"'
-        
-        # Replace {prompt_file} placeholder
-        cmd_str = cli_cmd_template.replace("{prompt_file}", relative_prompt_file)
-        
-        # Safety net: if user template still uses {prompt} (inline), replace with file path reference
-        # to avoid Windows command line length limit (~32KB)
-        if "{prompt}" in cmd_str:
-            print("[CLI Coder ⚠️] Warning: '{prompt}' in command template may exceed Windows command line limit. "
-                  "Auto-upgrading to use prompt file path instead. "
-                  "Update your CLI command template to use '{prompt_file}' to suppress this warning.")
-            cmd_str = cmd_str.replace("{prompt}", relative_prompt_file)
-        
         print(f"[CLI Coder] Prompt written to: {prompt_txt_path} ({len(cli_prompt)} chars)")
-        print(f"[CLI Coder] Executing command in workspace: {cmd_str}")
-        try:
-            result = subprocess.run(
-                cmd_str,
-                cwd=workspace_dir,
-                capture_output=True,
-                text=True,
-                shell=True,
-                timeout=600  # 10 minute timeout for large codegen
+        
+        # ── Resolve CLI executable path ──────────────────────────────────────
+        cli_cmd_template = settings.get("coder_cli_command") or 'agy run "{prompt_file}"'
+        base_exe = cli_cmd_template.strip().split()[0]  # e.g. "agy"
+        
+        resolved_exe = _shutil.which(base_exe)
+        if not resolved_exe:
+            # Search common Windows installation locations
+            common_dirs = [
+                os.path.expandvars(r"%APPDATA%\npm"),
+                os.path.expandvars(r"%LOCALAPPDATA%\Programs\antigravity"),
+                os.path.expandvars(r"%LOCALAPPDATA%\Programs"),
+                os.path.expandvars(r"%LOCALAPPDATA%\antigravity\bin"),
+                os.path.expanduser(r"~\.local\bin"),
+                os.path.expanduser(r"~\AppData\Roaming\npm"),
+                r"C:\Program Files\antigravity\bin",
+                r"C:\Program Files (x86)\antigravity\bin",
+            ]
+            for search_dir in common_dirs:
+                if os.path.isdir(search_dir):
+                    candidate = _shutil.which(base_exe, path=search_dir)
+                    if candidate:
+                        resolved_exe = candidate
+                        break
+        
+        if not resolved_exe:
+            print(f"[CLI Coder Error] Cannot find '{base_exe}' in PATH or common install locations.")
+            print(f"[CLI Coder] Tip: Ensure '{base_exe}' is installed and its directory is in your system PATH.")
+            print(f"[CLI Coder] You can verify by running: where {base_exe}")
+            success = False
+            cli_errors = (
+                f"Executable '{base_exe}' not found in PATH.\n"
+                f"Fix: Add '{base_exe}' install directory to System PATH, then restart the server.\n"
+                f"You can find the install path by running:  where {base_exe}  in a terminal."
             )
-            success = (result.returncode == 0)
-            cli_output = result.stdout or ""
-            cli_errors = "" if success else (result.stderr or result.stdout or "Unknown CLI error")
-            if cli_output:
-                print(f"[CLI Coder] Output:\n{cli_output[-2000:]}")
-            if not success:
-                print(f"[CLI Coder Warning] Coder CLI exited with code {result.returncode}. Error:\n{cli_errors[-1000:]}")
-        except subprocess.TimeoutExpired:
-            print("[CLI Coder Error] Command timed out after 600 seconds.")
-            success = False
-            cli_errors = "CLI Coder timed out after 600 seconds."
-        except Exception as e:
-            print(f"[CLI Coder Error] Failed to launch custom CLI command: {e}")
-            success = False
-            cli_errors = f"Failed to execute CLI: {str(e)}"
+        else:
+            print(f"[CLI Coder] Resolved '{base_exe}' → {resolved_exe}")
+            
+            # ── Build execution strategy ─────────────────────────────────────
+            # Strategy: pass the prompt content via STDIN to the CLI tool.
+            # This avoids both the "command line too long" limit AND the
+            # "file path passed as prompt string" semantic bug.
+            #
+            # Supported template modes:
+            #   agy run "{prompt_file}"   → strip {prompt_file}, pipe content via stdin
+            #   agy run "{prompt}"        → strip {prompt}, pipe content via stdin  
+            #   aider --read "{prompt_file}" → keep as-is, pass absolute file path
+            #   custom tool               → use as-is, pipe content via stdin fallback
+            
+            relative_prompt_file = ".studio/prompt.txt"
+            abs_prompt_file = prompt_txt_path.replace("\\", "/")
+            
+            uses_prompt_file = "{prompt_file}" in cli_cmd_template
+            uses_prompt     = "{prompt}" in cli_cmd_template
+            
+            # Determine if this tool uses file-path natively (e.g. aider --read)
+            # vs. tools like `agy run` that take a prompt string (use stdin instead)
+            file_arg_tools = ["aider", "continue", "cursor"]  # tools that can read a file directly
+            is_file_arg_tool = any(t in base_exe.lower() for t in file_arg_tools)
+            
+            if is_file_arg_tool:
+                # For tools that natively support file args, pass absolute path
+                cmd_str = cli_cmd_template.replace("{prompt_file}", abs_prompt_file)
+                cmd_str = cmd_str.replace("{prompt}", abs_prompt_file)
+                # Replace the generic exe name with resolved full path
+                cmd_str = cmd_str.replace(base_exe, f'"{resolved_exe}"', 1)
+                stdin_content = None
+                print(f"[CLI Coder] Mode: file-arg (passing file path to tool)")
+            else:
+                # For tools like `agy run` that take a prompt string:
+                # Strip {prompt_file}/{prompt} placeholder from the command,
+                # then pipe the full content via stdin.
+                cmd_str = cli_cmd_template
+                cmd_str = cmd_str.replace('"{prompt_file}"', "").replace("{prompt_file}", "")
+                cmd_str = cmd_str.replace('"{prompt}"', "").replace("{prompt}", "")
+                cmd_str = cmd_str.replace(base_exe, f'"{resolved_exe}"', 1).strip()
+                stdin_content = cli_prompt
+                print(f"[CLI Coder] Mode: stdin-pipe (sending prompt via stdin)")
+
+            print(f"[CLI Coder] Executing command in workspace: {cmd_str}")
+            try:
+                result = subprocess.run(
+                    cmd_str,
+                    cwd=workspace_dir,
+                    input=stdin_content,
+                    capture_output=True,
+                    text=True,
+                    shell=True,
+                    timeout=600
+                )
+                success = (result.returncode == 0)
+                cli_output = result.stdout or ""
+                cli_errors = "" if success else (result.stderr or result.stdout or "Unknown CLI error")
+                if cli_output:
+                    print(f"[CLI Coder] Output:\n{cli_output[-2000:]}")
+                if not success:
+                    print(f"[CLI Coder Warning] Coder CLI exited with code {result.returncode}. Error:\n{cli_errors[-1000:]}")
+            except subprocess.TimeoutExpired:
+                print("[CLI Coder Error] Command timed out after 600 seconds.")
+                success = False
+                cli_errors = "CLI Coder timed out after 600 seconds."
+            except Exception as e:
+                print(f"[CLI Coder Error] Failed to launch CLI command: {e}")
+                success = False
+                cli_errors = f"Failed to execute CLI: {str(e)}"
             
         from utils import scan_workspace
         updated_metadata = scan_workspace(workspace_dir)
@@ -1046,7 +1109,9 @@ def implement_engineer_node(state: dict) -> dict:
         save_studio_state(workspace_dir, {**state, **res, "next_agent": "Tester"})
         return res
 
+
     llm = get_llm()
+
     files_str = "\n".join([f"- {f}" for f in files_list])
     
     # Retrieve contents of the target files only
