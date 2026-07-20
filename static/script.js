@@ -1774,7 +1774,7 @@ function loadSettings() {
             coderProviderSelect.dispatchEvent(new Event("change"));
         }
         if (coderCliCommandInput) {
-            coderCliCommandInput.value = settings.coder_cli_command || 'agy run "{prompt}"';
+            coderCliCommandInput.value = settings.coder_cli_command || 'agy run "{prompt_file}"';
         }
         
         if (semanticCacheToggle) {

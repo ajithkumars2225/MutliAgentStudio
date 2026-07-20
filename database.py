@@ -123,7 +123,7 @@ def init_db():
         "max_iterations": "3",
         "approval_mode": "strict",
         "coder_provider": "llm",
-        "coder_cli_command": 'agy run "{prompt}"',
+        "coder_cli_command": 'agy run "{prompt_file}"',
         "semantic_cache": "true",
         "enable_free_limit": "false",
         "free_limit_rpm": "15",
@@ -135,6 +135,9 @@ def init_db():
         
     # Migration: Update deprecated grok-beta to grok-2
     cursor.execute("UPDATE settings SET value = 'grok-2' WHERE key = 'xai_model' AND value = 'grok-beta'")
+    
+    # Migration: Upgrade old {prompt} inline CLI command to safe {prompt_file} version
+    cursor.execute("UPDATE settings SET value = 'agy run \"{prompt_file}\"' WHERE key = 'coder_cli_command' AND value = 'agy run \"{prompt}\"'")
     
     # 4. Create telemetry logs table
     cursor.execute("""
