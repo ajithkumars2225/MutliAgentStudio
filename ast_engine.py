@@ -233,3 +233,87 @@ class EnterpriseASTEngine:
 
         return symbol_index
 
+    @classmethod
+    def search_symbols(cls, workspace_directory: str, query: str, symbol_type: str = "all") -> List[Dict[str, Any]]:
+        """
+        Symbol Index v2 Search Engine.
+        Searches workspace symbols by partial name, type, or pattern.
+        """
+        idx = cls.get_workspace_symbol_index(workspace_directory)
+        results = []
+        q = query.lower()
+
+        if symbol_type in ["all", "function"]:
+            for name, data in idx.get("functions", {}).items():
+                if q in name.lower():
+                    results.append({"symbol": name, "kind": "function", **data})
+
+        if symbol_type in ["all", "class"]:
+            for name, data in idx.get("classes", {}).items():
+                if q in name.lower():
+                    results.append({"symbol": name, "kind": "class", **data})
+
+        if symbol_type in ["all", "table"]:
+            for name, data in idx.get("tables", {}).items():
+                if q in name.lower():
+                    results.append({"symbol": name, "kind": "table", **data})
+
+        return results
+
+    @classmethod
+    def find_symbol_references(cls, workspace_directory: str, symbol_name: str) -> List[Dict[str, Any]]:
+        """
+        Symbol References & Usages Index (v2).
+        Finds all occurrences and calls to a symbol across the workspace files.
+        """
+        base = Path(workspace_directory)
+        if not base.exists() or not symbol_name:
+            return []
+
+        references = []
+        pattern = re.compile(rf'\b{re.escape(symbol_name)}\b')
+
+        for root, dirs, files in os.walk(base):
+            dirs[:] = [d for d in dirs if d not in {".git", ".venv", "venv", "__pycache__", "node_modules", "dist", "build"}]
+            for file in files:
+                filepath = Path(root) / file
+                rel_path = str(filepath.relative_to(base)).replace("\\", "/")
+                ext = filepath.suffix.lower()
+                if ext in [".py", ".js", ".ts", ".jsx", ".tsx", ".html", ".sql"]:
+                    try:
+                        content = filepath.read_text(encoding="utf-8", errors="ignore")
+                        lines = content.splitlines()
+                        for idx_line, line_text in enumerate(lines, 1):
+                            if pattern.search(line_text):
+                                references.append({
+                                    "file": rel_path,
+                                    "line": idx_line,
+                                    "snippet": line_text.strip()
+                                })
+                    except Exception:
+                        pass
+
+        return references
+
+    @classmethod
+    def generate_file_symbol_outline(cls, filename: str, content: str) -> str:
+        """
+        Generates a compact AST Symbol Outline for a file to guide LLM code generation.
+        """
+        syms = cls.parse_polyglot_symbols(filename, content)
+        if not syms:
+            return ""
+
+        outline_lines = [f"File Symbol Outline for {filename}:"]
+        for c in syms.get("classes", []):
+            methods_str = ", ".join(c.get("methods", []))
+            outline_lines.append(f"  - class {c['name']} (methods: {methods_str if methods_str else 'None'})")
+        for f in syms.get("functions", []):
+            params_str = ", ".join(f.get("params", []))
+            outline_lines.append(f"  - def {f['name']}({params_str})")
+        for t in syms.get("tables", []):
+            outline_lines.append(f"  - table {t}")
+
+        return "\n".join(outline_lines)
+
+

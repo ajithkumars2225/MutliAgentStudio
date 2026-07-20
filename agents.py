@@ -553,17 +553,20 @@ def get_relevant_contents(codebase_metadata: dict, prompt: str) -> str:
 def get_target_files_contents(files_to_modify: List[str]) -> str:
     """
     Retrieves the actual contents of the target files slated for modification.
-    Applies context window truncation if files are large.
+    Includes AST Symbol Outline and applies context window truncation if files are large.
     """
     from utils import read_workspace_file
     from database import get_active_workspace
+    from ast_engine import EnterpriseASTEngine
     workspace_dir = get_active_workspace()
     
     result = ""
     for filename in files_to_modify:
         content = read_workspace_file(workspace_dir, filename)
+        outline = EnterpriseASTEngine.generate_file_symbol_outline(filename, content)
         truncated = truncate_context(content, max_chars=12000)
-        result += f"\n---FILE: {filename}---\n```python\n{truncated}\n```\n"
+        outline_str = f"[{outline}]\n" if outline else ""
+        result += f"\n---FILE: {filename}---\n{outline_str}```python\n{truncated}\n```\n"
     return result
 
 def ask_user_approval(stage: str, plan_text: str) -> str:

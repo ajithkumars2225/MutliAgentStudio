@@ -602,6 +602,18 @@ def get_symbols_endpoint():
     workspace_dir = database.get_active_workspace()
     return EnterpriseASTEngine.get_workspace_symbol_index(workspace_dir)
 
+@app.get("/api/symbols/search")
+def search_symbols_endpoint(q: str = "", type: str = "all"):
+    from ast_engine import EnterpriseASTEngine
+    workspace_dir = database.get_active_workspace()
+    return {"query": q, "type": type, "results": EnterpriseASTEngine.search_symbols(workspace_dir, q, type)}
+
+@app.get("/api/symbols/references")
+def get_symbol_references_endpoint(name: str = ""):
+    from ast_engine import EnterpriseASTEngine
+    workspace_dir = database.get_active_workspace()
+    return {"symbol": name, "references": EnterpriseASTEngine.find_symbol_references(workspace_dir, name)}
+
 @app.get("/api/history")
 def get_history():
     return database.get_all_history()
