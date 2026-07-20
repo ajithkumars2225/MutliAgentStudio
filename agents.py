@@ -2,7 +2,7 @@ import os
 import json
 import re
 import threading
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from dotenv import load_dotenv
 
 # Global variables for Web-based Human-in-the-Loop event synchronization
@@ -451,25 +451,27 @@ def invoke_llm(llm, prompt: str, bypass_cache: bool = False) -> str:
 
 # ----------------- PARSING HELPERS -----------------
 
-def parse_orchestrator_decision(text: str) -> str:
+def parse_orchestrator_decision(text: str) -> Tuple[str, str]:
     """
-    Parses the Orchestrator's decision from JSON blocks or simple string matches.
+    Parses the Orchestrator's ReAct decision (Thought + Next Agent Action).
     """
+    thought = ""
     match = re.search(r'```json\s*\n(.*?)\n```', text, re.DOTALL)
     if match:
         try:
             data = json.loads(match.group(1))
+            thought = data.get("thought", "").strip()
             decision = data.get("next_agent", "").strip()
             if decision in ["BusinessAnalyst", "ImpactAnalyzer", "ImplementEngineer", "Tester", "Deployer", "FINISH"]:
-                return decision
+                return decision, thought
         except Exception:
             pass
             
     for agent in ["BusinessAnalyst", "ImpactAnalyzer", "ImplementEngineer", "Tester", "Deployer", "FINISH"]:
         if re.search(rf"\b{agent}\b", text, re.IGNORECASE):
-            return agent
+            return agent, thought
             
-    return "BusinessAnalyst"
+    return "BusinessAnalyst", thought
 
 def parse_impact_files(text: str) -> List[str]:
     """
@@ -707,6 +709,7 @@ Coder Iterations: {state.get('iterations', 0)}/{state.get('max_iterations', 3)}
 Based on this state, decide the next agent. Output your decision in this exact JSON format:
 ```json
 {{
+  "thought": "Reasoning explaining why this next agent is selected based on state and observations...",
   "next_agent": "BusinessAnalyst"
 }}
 ```
@@ -718,7 +721,9 @@ Reasoning and Decision:"""
     check_pause()
     output = response.content if hasattr(response, 'content') else str(response)
     
-    next_agent = parse_orchestrator_decision(output)
+    next_agent, thought = parse_orchestrator_decision(output)
+    if thought:
+        print(f"[ReAct Loop 🧠] Thought: {thought}")
     
     # Deterministic safeguard overrides to prevent loops
     if next_agent == "ImplementEngineer" and state.get("iterations", 0) >= int(state.get("max_iterations", 3)):
@@ -735,7 +740,7 @@ Reasoning and Decision:"""
                 print("[Orchestrator Safeguard] Requirements already established. Progressing to 'ImplementEngineer'.")
                 next_agent = "ImplementEngineer"
                 
-    print(f"[Orchestrator Decision] Next Agent -> {next_agent}")
+    print(f"[ReAct Loop ⚙️] Action -> {next_agent}")
     
     if next_agent == "FINISH":
         from utils import clear_studio_state
