@@ -53,16 +53,14 @@ def scan_workspace(directory: str) -> Dict[str, Dict[str, Any]]:
                         "lines": line_count
                     }
 
-                    # AST Symbol Indexing for Python files
-                    if file_path.suffix.lower() == ".py":
-                        try:
-                            tree = ast.parse(content)
-                            funcs = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-                            classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
-                            if funcs or classes:
-                                metadata[relative_name]["symbols"] = {"functions": funcs[:15], "classes": classes[:10]}
-                        except Exception:
-                            pass
+                    # Enterprise Polyglot AST Symbol Indexing (Python, JS/TS, SQL)
+                    try:
+                        from ast_engine import EnterpriseASTEngine
+                        symbols = EnterpriseASTEngine.parse_polyglot_symbols(relative_name, content)
+                        if symbols:
+                            metadata[relative_name]["symbols"] = symbols
+                    except Exception:
+                        pass
                 except Exception as e:
                     print(f"Skipped indexing metadata for {file}: {e}")
                     

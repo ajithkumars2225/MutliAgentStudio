@@ -795,6 +795,18 @@ def impact_analyzer_node(state: dict) -> dict:
         for name, meta in state["codebase"].items():
             codebase_desc += f"  - {name} ({meta['size']} bytes, {meta['lines']} lines)\n"
         codebase_desc += f"\nRelevant File Contents loaded dynamically:\n{relevant_contents}"
+
+        # Enterprise AST Call Graph Engine
+        try:
+            from ast_engine import EnterpriseASTEngine
+            from database import get_active_workspace
+            call_graph = EnterpriseASTEngine.build_workspace_call_graph(get_active_workspace())
+            if call_graph:
+                graph_lines = [f"  - {src} depends on: {', '.join(deps)}" for src, deps in call_graph.items() if deps]
+                if graph_lines:
+                    codebase_desc += "\n\nAST Dependency Call Graph:\n" + "\n".join(graph_lines)
+        except Exception:
+            pass
             
     custom_prompts = load_custom_prompts()
     default_impact = "You are a Software Architect and Impact Analyzer.\nCompare the new requirements against the existing codebase files. Determine which files are affected, what new files must be created, and any risks or dependency issues."
@@ -991,6 +1003,24 @@ Write all necessary code now:"""
     
     workspace_dir = get_active_workspace()
     
+    # Enterprise AST Refactoring Diff Engine
+    try:
+        from ast_engine import EnterpriseASTEngine
+        from utils import read_workspace_file
+        ast_warnings = []
+        for fname, new_code in new_files.items():
+            old_code = read_workspace_file(workspace_dir, fname)
+            if old_code and not old_code.startswith("[File"):
+                diff_warns = EnterpriseASTEngine.analyze_ast_refactoring_diff(old_code, new_code)
+                if diff_warns:
+                    ast_warnings.extend([f"{fname}: {w}" for w in diff_warns])
+        if ast_warnings:
+            print("[AST Refactoring Engine ⚠️] AST structural diff warnings detected:")
+            for w in ast_warnings:
+                print(f"  - {w}")
+    except Exception as e:
+        print(f"[AST Refactoring Warning] {e}")
+
     # Save new/modified files directly to workspace
     save_codebase(new_files, workspace_dir)
     
