@@ -741,6 +741,18 @@ Reasoning and Decision:"""
                 next_agent = "ImplementEngineer"
                 
     print(f"[ReAct Loop ⚙️] Action -> {next_agent}")
+
+    # Enterprise ReAct Trace Recorder
+    try:
+        from react_engine import EnterpriseReActEngine
+        EnterpriseReActEngine.record_step(
+            agent_name="orchestrator",
+            thought=thought,
+            action=next_agent,
+            observation=f"Reqs: {'Yes' if state.get('requirements') else 'No'} | Impact: {'Yes' if state.get('impact_analysis') else 'No'} | Errors: {bool(state.get('errors'))}"
+        )
+    except Exception:
+        pass
     
     if next_agent == "FINISH":
         from utils import clear_studio_state
@@ -994,6 +1006,15 @@ IMPORTANT: The previous execution or test validation failed with the following e
 {pruned_errors}
 ------------------
 """
+        # Enterprise ReAct v2 Retrospective Self-Reflection
+        if state.get("iterations", 0) >= 2:
+            try:
+                from react_engine import EnterpriseReActEngine
+                reflection = EnterpriseReActEngine.generate_reflection_prompt(pruned_errors, state.get("iterations", 0))
+                error_feedback = f"{reflection}\n\n{error_feedback}"
+                print(f"[ReAct v2 🪞] Retrospective Self-Reflection Mode active for Coder Iteration {state.get('iterations', 0)}")
+            except Exception:
+                pass
 
     custom_prompts = load_custom_prompts()
     default_programmer = "You are a senior Software Implementation Engineer.\nYour task is to write clean, operational, and well-commented code files according to the requirements and impact plan.\nWrite the complete code for each target file. Do not use placeholders or skip details."

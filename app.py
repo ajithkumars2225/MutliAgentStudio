@@ -633,6 +633,17 @@ def get_impact_radius_endpoint(files: str = ""):
     target_files = [f.strip() for f in files.split(",") if f.strip()]
     return EnterpriseASTEngine.calculate_impact_radius(workspace_dir, target_files)
 
+@app.get("/api/react-trace")
+def get_react_trace_endpoint():
+    from react_engine import EnterpriseReActEngine
+    return {"trace": EnterpriseReActEngine.get_trace_history()}
+
+@app.delete("/api/react-trace")
+def clear_react_trace_endpoint():
+    from react_engine import EnterpriseReActEngine
+    EnterpriseReActEngine.clear_trace_history()
+    return {"status": "cleared"}
+
 @app.get("/api/history")
 def get_history():
     return database.get_all_history()
