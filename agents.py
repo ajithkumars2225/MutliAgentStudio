@@ -735,7 +735,7 @@ Based on this state, decide the next agent. Output your decision in this exact J
 ```json
 {{
   "thought": "Reasoning explaining why this next agent is selected based on state and observations...",
-  "next_agent": "BusinessAnalyst"
+  "next_agent": "AgentName"
 }}
 ```
 
@@ -761,7 +761,8 @@ Reasoning and Decision:"""
         
     if next_agent == "BusinessAnalyst" and state.get("requirements"):
         prompt_lower = state.get("prompt", "").lower()
-        if "spec" not in prompt_lower and "requirement" not in prompt_lower:
+        is_spec_only = any(phrase in prompt_lower for phrase in ["spec only", "requirements only", "only write spec", "only write requirement"])
+        if not is_spec_only:
             if not state.get("impact_analysis"):
                 print("[Orchestrator Safeguard] Requirements already established. Progressing to 'ImpactAnalyzer'.")
                 next_agent = "ImpactAnalyzer"
