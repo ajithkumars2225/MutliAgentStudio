@@ -330,30 +330,57 @@ def start_agent(req: StartRequest):
     if agent_running:
         raise HTTPException(status_code=400, detail="An agent simulation is already running.")
         
-    if req.start_fresh:
-        workspace_dir = database.get_active_workspace()
-        state_file = os.path.join(workspace_dir, ".studio", "state.json")
-        if os.path.exists(state_file):
-            try:
-                os.remove(state_file)
-                print("[Start Fresh] Removed existing state.json to start fresh.")
-            except Exception as e:
-                print(f"[Start Fresh Warning] Failed to delete state.json: {e}")
-        
-    # ── Session Context Engine: Auto-link & Session Summary Prepend ────────
     workspace_dir = database.get_active_workspace()
-    parent_id_to_use = req.parent_id
     
-    # Auto-link parent_id if start_fresh is False and parent_id was not explicitly passed
-    if not parent_id_to_use and not req.start_fresh:
-        latest_id = database.get_latest_history_id()
-        if latest_id:
-            parent_id_to_use = latest_id
-            print(f"[Session Context 🔗] Auto-linked prompt to latest session history record #{parent_id_to_use}")
+    # ── 1. True Fresh Start Cleanup ──────────────────────────────────────────
+    if req.start_fresh:
+        files_to_wipe = [
+            os.path.join(workspace_dir, ".studio", "state.json"),
+            os.path.join(workspace_dir, ".studio", "session_summary.json"),
+            os.path.join(workspace_dir, ".studio", "prompt.txt"),
+            os.path.join(workspace_dir, "walkthrough_agent.md"),
+            os.path.join(workspace_dir, "test_report.md"),
+            os.path.join(workspace_dir, "test_report.html"),
+        ]
+        for fpath in files_to_wipe:
+            if os.path.exists(fpath):
+                try:
+                    os.remove(fpath)
+                    print(f"[Start Fresh 🧹] Removed old session artifact: {os.path.basename(fpath)}")
+                except Exception as e:
+                    print(f"[Start Fresh Warning] Failed to delete {fpath}: {e}")
 
-    # 1. Fetch Prompt History Chain
+    # ── 2. Smart Follow-up vs. New Requirement Detection ───────────────────
+    prompt_lower = req.prompt.lower().strip()
+    
+    # Keywords indicating a brand-new application creation request
+    NEW_PROJECT_PHRASES = [
+        "create a ", "create new ", "build a ", "build new ", "develop a ", "develop new ",
+        "generate a ", "generate new ", "make a new ", "start a new ", "design a "
+    ]
+    is_new_app_request = any(prompt_lower.startswith(phrase) or f" {phrase}" in prompt_lower for phrase in NEW_PROJECT_PHRASES)
+    
+    # Keywords indicating an explicit follow-up or bug fix
+    FOLLOWUP_PHRASES = [
+        "add ", "update ", "fix ", "modify ", "change ", "also ", "now ", "extend ",
+        "feature ", "issue ", "bug ", "improve ", "refactor ", "delete ", "remove "
+    ]
+    is_explicit_followup = any(phrase in prompt_lower for phrase in FOLLOWUP_PHRASES)
+
+    parent_id_to_use = req.parent_id
+
+    # Auto-link parent_id ONLY if it's NOT a fresh start, NOT a new app request, AND looks like a follow-up
+    if not parent_id_to_use and not req.start_fresh and not is_new_app_request:
+        latest_id = database.get_latest_history_id()
+        if latest_id and is_explicit_followup:
+            parent_id_to_use = latest_id
+            print(f"[Session Context 🔗] Auto-linked follow-up prompt to session history record #{parent_id_to_use}")
+
+    # ── 3. Build Context Header ──────────────────────────────────────────────
+    # Only load previous session history & summary if start_fresh is False AND it's a follow-up
+    is_fresh_run = req.start_fresh or is_new_app_request
     history_text = ""
-    if parent_id_to_use:
+    if parent_id_to_use and not is_fresh_run:
         chain = database.get_prompt_chain(parent_id_to_use)
         if chain:
             pruned_chain = chain if len(chain) <= 6 else [chain[0]] + chain[-4:]
@@ -371,29 +398,29 @@ def start_agent(req: StartRequest):
             if len(history_text) > 4000:
                 history_text = history_text[-4000:] + "\n[Older prompt history windowed for token optimization]"
 
-    # 2. Build Workspace Session Summary (Walkthrough / Requirements / Files)
-    from utils import get_session_summary
-    session_summary = get_session_summary(workspace_dir)
     summary_blocks = []
+    if not is_fresh_run:
+        from utils import get_session_summary
+        session_summary = get_session_summary(workspace_dir)
 
-    # Check for walkthrough_agent.md in workspace
-    walkthrough_path = os.path.join(workspace_dir, "walkthrough_agent.md")
-    if os.path.exists(walkthrough_path):
-        try:
-            with open(walkthrough_path, "r", encoding="utf-8") as f:
-                wt_content = f.read().strip()
-                if wt_content:
-                    summary_blocks.append(f"Recent Handoff & Accomplishments Summary:\n{wt_content[:1500]}")
-        except Exception:
-            pass
+        # Check for walkthrough_agent.md in workspace
+        walkthrough_path = os.path.join(workspace_dir, "walkthrough_agent.md")
+        if os.path.exists(walkthrough_path):
+            try:
+                with open(walkthrough_path, "r", encoding="utf-8") as f:
+                    wt_content = f.read().strip()
+                    if wt_content:
+                        summary_blocks.append(f"Recent Handoff & Accomplishments Summary:\n{wt_content[:1500]}")
+            except Exception:
+                pass
 
-    if session_summary.get("requirements"):
-        req_text = session_summary["requirements"].strip()
-        summary_blocks.append(f"Established System Requirements & Specifications:\n{req_text[:1200]}")
+        if session_summary.get("requirements"):
+            req_text = session_summary["requirements"].strip()
+            summary_blocks.append(f"Established System Requirements & Specifications:\n{req_text[:1200]}")
 
-    if session_summary.get("files_modified"):
-        files_list = session_summary["files_modified"]
-        summary_blocks.append(f"Previously Built Codebase Files:\n- " + "\n- ".join(files_list[:25]))
+        if session_summary.get("files_modified"):
+            files_list = session_summary["files_modified"]
+            summary_blocks.append(f"Previously Built Codebase Files:\n- " + "\n- ".join(files_list[:25]))
 
     # Combine into rich prompt header
     context_header_parts = []
@@ -407,11 +434,14 @@ def start_agent(req: StartRequest):
         context_header_parts.append(history_text)
         context_header_parts.append("============================")
 
-    if context_header_parts and not req.start_fresh:
+    if context_header_parts and not is_fresh_run:
         prompt_to_run = "\n\n".join(context_header_parts) + f"\n\nCurrent follow-up request to execute:\n{req.prompt}"
         print(f"[Session Context 🧠] Injected Session Accomplishments & Prompt History into execution prompt.")
     else:
         prompt_to_run = req.prompt
+        if is_fresh_run:
+            print(f"[Start Fresh 🚀] Executing fresh requirement prompt with clean state.")
+
 
     # Write history entry with 'running' status and parent link
     history_id = database.add_history_record(
