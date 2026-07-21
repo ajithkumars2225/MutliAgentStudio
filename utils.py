@@ -1022,3 +1022,59 @@ def clear_studio_state(workspace_dir: str):
     except Exception as e:
         print(f"[State Warning] Failed to clear state snapshot: {e}")
 
+def append_transcript_step(workspace_dir: str, agent_name: str, step_type: str, content: str, metadata: dict = None):
+    """
+    Appends a structured event step to .studio/transcript.jsonl in real-time.
+    Mirrors Antigravity transcript trajectory logging format.
+    """
+    import json, datetime
+    if not workspace_dir:
+        return
+    try:
+        studio_dir = os.path.join(workspace_dir, ".studio")
+        os.makedirs(studio_dir, exist_ok=True)
+        transcript_file = os.path.join(studio_dir, "transcript.jsonl")
+        
+        entry = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "agent": agent_name,
+            "type": step_type,
+            "content": content[:3000] if isinstance(content, str) else str(content)[:3000],
+            "metadata": metadata or {}
+        }
+        with open(transcript_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception as e:
+        print(f"[Transcript Warning] Failed to record step: {e}")
+
+def save_checkpoint_summary(workspace_dir: str, state: dict):
+    """
+    Saves a comprehensive session checkpoint (.studio/checkpoint.json) detailing state,
+    accomplishments, active requirements, and system status.
+    """
+    import json, datetime
+    if not workspace_dir:
+        return
+    try:
+        studio_dir = os.path.join(workspace_dir, ".studio")
+        os.makedirs(studio_dir, exist_ok=True)
+        checkpoint_file = os.path.join(studio_dir, "checkpoint.json")
+        
+        checkpoint_data = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "prompt": state.get("prompt", ""),
+            "requirements_status": "Established" if state.get("requirements") else "Missing",
+            "impact_status": "Established" if state.get("impact_analysis") else "Missing",
+            "iterations": state.get("iterations", 0),
+            "max_iterations": state.get("max_iterations", 3),
+            "next_agent": state.get("next_agent", "BusinessAnalyst"),
+            "files_in_workspace": list(state.get("codebase", {}).keys()) if isinstance(state.get("codebase"), dict) else [],
+            "has_errors": bool(state.get("errors")),
+            "last_error_snippet": state.get("errors", "")[:500] if state.get("errors") else ""
+        }
+        with open(checkpoint_file, "w", encoding="utf-8") as f:
+            json.dump(checkpoint_data, f, indent=2)
+    except Exception as e:
+        print(f"[Checkpoint Warning] Failed to save checkpoint: {e}")
+
+

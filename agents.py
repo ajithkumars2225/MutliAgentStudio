@@ -857,9 +857,24 @@ Requirements Document:"""
             "prompt": f"{state.get('prompt')}\n\n[BA Revision Feedback]: {feedback}"
         }
     res = {"requirements": reqs}
-    from utils import save_studio_state
+    from utils import save_studio_state, append_transcript_step, save_checkpoint_summary
     from database import get_active_workspace
-    save_studio_state(get_active_workspace(), {**state, **res, "next_agent": "ImpactAnalyzer"})
+    workspace_dir = get_active_workspace()
+    
+    # Save implementation_plan.md artifact
+    try:
+        studio_dir = os.path.join(workspace_dir, ".studio")
+        os.makedirs(studio_dir, exist_ok=True)
+        plan_path = os.path.join(studio_dir, "implementation_plan.md")
+        with open(plan_path, "w", encoding="utf-8") as f:
+            f.write(f"# Implementation Plan\n\n## Requirements Specifications\n\n{reqs}\n")
+        print(f"[Artifact Generator 📄] Saved implementation_plan.md: {plan_path}")
+    except Exception as e:
+        print(f"[Artifact Warning] Failed to write implementation_plan.md: {e}")
+
+    append_transcript_step(workspace_dir, "BusinessAnalyst", "REQUIREMENTS_SPEC", reqs)
+    save_studio_state(workspace_dir, {**state, **res, "next_agent": "ImpactAnalyzer"})
+    save_checkpoint_summary(workspace_dir, {**state, **res, "next_agent": "ImpactAnalyzer"})
     return res
 
 def impact_analyzer_node(state: dict) -> dict:
@@ -956,9 +971,25 @@ Impact Assessment:"""
         "impact_analysis": output,
         "files_to_modify": files_to_modify
     }
-    from utils import save_studio_state
+    from utils import save_studio_state, append_transcript_step, save_checkpoint_summary
     from database import get_active_workspace
-    save_studio_state(get_active_workspace(), {**state, **res, "next_agent": "ImplementEngineer"})
+    workspace_dir = get_active_workspace()
+
+    # Append Impact & Architecture Plan to implementation_plan.md
+    try:
+        studio_dir = os.path.join(workspace_dir, ".studio")
+        os.makedirs(studio_dir, exist_ok=True)
+        plan_path = os.path.join(studio_dir, "implementation_plan.md")
+        reqs = state.get("requirements", "")
+        with open(plan_path, "w", encoding="utf-8") as f:
+            f.write(f"# Implementation Plan\n\n## Requirements Specifications\n\n{reqs}\n\n## Impact & Architecture Plan\n\n{output}\n\n### Proposed Files to Modify/Create\n" + "\n".join([f"- {f}" for f in files_to_modify]) + "\n")
+        print(f"[Artifact Generator 📄] Updated implementation_plan.md: {plan_path}")
+    except Exception as e:
+        print(f"[Artifact Warning] Failed to update implementation_plan.md: {e}")
+
+    append_transcript_step(workspace_dir, "ImpactAnalyzer", "IMPACT_PLAN", output, {"files_to_modify": files_to_modify})
+    save_studio_state(workspace_dir, {**state, **res, "next_agent": "ImplementEngineer"})
+    save_checkpoint_summary(workspace_dir, {**state, **res, "next_agent": "ImplementEngineer"})
     return res
 
 def implement_engineer_node(state: dict) -> dict:

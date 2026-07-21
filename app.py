@@ -499,6 +499,41 @@ def get_status():
         ))()
     }
 
+@app.get("/api/checkpoint")
+def get_checkpoint():
+    """
+    Returns active session checkpoint data for the current workspace.
+    """
+    workspace_dir = database.get_active_workspace()
+    checkpoint_file = os.path.join(workspace_dir, ".studio", "checkpoint.json")
+    if os.path.exists(checkpoint_file):
+        try:
+            with open(checkpoint_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            return {"error": f"Failed to load checkpoint: {e}"}
+    return {"status": "No active checkpoint file"}
+
+@app.get("/api/transcript")
+def get_transcript():
+    """
+    Returns step-by-step agent trajectory log entries (.studio/transcript.jsonl).
+    """
+    workspace_dir = database.get_active_workspace()
+    transcript_file = os.path.join(workspace_dir, ".studio", "transcript.jsonl")
+    entries = []
+    if os.path.exists(transcript_file):
+        try:
+            with open(transcript_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        entries.append(json.loads(line.strip()))
+            return {"transcript": entries[-50:]}  # Return last 50 trajectory steps
+        except Exception as e:
+            return {"error": f"Failed to read transcript: {e}"}
+    return {"transcript": []}
+
+
 @app.post("/api/pause")
 def pause_agent():
     agents.pause_event.clear()
