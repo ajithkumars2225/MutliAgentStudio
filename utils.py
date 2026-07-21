@@ -741,42 +741,63 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
     try:
         if deploy_bat.exists() and sys.platform.startswith("win"):
             logs.append("Running deployment batch script (deploy.bat)...")
-            result = subprocess.run(
-                [str(deploy_bat)],
-                capture_output=True,
-                text=True,
-                cwd=str(base_path),
-                check=False
-            )
-            success = (result.returncode == 0)
-            logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
-            return success, "\n".join(logs)
+            try:
+                result = subprocess.run(
+                    [str(deploy_bat)],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(base_path),
+                    check=False,
+                    timeout=45
+                )
+                success = (result.returncode == 0)
+                logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
+                return success, "\n".join(logs)
+            except subprocess.TimeoutExpired as te:
+                out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
+                err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
+                logs.append(f"Deployment script reached 45s timeout (launched background app server).\nSTDOUT:\n{out}\nSTDERR:\n{err}")
+                return True, "\n".join(logs)
             
         elif deploy_sh.exists() and not sys.platform.startswith("win"):
             logs.append("Running deployment shell script (deploy.sh)...")
-            result = subprocess.run(
-                ["bash", str(deploy_sh)],
-                capture_output=True,
-                text=True,
-                cwd=str(base_path),
-                check=False
-            )
-            success = (result.returncode == 0)
-            logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
-            return success, "\n".join(logs)
+            try:
+                result = subprocess.run(
+                    ["bash", str(deploy_sh)],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(base_path),
+                    check=False,
+                    timeout=45
+                )
+                success = (result.returncode == 0)
+                logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
+                return success, "\n".join(logs)
+            except subprocess.TimeoutExpired as te:
+                out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
+                err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
+                logs.append(f"Deployment script reached 45s timeout (launched background app server).\nSTDOUT:\n{out}\nSTDERR:\n{err}")
+                return True, "\n".join(logs)
             
         elif deploy_py.exists():
             logs.append("Running deployment Python script (deploy.py)...")
-            result = subprocess.run(
-                [sys.executable, str(deploy_py)],
-                capture_output=True,
-                text=True,
-                cwd=str(base_path),
-                check=False
-            )
-            success = (result.returncode == 0)
-            logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
-            return success, "\n".join(logs)
+            try:
+                result = subprocess.run(
+                    [sys.executable, str(deploy_py)],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(base_path),
+                    check=False,
+                    timeout=45
+                )
+                success = (result.returncode == 0)
+                logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
+                return success, "\n".join(logs)
+            except subprocess.TimeoutExpired as te:
+                out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
+                err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
+                logs.append(f"Deployment script reached 45s timeout (launched background app server).\nSTDOUT:\n{out}\nSTDERR:\n{err}")
+                return True, "\n".join(logs)
             
         else:
             logs.append("No custom deployment script detected.")

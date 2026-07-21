@@ -1396,7 +1396,7 @@ def deployment_node(state: dict) -> dict:
     llm = get_llm()
     
     custom_prompts = load_custom_prompts()
-    default_deployer = "You are a DevOps and Deployment Engineer.\nFor the application built under these requirements, write:\n1. A local deployment script:\n   - On Windows systems, write a `deploy.bat` file.\n   - For other platforms, write a `deploy.sh` script or a python script `deploy.py`.\n2. A CI/CD Pipeline configuration file:\n   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.\n   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines.\n   - Both pipelines should be configured to install dependencies, run linting/compilation checks, execute your unit tests, and trigger static security/vulnerability scans (e.g. Bandit for Python)."
+    default_deployer = "You are a DevOps and Deployment Engineer.\nFor the application built under these requirements, write:\n1. A local deployment script:\n   - On Windows systems, write a `deploy.bat` file.\n   - For other platforms, write a `deploy.sh` script or a python script `deploy.py`.\n   - IMPORTANT: Script commands must be non-blocking. If starting web applications (e.g. dotnet run, npm start), use non-blocking/background flags or build checks. Do NOT include `pause` or interactive input prompts.\n2. A CI/CD Pipeline configuration file:\n   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.\n   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines.\n   - Both pipelines should be configured to install dependencies, run linting/compilation checks, execute your unit tests, and trigger static security/vulnerability scans (e.g. Bandit for Python)."
     deployer_header = (custom_prompts.get("deployer") or "").strip() or default_deployer
     
     prompt = f"""{deployer_header}
@@ -1446,6 +1446,7 @@ Write the deployment scripts:"""
     deployment_spec = ""
     for path, code in deploy_files.items():
         deployment_spec += f"--- {path} ---\n{code}\n\n"
+    print("\n[Deployment Gate ⏳] Application validated. Waiting for user approval on Deployment Execution in UI...")
     feedback = ask_user_approval("Deployment Execution", f"The application code has been written and successfully validated. Review the generated deployment scripts below and approve to execute the deployment:\n\n{deployment_spec}")
     if feedback:
         print("[Deployment Gate] User rejected deployment or requested changes. Re-routing back to ImplementEngineer...")
