@@ -340,32 +340,78 @@ def start_agent(req: StartRequest):
             except Exception as e:
                 print(f"[Start Fresh Warning] Failed to delete state.json: {e}")
         
-    # Construct conversation history context if parent_id exists
-    prompt_to_run = req.prompt
-    if req.parent_id:
-        chain = database.get_prompt_chain(req.parent_id)
+    # ── Session Context Engine: Auto-link & Session Summary Prepend ────────
+    workspace_dir = database.get_active_workspace()
+    parent_id_to_use = req.parent_id
+    
+    # Auto-link parent_id if start_fresh is False and parent_id was not explicitly passed
+    if not parent_id_to_use and not req.start_fresh:
+        latest_id = database.get_latest_history_id()
+        if latest_id:
+            parent_id_to_use = latest_id
+            print(f"[Session Context 🔗] Auto-linked prompt to latest session history record #{parent_id_to_use}")
+
+    # 1. Fetch Prompt History Chain
+    history_text = ""
+    if parent_id_to_use:
+        chain = database.get_prompt_chain(parent_id_to_use)
         if chain:
-            # Context Engineering: Window long history chains (Keep initial turn 1 + last 4 turns)
-            pruned_chain = chain
-            if len(chain) > 6:
-                pruned_chain = [chain[0]] + chain[-4:]
-            
+            pruned_chain = chain if len(chain) <= 6 else [chain[0]] + chain[-4:]
             history_blocks = []
             for idx, past_prompt in enumerate(pruned_chain, 1):
                 clean_prompt = past_prompt
-                if "=== CONVERSATION CHAT HISTORY ===" in past_prompt:
-                    parts = past_prompt.split("Current follow-up request to execute:\n")
-                    if len(parts) > 1:
-                        clean_prompt = parts[-1]
-                history_blocks.append(f"Turn {idx}: {clean_prompt}")
-            
+                for marker in ["=== PREVIOUS SESSION ACCOMPLISHMENTS", "=== CONVERSATION CHAT HISTORY ==="]:
+                    if marker in past_prompt:
+                        parts = past_prompt.split("Current follow-up request to execute:\n")
+                        if len(parts) > 1:
+                            clean_prompt = parts[-1]
+                            break
+                history_blocks.append(f"Turn {idx}: {clean_prompt.strip()}")
             history_text = "\n".join(history_blocks)
-            if len(history_text) > 5000:
-                history_text = history_text[-5000:] + "\n[Older history truncated for Context Window Optimization]"
-                
-            prompt_to_run = f"=== CONVERSATION CHAT HISTORY ===\n{history_text}\n=================================\n\nCurrent follow-up request to execute:\n{req.prompt}"
-            print(f"[Chat History] Prepend history context chain ({len(chain)} turns -> {len(pruned_chain)} active windowed turns)")
+            if len(history_text) > 4000:
+                history_text = history_text[-4000:] + "\n[Older prompt history windowed for token optimization]"
 
+    # 2. Build Workspace Session Summary (Walkthrough / Requirements / Files)
+    from utils import get_session_summary
+    session_summary = get_session_summary(workspace_dir)
+    summary_blocks = []
+
+    # Check for walkthrough_agent.md in workspace
+    walkthrough_path = os.path.join(workspace_dir, "walkthrough_agent.md")
+    if os.path.exists(walkthrough_path):
+        try:
+            with open(walkthrough_path, "r", encoding="utf-8") as f:
+                wt_content = f.read().strip()
+                if wt_content:
+                    summary_blocks.append(f"Recent Handoff & Accomplishments Summary:\n{wt_content[:1500]}")
+        except Exception:
+            pass
+
+    if session_summary.get("requirements"):
+        req_text = session_summary["requirements"].strip()
+        summary_blocks.append(f"Established System Requirements & Specifications:\n{req_text[:1200]}")
+
+    if session_summary.get("files_modified"):
+        files_list = session_summary["files_modified"]
+        summary_blocks.append(f"Previously Built Codebase Files:\n- " + "\n- ".join(files_list[:25]))
+
+    # Combine into rich prompt header
+    context_header_parts = []
+    if summary_blocks:
+        context_header_parts.append("=== PREVIOUS SESSION ACCOMPLISHMENTS & SYSTEM CONTEXT ===")
+        context_header_parts.append("\n\n".join(summary_blocks))
+        context_header_parts.append("=========================================================")
+
+    if history_text:
+        context_header_parts.append("=== PRIOR PROMPT HISTORY ===")
+        context_header_parts.append(history_text)
+        context_header_parts.append("============================")
+
+    if context_header_parts and not req.start_fresh:
+        prompt_to_run = "\n\n".join(context_header_parts) + f"\n\nCurrent follow-up request to execute:\n{req.prompt}"
+        print(f"[Session Context 🧠] Injected Session Accomplishments & Prompt History into execution prompt.")
+    else:
+        prompt_to_run = req.prompt
 
     # Write history entry with 'running' status and parent link
     history_id = database.add_history_record(
@@ -374,7 +420,7 @@ def start_agent(req: StartRequest):
         model=req.model,
         max_iterations=req.max_iterations,
         status="running",
-        parent_id=req.parent_id
+        parent_id=parent_id_to_use
     )
     
     # Reset last execution error

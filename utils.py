@@ -952,8 +952,64 @@ def save_studio_state(workspace_dir: str, state: dict):
         with open(state_file, "w", encoding="utf-8") as f:
             json.dump(serializable_state, f, indent=2)
         print(f"[State Snapshot] Saved studio state to: {state_file}")
+        
+        # Also maintain persistent session summary whenever requirements/impact are established
+        if state.get("requirements") or state.get("impact_analysis"):
+            save_session_summary(workspace_dir, state)
     except Exception as e:
         print(f"[State Warning] Failed to save state snapshot: {e}")
+
+def save_session_summary(workspace_dir: str, state: dict):
+    """
+    Saves a persistent session summary of completed requirements, impact, and files built.
+    Preserved across runs even when state.json (turn checkpoint) is cleared.
+    """
+    import json, datetime
+    if not workspace_dir:
+        return
+    try:
+        studio_dir = os.path.join(workspace_dir, ".studio")
+        os.makedirs(studio_dir, exist_ok=True)
+        summary_file = os.path.join(studio_dir, "session_summary.json")
+        
+        walkthrough_text = ""
+        walkthrough_path = os.path.join(workspace_dir, "walkthrough_agent.md")
+        if os.path.exists(walkthrough_path):
+            try:
+                with open(walkthrough_path, "r", encoding="utf-8") as f:
+                    walkthrough_text = f.read()
+            except Exception:
+                pass
+
+        summary_data = {
+            "last_prompt": state.get("prompt", ""),
+            "requirements": state.get("requirements", ""),
+            "impact_analysis": state.get("impact_analysis", ""),
+            "files_modified": list(state.get("codebase", {}).keys()) if isinstance(state.get("codebase"), dict) else [],
+            "walkthrough_summary": walkthrough_text[:2000] if walkthrough_text else "",
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+        with open(summary_file, "w", encoding="utf-8") as f:
+            json.dump(summary_data, f, indent=2)
+        print(f"[Session Summary 📝] Updated workspace session summary: {summary_file}")
+    except Exception as e:
+        print(f"[Session Summary Warning] Failed to save session summary: {e}")
+
+def get_session_summary(workspace_dir: str) -> dict:
+    """
+    Retrieves saved persistent session summary for a workspace.
+    """
+    import json
+    if not workspace_dir:
+        return {}
+    summary_file = os.path.join(workspace_dir, ".studio", "session_summary.json")
+    if os.path.exists(summary_file):
+        try:
+            with open(summary_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
 
 def clear_studio_state(workspace_dir: str):
     if not workspace_dir:
@@ -962,6 +1018,7 @@ def clear_studio_state(workspace_dir: str):
         state_file = os.path.join(workspace_dir, ".studio", "state.json")
         if os.path.exists(state_file):
             os.remove(state_file)
-            print(f"[State Cleanup] Removed state snapshot: {state_file}")
+            print(f"[State Cleanup] Removed turn state snapshot: {state_file}")
     except Exception as e:
         print(f"[State Warning] Failed to clear state snapshot: {e}")
+

@@ -304,6 +304,19 @@ def get_prompt_chain(history_id: Optional[int]) -> list:
     prompts.reverse()
     return prompts
 
+def get_latest_history_id() -> Optional[int]:
+    """
+    Returns the ID of the most recent requirements history record.
+    Used to auto-link follow-up prompts across sessions.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM requirements_history ORDER BY id DESC LIMIT 1")
+    row = cursor.fetchone()
+    conn.close()
+    return row["id"] if row else None
+
+
 def insert_telemetry_log(agent_name: str, provider: str, model: str, prompt_tokens: int, completion_tokens: int, total_tokens: int, latency_sec: float, cost_usd: float, prompt_text: str, response_text: str, history_id: Optional[int] = None):
     conn = get_db_connection()
     cursor = conn.cursor()
