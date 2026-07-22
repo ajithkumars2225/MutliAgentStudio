@@ -677,6 +677,53 @@ if (retryBtn) {
     });
 }
 
+// Fullscreen Requirements Editor Modal logic
+const expandPromptBtn = document.getElementById("expand-prompt-btn");
+const promptModal = document.getElementById("prompt-modal");
+const promptModalTextarea = document.getElementById("prompt-modal-textarea");
+const closePromptModalBtn = document.getElementById("close-prompt-modal");
+const cancelPromptModalBtn = document.getElementById("cancel-prompt-modal-btn");
+const savePromptModalBtn = document.getElementById("save-prompt-modal-btn");
+
+if (expandPromptBtn && promptModal) {
+    expandPromptBtn.addEventListener("click", () => {
+        if (promptModalTextarea && promptInput) {
+            promptModalTextarea.value = promptInput.value;
+        }
+        promptModal.style.display = "flex";
+        if (promptModalTextarea) {
+            promptModalTextarea.focus();
+        }
+    });
+}
+
+function closeFullscreenPromptModal() {
+    if (promptModal) {
+        promptModal.style.display = "none";
+    }
+}
+
+if (closePromptModalBtn) closePromptModalBtn.addEventListener("click", closeFullscreenPromptModal);
+if (cancelPromptModalBtn) cancelPromptModalBtn.addEventListener("click", closeFullscreenPromptModal);
+
+if (savePromptModalBtn) {
+    savePromptModalBtn.addEventListener("click", () => {
+        if (promptInput && promptModalTextarea) {
+            promptInput.value = promptModalTextarea.value;
+            promptInput.dispatchEvent(new Event("input"));
+        }
+        closeFullscreenPromptModal();
+    });
+}
+
+if (promptModal) {
+    promptModal.addEventListener("click", (e) => {
+        if (e.target === promptModal) {
+            closeFullscreenPromptModal();
+        }
+    });
+}
+
 // HITL APPROVAL LISTENERS
 hitlApproveBtn.addEventListener("click", () => {
     hitlApproveBtn.disabled = true;
