@@ -840,6 +840,7 @@ def business_analyst_node(state: dict) -> dict:
     from database import get_active_workspace
     from git_branching import GitBranchingManager
     from db_provisioner import DatabaseProvisioner
+    llm = get_llm()
     
     workspace_dir = get_active_workspace()
     if workspace_dir:
