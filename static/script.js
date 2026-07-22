@@ -747,7 +747,12 @@ function pollStatus() {
     .then(r => r.json())
     .then(status => {
         updateStatusIndicator(status);
-        appendLogs(status.logs);
+        if (!status.running && !wasAgentRunning) {
+            // Initial load or browser refresh while idle: keep terminal clean for fresh run
+            lastLogCount = status.logs ? status.logs.length : 0;
+        } else {
+            appendLogs(status.logs);
+        }
         updateFileTree(status.files);
         handleHITLModal(status);
         
