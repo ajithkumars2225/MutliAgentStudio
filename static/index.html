@@ -66,7 +66,7 @@
         <!-- WORKSPACE PAGE VIEW -->
         <div id="view-workspace" class="view-content active">
             <main class="app-body">
-                <!-- SIDEBAR PANEL: DEVELOPER REQUIREMENTS & INPUT STUDIO -->
+                <!-- SIDEBAR PANEL: DEVELOPER REQUIREMENTS -->
                 <aside class="control-panel glass-card" id="control-panel">
                     <div class="panel-header">
                         <h2>Developer Input</h2>
@@ -74,72 +74,105 @@
                     </div>
                     
                     <div class="panel-form-container">
-                        <div class="panel-form" style="display: flex; flex-direction: column; gap: 0.6rem; height: 100%;">
-                            <!-- PROMPT INPUT STUDIO DECK -->
-                            <div class="form-group prompt-group" style="display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0;">
-                                <div style="position: relative; width: 100%;">
-                                    <textarea id="prompt-input" placeholder="e.g., Create an Employee CRUD application using .NET MVC with PostgreSQL database..." style="width: 100%; min-height: 120px; max-height: 200px; resize: vertical; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(5, 8, 15, 0.7); font-size: 0.88rem; line-height: 1.45; color: var(--text-primary); outline: none;"></textarea>
-                                </div>
-                            </div>
-
-                            <!-- ACTION BUTTONS ROW -->
-                            <div class="panel-action" style="display: flex; flex-direction: column; gap: 0.4rem; width: 100%; flex-shrink: 0;">
-                                <div style="display: flex; gap: 0.4rem; width: 100%;">
-                                    <div class="studio-action-btn-wrap" style="flex: 1;">
-                                        <button id="start-btn" class="btn primary-btn" style="width: 100%; padding: 0.5rem 0.8rem; font-size: 0.82rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%); border: none; border-radius: 6px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-                                            ⚡ <span>Run Studio</span>
-                                        </button>
-                                    </div>
-                                    <div class="studio-action-btn-wrap" style="flex: 1;">
-                                        <button id="new-create-btn" class="btn secondary-btn" style="width: 100%; padding: 0.5rem 0.8rem; font-size: 0.82rem; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-                                            🆕 <span>New Create</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="studio-action-btn-wrap" style="width: 100%; display: none;" id="retry-btn-wrap">
-                                    <button id="retry-btn" class="btn secondary-btn" style="width: 100%; padding: 0.45rem; font-size: 0.8rem;" title="Retry Last Attempt">
-                                        🔄 Retry Last Run
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Agent Flow Visualizer Flowchart -->
-                            <div class="form-group flow-viz-group" style="margin-top: 0.4rem; border-top: 1px solid var(--border-color); padding-top: 0.4rem; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
-                                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 600;">Agent Execution Flow</label>
-                                <div id="agent-flow-viz" style="display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; overflow-y: auto; flex: 1; min-height: 0;">
-                                    <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                        <div class="panel-form">
+                            <!-- Agent Flow Visualizer Flowchart (TOP) -->
+                            <div class="form-group flow-viz-group" style="margin-bottom: 0.6rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.6rem; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
+                                <label style="display: block; margin-bottom: 0.6rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 600;">Agent Execution Flow</label>
+                                <div id="agent-flow-viz" style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; overflow-y: auto; flex: 1; min-height: 0;">
+                                    <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
                                         <span>🤖 Orchestrator</span>
                                         <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
                                     </div>
-                                    <div class="flow-viz-node" id="node-analyst" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                    <div class="flow-viz-node" id="node-analyst" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
                                         <span>📝 Business Analyst</span>
                                         <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
                                     </div>
-                                    <div class="flow-viz-node" id="node-impact" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                    <div class="flow-viz-node" id="node-impact" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
                                         <span>🔍 Impact Analyzer</span>
                                         <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
                                     </div>
-                                    <div class="flow-viz-node" id="node-programmer" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                    <div class="flow-viz-node" id="node-programmer" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
                                         <span>💻 Implementer Coder</span>
                                         <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
                                     </div>
-                                    <div class="flow-viz-node" id="node-tester" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                    <div class="flow-viz-node" id="node-tester" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
                                         <span>🧪 QA Tester</span>
                                         <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
                                     </div>
-                                    <div class="flow-viz-node" id="node-deployer" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
+                                    <div class="flow-viz-node" id="node-deployer" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.72rem; transition: all 0.25s ease; color: var(--text-secondary);">
                                         <span>🚀 Deployment Engineer</span>
                                         <span class="node-status-pill" style="font-size: 0.62rem; padding: 2px 6px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Developer Requirements Input Group (BOTTOM) -->
+                            <div class="form-group prompt-group">
+                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.4rem;">
+                                    <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Requirements</span>
+                                    <div style="display: flex; gap: 0.3rem; align-items: center;">
+                                        <!-- Fullscreen icon button -->
+                                        <div class="studio-icon-btn-wrap">
+                                            <button id="expand-prompt-btn" class="studio-icon-btn" aria-label="Fullscreen Editor">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                                            </button>
+                                            <div class="studio-tooltip">Fullscreen Editor</div>
+                                        </div>
+                                        <!-- Recent Prompts icon button -->
+                                        <div class="studio-icon-btn-wrap recent-prompts-container">
+                                            <button id="recent-prompts-trigger" class="studio-icon-btn" aria-label="Recent Prompts">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            </button>
+                                            <div class="studio-tooltip">Recent Prompts</div>
+                                            <div id="recent-prompts-popover" class="recent-prompts-popover glass-card">
+                                                <div class="popover-header">
+                                                    <span>Recent Prompts</span>
+                                                </div>
+                                                <div class="popover-list" id="recent-prompts-list">
+                                                    <!-- Custom list items loaded here -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <textarea id="prompt-input" placeholder="e.g., Create a Python command line task planner that writes to JSON and include a test script..." style="min-height: 100px; max-height: 160px; resize: none; overflow-y: auto;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- ACTION ICON BUTTONS ROW -->
+                        <div class="panel-action" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; margin-top: 0.6rem; flex-shrink: 0;">
+                            <div style="display: flex; gap: 0.5rem; width: 100%; align-items: stretch;">
+                                <!-- Run Studio button: lightning bolt icon -->
+                                <div class="studio-action-btn-wrap" style="flex: 1;">
+                                    <button id="start-btn" class="studio-action-icon-btn studio-action-run" title="Run Studio — Execute agents on your requirements">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M13 2L4.09 12.26a1 1 0 0 0-.09 1.05A1 1 0 0 0 5 14h6v8l8.91-10.26a1 1 0 0 0 .09-1.05A1 1 0 0 0 19 10h-6V2z"/></svg>
+                                        <span class="action-label">Run Studio</span>
+                                        <div class="studio-action-tooltip">⚡ Run Studio<br><small>Execute agents on your requirements</small></div>
+                                    </button>
+                                </div>
+                                <!-- New Create button: sparkle / new file icon -->
+                                <div class="studio-action-btn-wrap" style="flex: 1;">
+                                    <button id="new-create-btn" class="studio-action-icon-btn studio-action-new" title="New Create — Start fresh, ignore saved state">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                        <span class="action-label">New Create</span>
+                                        <div class="studio-action-tooltip">🆕 New Create<br><small>Start fresh, ignores saved checkpoint state</small></div>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Retry button: circular arrows icon -->
+                            <div class="studio-action-btn-wrap" style="width: 100%; display: none;" id="retry-btn-wrap">
+                                <button id="retry-btn" class="studio-action-icon-btn studio-action-retry" style="width: 100%;" title="Retry — Re-run last failed attempt">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                    <span class="action-label">Retry Last Run</span>
+                                    <div class="studio-action-tooltip">🔄 Retry<br><small>Re-run the last failed attempt</small></div>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </aside>
 
-                <!-- MAIN WORKSPACE CONTAINER (FULL SCREEN HEIGHT) -->
-                <div class="main-content" style="display: grid; grid-template-rows: 1fr 6px 220px; gap: 0; overflow: hidden; height: 100%; padding: 0;">
-                    
+                <!-- MAIN WORKSPACE CONTAINER -->
+                <div class="main-content" style="display: grid; grid-template-rows: 1fr 6px 220px; gap: 0; overflow: hidden; height: 100%;">
                     <!-- TOP HALF: GENERATED WORKSPACE (IDE VIEW) -->
                     <section class="workspace-area glass-card" style="height: auto; min-height: 0;">
                         <div class="panel-header">
