@@ -7,6 +7,44 @@ let currentActiveParentId = null;
 let openFiles = {}; // filepath -> { content, isDirty, mode }
 let codeEditor = null; // CodeMirror instance
 
+// ANTIGRAVITY PROMPT PRESETS & KEYBOARD SHORTCUTS
+window.applyPresetPrompt = function(type) {
+    const promptInput = document.getElementById("prompt-input");
+    if (!promptInput) return;
+    
+    if (type === "employee_crud") {
+        promptInput.value = `Create an Employee CRUD web application using .NET MVC.
+Implement database calls in the same MVC project using PostgreSQL as database.
+Auto-migrate EF database and seed 3-5 initial sample employee records on startup.
+Write automated Playwright E2E UI test scripts to verify list, create, edit, and delete functionality.`;
+    } else if (type === "add_feature") {
+        promptInput.value = `Add a new feature to the existing application:
+Add an advanced search and filter functionality by Department and Salary range on the Employee list page.
+Ensure Playwright UI tests are updated to verify the search feature.`;
+    } else if (type === "playwright_ui") {
+        promptInput.value = `Generate comprehensive Playwright E2E UI tests for all Web pages.
+Test navigating to list, opening create form, filling inputs, submitting, and asserting table rendering.`;
+    } else if (type === "security_audit") {
+        promptInput.value = `Perform a comprehensive Security & Vulnerability audit across the codebase.
+Fix any hardcoded credentials, SQL injection risks, or unsafe inputs.`;
+    }
+    
+    promptInput.focus();
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    const promptInput = document.getElementById("prompt-input");
+    if (promptInput) {
+        promptInput.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                const startBtn = document.getElementById("start-btn");
+                if (startBtn) startBtn.click();
+            }
+        });
+    }
+});
+
 // DOM ELEMENTS
 const editorTabsBar = document.getElementById("editor-tabs-bar");
 const providerSelect = document.getElementById("provider-select");

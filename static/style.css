@@ -1682,3 +1682,30 @@ body {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+/* ANTIGRAVITY PROMPT STUDIO CHIPS & FLOATING INPUT DECK */
+.preset-chip {
+    background: rgba(0, 223, 216, 0.06);
+    border: 1px solid rgba(0, 223, 216, 0.2);
+    color: var(--accent-cyan);
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 0.25rem 0.55rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.preset-chip:hover {
+    background: rgba(0, 223, 216, 0.18);
+    border-color: var(--accent-cyan);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 223, 216, 0.15);
+}
+
+#prompt-input:focus {
+    outline: none;
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 15px rgba(0, 223, 216, 0.25), inset 0 0 10px rgba(0, 223, 216, 0.05) !important;
+}

@@ -75,9 +75,24 @@
                     
                     <div class="panel-form-container">
                         <div class="panel-form">
-                            <div class="form-group prompt-group">
-                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.4rem;">
-                                    <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Requirements</span>
+                            <div class="form-group prompt-group antigravity-prompt-deck" style="display: flex; flex-direction: column; gap: 0.6rem;">
+                                <!-- Antigravity Quick Requirement Preset Chips -->
+                                <div class="antigravity-presets-row" style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.2rem;">
+                                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('employee_crud')" title="Click to fill template">✨ .NET MVC CRUD (PostgreSQL)</button>
+                                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('add_feature')" title="Click to fill template">🚀 Add Feature to Project</button>
+                                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('playwright_ui')" title="Click to fill template">🎭 Playwright UI Testing</button>
+                                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('security_audit')" title="Click to fill template">🛡️ Audit & Fix Security</button>
+                                </div>
+
+                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                        <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent-cyan);">🌌 Prompt Studio</span>
+                                        <select id="agent-execution-mode" style="background: rgba(0,0,0,0.3); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 12px; font-size: 0.7rem; padding: 0.15rem 0.5rem; outline: none; cursor: pointer;">
+                                            <option value="auto">⚡ Auto-Orchestrator</option>
+                                            <option value="interactive">🖐️ Interactive Approval</option>
+                                            <option value="fast">🚀 Fast Mode</option>
+                                        </select>
+                                    </div>
                                     <div style="display: flex; gap: 0.3rem; align-items: center;">
                                         <!-- Fullscreen icon button -->
                                         <div class="studio-icon-btn-wrap">
@@ -103,7 +118,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                <textarea id="prompt-input" placeholder="e.g., Create a Python command line task planner that writes to JSON and include a test script..." style="min-height: 100px; max-height: 160px; resize: none; overflow-y: auto;"></textarea>
+                                <div class="antigravity-textarea-wrapper" style="position: relative; width: 100%;">
+                                    <textarea id="prompt-input" placeholder="Ask MultiAgentStudio to build, modify, or test anything... (Press Ctrl + Enter to run)" style="min-height: 120px; max-height: 220px; resize: vertical; padding: 0.8rem; border-radius: 12px; border: 1px solid rgba(0, 223, 216, 0.2); background: rgba(5, 8, 15, 0.7); box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-size: 0.88rem; line-height: 1.5; color: var(--text-primary); transition: all 0.2s ease;"></textarea>
+                                    <span style="position: absolute; right: 10px; bottom: 8px; font-size: 0.65rem; color: var(--text-secondary); opacity: 0.6; pointer-events: none;">Ctrl + Enter ↵</span>
+                                </div>
                             </div>
                             <!-- Agent Flow Visualizer Flowchart -->
                             <div class="form-group flow-viz-group" style="margin-top: 0.6rem; border-top: 1px solid var(--border-color); padding-top: 0.6rem; flex-shrink: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
