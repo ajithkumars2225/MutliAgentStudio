@@ -111,12 +111,21 @@
                                 <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.3rem;">
                                     <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Requirements Input</span>
                                     <div style="display: flex; gap: 0.3rem; align-items: center;">
+                                        <!-- New Create icon button -->
+                                        <div class="studio-icon-btn-wrap">
+                                            <button id="new-create-btn" class="studio-icon-btn" aria-label="New Create — Start fresh session" title="New Create — Start fresh session">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                            </button>
+                                            <div class="studio-tooltip">🆕 New Create / Start Fresh</div>
+                                        </div>
+                                        <!-- Fullscreen icon button -->
                                         <div class="studio-icon-btn-wrap">
                                             <button id="expand-prompt-btn" class="studio-icon-btn" aria-label="Fullscreen Editor">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
                                             </button>
                                             <div class="studio-tooltip">Fullscreen Editor</div>
                                         </div>
+                                        <!-- Recent Prompts icon button -->
                                         <div class="studio-icon-btn-wrap recent-prompts-container">
                                             <button id="recent-prompts-trigger" class="studio-icon-btn" aria-label="Recent Prompts">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -147,15 +156,8 @@
                         <div class="panel-action" style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.4rem; flex-shrink: 0;">
                             <!-- Hidden legacy start-btn for script compatibility -->
                             <button id="start-btn" style="display: none;"></button>
-                            <!-- New Create button -->
-                            <div class="studio-action-btn-wrap" style="flex: 1;">
-                                <button id="new-create-btn" class="studio-action-icon-btn studio-action-new" style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem;" title="New Create — Start fresh, ignore saved state">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                                    <span class="action-label">New Create</span>
-                                </button>
-                            </div>
                             <!-- Retry button -->
-                            <div class="studio-action-btn-wrap" style="flex: 1; display: none;" id="retry-btn-wrap">
+                            <div class="studio-action-btn-wrap" style="width: 100%; display: none;" id="retry-btn-wrap">
                                 <button id="retry-btn" class="studio-action-icon-btn studio-action-retry" style="width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem;" title="Retry — Re-run last failed attempt">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                                     <span class="action-label">Retry</span>
