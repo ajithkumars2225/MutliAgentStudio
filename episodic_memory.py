@@ -92,3 +92,29 @@ class EpisodicMemoryEngine:
 
         scored.sort(key=lambda x: x["score"], reverse=True)
         return scored[:top_k]
+
+    @classmethod
+    def get_all_memories(cls) -> List[Dict[str, Any]]:
+        """
+        Returns all stored episodic memories for management in UI.
+        """
+        cls.init_memory_db()
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, category, key_concept, memory_value, created_at FROM episodic_memory ORDER BY id DESC")
+        rows = [dict(r) for r in cursor.fetchall()]
+        conn.close()
+        return rows
+
+    @classmethod
+    def delete_memory(cls, memory_id: int):
+        """
+        Deletes a specific memory entry by ID.
+        """
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM episodic_memory WHERE id = ?", (memory_id,))
+        conn.commit()
+        conn.close()
+        print(f"[Episodic Memory] Deleted memory entry #{memory_id}")
+

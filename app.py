@@ -807,6 +807,17 @@ def index_rag_endpoint():
     count = CodebaseRAGEngine.index_workspace(workspace_dir, provider=provider)
     return {"status": "indexed", "chunks": count}
 
+@app.get("/api/memory/all")
+def get_all_memories_endpoint():
+    from episodic_memory import EpisodicMemoryEngine
+    return {"memories": EpisodicMemoryEngine.get_all_memories()}
+
+@app.delete("/api/memory/{memory_id}")
+def delete_memory_endpoint(memory_id: int):
+    from episodic_memory import EpisodicMemoryEngine
+    EpisodicMemoryEngine.delete_memory(memory_id)
+    return {"status": "deleted", "id": memory_id}
+
 @app.get("/api/memory/recall")
 def recall_memory_endpoint(q: str = ""):
     from episodic_memory import EpisodicMemoryEngine

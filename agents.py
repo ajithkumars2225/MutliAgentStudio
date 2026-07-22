@@ -811,6 +811,25 @@ def orchestrator_node(state: dict) -> dict:
 
     return {"next_agent": next_agent}
 
+def get_memory_context_string(prompt: str) -> str:
+    """
+    Recalls top relevant episodic memories and user preferences for a prompt.
+    """
+    if not prompt:
+        return ""
+    try:
+        from episodic_memory import EpisodicMemoryEngine
+        import database
+        provider = database.get_setting("llm_provider", "google")
+        memories = EpisodicMemoryEngine.recall_relevant_memories(prompt, top_k=3, provider=provider)
+        if memories:
+            mem_items = [f"  - [{m['category']}] {m['concept']}: {m['value']}" for m in memories]
+            print(f"[Episodic Memory 🧠] Recalled and injected {len(memories)} relevant user preferences into prompt.")
+            return "\n=== RECALLED LONG-TERM MEMORIES & USER PREFERENCES ===\n" + "\n".join(mem_items) + "\n======================================================\n"
+    except Exception as e:
+        print(f"[Memory Warning] Failed to recall memories: {e}")
+    return ""
+
 def business_analyst_node(state: dict) -> dict:
     """
     Business Analyst Agent Node.
@@ -829,7 +848,10 @@ def business_analyst_node(state: dict) -> dict:
     default_analyst = "You are an expert Business Analyst.\nAnalyze the following request and detail the user requirements, criteria, and edge cases."
     analyst_header = (custom_prompts.get("analyst") or "").strip() or default_analyst
     
+    memory_str = get_memory_context_string(state.get("prompt", ""))
+
     prompt = f"""{analyst_header}
+{memory_str}
 If there are existing files, consider how the request interacts with them.
 Produce a clean Markdown requirements document including:
 1. Functional Requirements
@@ -913,7 +935,10 @@ def impact_analyzer_node(state: dict) -> dict:
     default_impact = "You are a Software Architect and Impact Analyzer.\nCompare the new requirements against the existing codebase files. Determine which files are affected, what new files must be created, and any risks or dependency issues."
     impact_header = (custom_prompts.get("impact") or "").strip() or default_impact
     
+    memory_str = get_memory_context_string(state.get("prompt", ""))
+
     prompt = f"""{impact_header}
+{memory_str}
 
 Requirements:
 {state['requirements']}
@@ -1203,7 +1228,10 @@ IMPORTANT: The previous execution or test validation failed with the following e
     default_programmer = "You are a senior Software Implementation Engineer.\nYour task is to write clean, operational, and well-commented code files according to the requirements and impact plan.\nWrite the complete code for each target file. Do not use placeholders or skip details."
     programmer_header = (custom_prompts.get("programmer") or "").strip() or default_programmer
     
+    memory_str = get_memory_context_string(state.get("prompt", ""))
+
     prompt = f"""{programmer_header}
+{memory_str}
 
 Requirements:
 {state['requirements']}
