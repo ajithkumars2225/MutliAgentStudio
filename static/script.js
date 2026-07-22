@@ -2057,6 +2057,13 @@ const recentPromptsList = document.getElementById("recent-prompts-list");
 
 if (recentPromptsTrigger && recentPromptsPopover) {
     recentPromptsTrigger.addEventListener("click", (e) => {
+        const isVisible = recentPromptsPopover.classList.contains("show");
+        if (!isVisible) {
+            // Position popover below the trigger button using fixed coordinates
+            const rect = recentPromptsTrigger.getBoundingClientRect();
+            recentPromptsPopover.style.top = (rect.bottom + 6) + "px";
+            recentPromptsPopover.style.left = Math.max(4, rect.right - 270) + "px";
+        }
         recentPromptsPopover.classList.toggle("show");
         e.stopPropagation();
     });
@@ -2853,39 +2860,6 @@ function executeGitRollback(commitHash) {
         "Perform Git Rollback",
         "⚠️"
     );
-}
-
-// 4. Fullscreen Prompt / Requirements Editor Modal
-const promptModal = document.getElementById("prompt-modal");
-const expandPromptBtn = document.getElementById("expand-prompt-btn");
-const closePromptModal = document.getElementById("close-prompt-modal");
-const cancelPromptModalBtn = document.getElementById("cancel-prompt-modal-btn");
-const savePromptModalBtn = document.getElementById("save-prompt-modal-btn");
-const promptModalTextarea = document.getElementById("prompt-modal-textarea");
-
-if (expandPromptBtn && promptModal) {
-    expandPromptBtn.addEventListener("click", () => {
-        if (promptModalTextarea && promptInput) {
-            promptModalTextarea.value = promptInput.value;
-        }
-        promptModal.style.display = "flex";
-        setTimeout(() => { if (promptModalTextarea) promptModalTextarea.focus(); }, 50);
-    });
-}
-
-const hidePromptModal = () => {
-    if (promptModal) promptModal.style.display = "none";
-};
-
-if (closePromptModal) closePromptModal.addEventListener("click", hidePromptModal);
-if (cancelPromptModalBtn) cancelPromptModalBtn.addEventListener("click", hidePromptModal);
-
-if (savePromptModalBtn && promptModalTextarea && promptInput) {
-    savePromptModalBtn.addEventListener("click", () => {
-        promptInput.value = promptModalTextarea.value;
-        hidePromptModal();
-        promptInput.dispatchEvent(new Event("input"));
-    });
 }
 
 // 5. Settings Left Navigation Sidebar Tab Switcher

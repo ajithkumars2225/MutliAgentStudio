@@ -284,7 +284,7 @@ body {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    overflow: hidden;
+    overflow: visible;
     padding: 0 1rem 0.8rem 1rem;
 }
 
@@ -1189,19 +1189,18 @@ body {
 }
 
 .recent-prompts-popover {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
+    position: fixed;
     width: 270px;
     max-height: 290px;
-    background: rgba(11, 15, 25, 0.96);
+    background: rgba(11, 15, 25, 0.98);
     border: 1px solid var(--border-color);
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
-    z-index: 100;
+    z-index: 9999;
     display: none;
     flex-direction: column;
     border-radius: 8px;
     overflow: hidden;
+    backdrop-filter: blur(12px);
 }
 
 .recent-prompts-popover.show {
