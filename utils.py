@@ -704,9 +704,40 @@ This section lists compilation bugs, test failures, or crashes that occurred dur
     (base_path / "test_report.html").write_text(html, encoding="utf-8")
     print(f"Generated HTML test report: {base_path / 'test_report.html'}")
 
+def verify_http_health(url: str, retries: int = 5, delay: float = 2.0) -> Tuple[bool, str]:
+    """
+    Pings the deployment URL up to `retries` times to verify HTTP 200/302/301 server health.
+    """
+    import urllib.request
+    import urllib.error
+    import time
+
+    if not url:
+        return False, "No URL specified for health check."
+    
+    target_url = url.replace("0.0.0.0", "localhost")
+    print(f"[Health Check 🏥] Verifying live server health on {target_url}...")
+    
+    for attempt in range(1, retries + 1):
+        try:
+            req = urllib.request.Request(target_url, headers={'User-Agent': 'StudioHealthCheck/1.0'})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                status_code = resp.getcode()
+                if 200 <= status_code < 400:
+                    return True, f"HTTP {status_code} OK (Verified on attempt {attempt})"
+        except urllib.error.HTTPError as he:
+            if 200 <= he.code < 400 or he.code in (401, 403):
+                return True, f"HTTP {he.code} (Verified on attempt {attempt})"
+        except Exception as e:
+            pass
+        time.sleep(delay)
+        
+    return False, f"Server on {target_url} did not respond after {retries} attempts."
+
 def run_deployment(directory: str) -> Tuple[bool, str]:
     """
     Looks for deployment scripts or docker-compose files and executes them.
+    Performs live HTTP health check verification.
     """
     base_path = Path(directory).resolve()
     if not base_path.exists():
@@ -738,6 +769,9 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
     deploy_sh = base_path / "deploy.sh"
     deploy_py = base_path / "deploy.py"
     
+    output_text = ""
+    success = False
+
     try:
         if deploy_bat.exists() and sys.platform.startswith("win"):
             logs.append("Running deployment batch script (deploy.bat)...")
@@ -748,16 +782,17 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     text=True,
                     cwd=str(base_path),
                     check=False,
-                    timeout=45
+                    timeout=30
                 )
                 success = (result.returncode == 0)
-                logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
-                return success, "\n".join(logs)
+                output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+                logs.append(output_text)
             except subprocess.TimeoutExpired as te:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
-                logs.append(f"Deployment script reached 45s timeout (launched background app server).\nSTDOUT:\n{out}\nSTDERR:\n{err}")
-                return True, "\n".join(logs)
+                output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
+                logs.append(f"Deployment script reached timeout (launched background app server).\n{output_text}")
+                success = True
             
         elif deploy_sh.exists() and not sys.platform.startswith("win"):
             logs.append("Running deployment shell script (deploy.sh)...")
@@ -768,16 +803,17 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     text=True,
                     cwd=str(base_path),
                     check=False,
-                    timeout=45
+                    timeout=30
                 )
                 success = (result.returncode == 0)
-                logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
-                return success, "\n".join(logs)
+                output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+                logs.append(output_text)
             except subprocess.TimeoutExpired as te:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
-                logs.append(f"Deployment script reached 45s timeout (launched background app server).\nSTDOUT:\n{out}\nSTDERR:\n{err}")
-                return True, "\n".join(logs)
+                output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
+                logs.append(f"Deployment script reached timeout (launched background app server).\n{output_text}")
+                success = True
             
         elif deploy_py.exists():
             logs.append("Running deployment Python script (deploy.py)...")
@@ -788,25 +824,38 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     text=True,
                     cwd=str(base_path),
                     check=False,
-                    timeout=45
+                    timeout=30
                 )
                 success = (result.returncode == 0)
-                logs.append(f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
-                return success, "\n".join(logs)
+                output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+                logs.append(output_text)
             except subprocess.TimeoutExpired as te:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
-                logs.append(f"Deployment script reached 45s timeout (launched background app server).\nSTDOUT:\n{out}\nSTDERR:\n{err}")
-                return True, "\n".join(logs)
-            
+                output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
+                logs.append(f"Deployment script reached timeout (launched background app server).\n{output_text}")
+                success = True
         else:
             logs.append("No custom deployment script detected.")
             logs.append("Performing default deployment verification...")
-            
             readme_exists = (base_path / "README.md").exists() or (base_path / "readme.md").exists()
             logs.append(f"Deployment Check: README.md exists = {readme_exists}")
             return True, "\n".join(logs)
-                
+
+        # Health Check Verification
+        detected_url = detect_preview_url(output_text)
+        if detected_url:
+            health_ok, health_msg = verify_http_health(detected_url)
+            logs.append(f"🏥 Live Health Verification for {detected_url}: {health_msg}")
+            if health_ok:
+                logs.append(f"🚀 Application deployed & active at: {detected_url}")
+            else:
+                logs.append(f"⚠️ Warning: Application started, but HTTP ping on {detected_url} timed out.")
+        else:
+            logs.append("ℹ️ No HTTP port binding detected in deploy logs.")
+
+        return success, "\n".join(logs)
+
     except Exception as e:
         return False, f"Deployment script error: {str(e)}"
 
