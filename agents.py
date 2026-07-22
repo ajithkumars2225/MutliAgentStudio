@@ -1350,14 +1350,14 @@ def tester_node(state: dict) -> dict:
     active_agent_name = "tester"
     check_pause()
     print("\n[QA Tester] Running test checks...")
-    from utils import run_tests, run_security_scan, run_playwright_e2e_tests, generate_test_report, scan_workspace
+    from utils import run_local_tests, run_security_scan, run_playwright_e2e_tests, generate_test_report, scan_workspace
     from database import get_active_workspace
     
     workspace_dir = get_active_workspace()
     
     # Run tests directly from disk
     check_pause()
-    success, test_logs = run_tests(workspace_dir)
+    success, test_logs = run_local_tests(workspace_dir)
     check_pause()
     
     # Run Playwright E2E UI verification if Playwright tests exist
