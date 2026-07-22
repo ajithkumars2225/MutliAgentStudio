@@ -106,9 +106,9 @@
                                 </div>
                             </div>
 
-                            <!-- Developer Requirements Input Group (BOTTOM) -->
-                            <div class="form-group prompt-group" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end; margin-top: auto;">
-                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.3rem;">
+                            <!-- Developer Requirements Input Group (EXPANDS TO FILL REMAINING SPACE) -->
+                            <div class="form-group prompt-group" style="flex: 1; display: flex; flex-direction: column; min-height: 0; margin-top: 0.4rem;">
+                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.3rem; flex-shrink: 0;">
                                     <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Requirements Input</span>
                                     <div style="display: flex; gap: 0.3rem; align-items: center;">
                                         <!-- New Create icon button -->
@@ -141,9 +141,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Textarea wrapper with embedded arrow send button -->
-                                <div class="prompt-input-wrapper" style="position: relative; display: flex; align-items: flex-end; width: 100%;">
-                                    <textarea id="prompt-input" placeholder="Type prompt requirements here... (Press Enter or Click ➢)" style="min-height: 60px; max-height: 85px; width: 100%; resize: none; overflow-y: auto; padding-right: 48px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
+                                <!-- Textarea wrapper with embedded arrow send button filling vertical space -->
+                                <div class="prompt-input-wrapper" style="position: relative; display: flex; flex: 1; min-height: 0; width: 100%;">
+                                    <textarea id="prompt-input" placeholder="Type prompt requirements here... (Press Enter or Click ➢)" style="height: 100%; min-height: 120px; width: 100%; resize: none; overflow-y: auto; padding-right: 48px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
                                     <!-- Embedded Arrow Send Button -->
                                     <button id="inline-send-btn" class="inline-send-btn" title="Run Studio Prompt (Enter)" style="position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
