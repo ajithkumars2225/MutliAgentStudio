@@ -757,6 +757,18 @@ def orchestrator_node(state: dict) -> dict:
             next_agent = "FINISH"
             reason = f"Max iterations ({max_iterations}) reached → FINISH to prevent infinite loop."
 
+        elif not has_requirements:
+            next_agent = "BusinessAnalyst"
+            reason = "Requirements missing → BusinessAnalyst."
+
+        elif has_requirements and not has_impact:
+            next_agent = "ImpactAnalyzer"
+            reason = "Requirements established, Impact missing → ImpactAnalyzer."
+
+        elif has_errors and iterations < max_iterations:
+            next_agent = "ImplementEngineer"
+            reason = f"Errors present (iteration {iterations}/{max_iterations}) → ImplementEngineer to fix."
+
         elif has_deploy_logs and not has_errors:
             next_agent = "FINISH"
             reason = "Deployment complete, no errors → FINISH."
@@ -765,25 +777,13 @@ def orchestrator_node(state: dict) -> dict:
             next_agent = "Deployer"
             reason = "Tests passed, no errors, not yet deployed → Deployer."
 
-        elif has_errors and iterations < max_iterations:
+        elif has_requirements and has_impact and iterations == 0 and not state.get("code_updated", False):
             next_agent = "ImplementEngineer"
-            reason = f"Errors present (iteration {iterations}/{max_iterations}) → ImplementEngineer to fix."
+            reason = "Requirements + Impact established → ImplementEngineer."
 
         elif has_code and not has_test_results and not has_errors:
             next_agent = "Tester"
-            reason = "Code written, no errors, no test results yet → Tester."
-
-        elif has_requirements and has_impact and (not has_code or iterations == 0):
-            next_agent = "ImplementEngineer"
-            reason = "Requirements + Impact established, no code yet → ImplementEngineer."
-
-        elif has_requirements and not has_impact:
-            next_agent = "ImpactAnalyzer"
-            reason = "Requirements established, Impact missing → ImpactAnalyzer."
-
-        elif not has_requirements:
-            next_agent = "BusinessAnalyst"
-            reason = "Requirements missing → BusinessAnalyst."
+            reason = "Code written/updated, no errors, no test results yet → Tester."
 
         else:
             next_agent = "FINISH"
