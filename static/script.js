@@ -2911,6 +2911,7 @@ if (workSummaryModal) {
 
 // 8. LLM Observability & Cost Tracking (Telemetry) Actions
 let currentTelemetryData = null;
+const activeExpandedRunIds = new Set();
 
 function loadTelemetry() {
     const tableBody = document.getElementById("telemetry-table-body");
@@ -2941,6 +2942,7 @@ function loadTelemetry() {
         // Render Grouped Runs (Requirement Runs)
         if (data.grouped_runs && data.grouped_runs.length > 0) {
             data.grouped_runs.forEach(run => {
+                const isAlreadyExpanded = activeExpandedRunIds.has(run.id);
                 const tr = document.createElement("tr");
                 tr.style.borderBottom = "1px solid var(--border-color)";
                 tr.style.cursor = "pointer";
@@ -2951,7 +2953,8 @@ function loadTelemetry() {
                 toggleCell.style.padding = "10px";
                 toggleCell.style.textAlign = "center";
                 toggleCell.style.fontSize = "0.7rem";
-                toggleCell.innerHTML = `<span class="toggle-icon" style="transition: transform 0.2s ease; display: inline-block;">▶</span>`;
+                const initialTransform = isAlreadyExpanded ? "rotate(90deg)" : "rotate(0deg)";
+                toggleCell.innerHTML = `<span class="toggle-icon" style="transition: transform 0.2s ease; display: inline-block; transform: ${initialTransform};">▶</span>`;
                 tr.appendChild(toggleCell);
 
                 // Timestamp
@@ -3006,7 +3009,7 @@ function loadTelemetry() {
                 // Collapse Details Row
                 const detailTr = document.createElement("tr");
                 detailTr.className = "telemetry-detail-row";
-                detailTr.style.display = "none";
+                detailTr.style.display = isAlreadyExpanded ? "table-row" : "none";
                 detailTr.style.background = "rgba(0,0,0,0.15)";
                 
                 const detailTd = document.createElement("td");
@@ -3073,11 +3076,16 @@ function loadTelemetry() {
                 detailTr.appendChild(detailTd);
                 tableBody.appendChild(detailTr);
 
-                // Toggle click bind
+                // Toggle click bind with state memory
                 tr.addEventListener("click", (e) => {
                     if (e.target.closest(".inspect-btn")) return;
                     const isCollapsed = (detailTr.style.display === "none");
                     detailTr.style.display = isCollapsed ? "table-row" : "none";
+                    if (isCollapsed) {
+                        activeExpandedRunIds.add(run.id);
+                    } else {
+                        activeExpandedRunIds.delete(run.id);
+                    }
                     const icon = toggleCell.querySelector(".toggle-icon");
                     if (icon) {
                         icon.style.transform = isCollapsed ? "rotate(90deg)" : "rotate(0deg)";
