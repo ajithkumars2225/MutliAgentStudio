@@ -253,11 +253,12 @@
                                 </div>
                                 <button id="toggle-terminal-btn" class="text-btn icon-btn" title="Collapse Terminal" style="font-size: 0.65rem; padding: 0.15rem 0.35rem; margin-left: 0.6rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px;">▼</button>
                             </div>
-                            <div class="terminal-header-actions" style="display: flex; align-items: center;">
+                             <div class="terminal-header-actions" style="display: flex; align-items: center; gap: 0.3rem;">
                                  <button id="pause-btn" class="text-btn icon-btn success-btn-text" title="Pause Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">⏸️ Pause</button>
                                  <button id="resume-btn" class="text-btn icon-btn success-btn-text" title="Resume Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">▶️ Resume</button>
-                                 <button id="terminate-btn" class="text-btn icon-btn danger-btn-text" title="Terminate Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">🛑 Terminate</button>
-                                 <button id="clear-logs-btn" class="text-btn">Clear Terminal</button>
+                                 <button id="terminate-btn" class="text-btn icon-btn danger-btn-text" title="Terminate Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">🛑 Terminate</button>
+                                 <button id="copy-terminal-btn" class="text-btn" title="Copy selected text (or all output if nothing selected) — also Ctrl+Shift+C" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">📋 Copy</button>
+                                 <button id="clear-logs-btn" class="text-btn" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">🗑️ Clear</button>
                              </div>
                         </div>
                         <div id="terminal-container" style="flex: 1; width: 100%; height: calc(100% - 38px); background-color: #05080f; padding: 0.5rem 0.2rem 0.5rem 0.6rem; box-sizing: border-box; overflow: hidden; border-radius: 0 0 8px 8px; display: none;"></div>

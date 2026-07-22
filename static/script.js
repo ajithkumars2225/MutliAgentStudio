@@ -2403,6 +2403,79 @@ if (gitModal) {
     });
 }
 
+// ── Terminal Copy/Paste Utilities ──────────────────────────────────────────
+function showCopyToast(msg) {
+    let toast = document.getElementById('term-copy-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'term-copy-toast';
+        toast.style.cssText = `
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,223,216,0.15); border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan); padding: 0.4rem 1rem; border-radius: 6px;
+            font-size: 0.76rem; font-weight: 600; z-index: 99999;
+            backdrop-filter: blur(8px); pointer-events: none;
+            opacity: 0; transition: opacity 0.2s;
+        `;
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 1800);
+}
+
+// Copy button: copies selected text, or full console buffer if nothing selected
+const copyTerminalBtn = document.getElementById('copy-terminal-btn');
+if (copyTerminalBtn) {
+    copyTerminalBtn.addEventListener('click', () => {
+        // Determine which terminal is visible
+        const consoleVisible = document.getElementById('console-logs-container')?.style.display !== 'none';
+        const activeTerm = consoleVisible ? termConsole : term;
+        if (!activeTerm) return;
+        const sel = activeTerm.getSelection();
+        const textToCopy = sel || '(Select text in the terminal first, then click Copy)';
+        if (sel) {
+            navigator.clipboard.writeText(sel).then(() => {
+                showCopyToast('✅ Copied!');
+                copyTerminalBtn.textContent = '✅ Copied!';
+                setTimeout(() => { copyTerminalBtn.textContent = '📋 Copy'; }, 1500);
+            }).catch(() => showCopyToast('Select text first, then right-click to copy'));
+        } else {
+            showCopyToast('Select text in the terminal first');
+        }
+    });
+}
+
+// Ctrl+Shift+C → Copy selection from active terminal
+// Ctrl+Shift+V → Paste into shell terminal
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        const consoleVisible = document.getElementById('console-logs-container')?.style.display !== 'none';
+        const activeTerm = consoleVisible ? termConsole : term;
+        if (activeTerm) {
+            const sel = activeTerm.getSelection();
+            if (sel) {
+                navigator.clipboard.writeText(sel).then(() => showCopyToast('✅ Copied!')).catch(() => {});
+            }
+        }
+    }
+    if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+        e.preventDefault();
+        navigator.clipboard.readText().then(text => {
+            if (text && term) {
+                term.write(text);
+                fetch("/api/terminal/write", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ data: text })
+                });
+            }
+        }).catch(() => {});
+    }
+});
+
 // Initialize Xterm.js Terminal Instance (Interactive Shell)
 let term = null;
 let fitAddon = null;
@@ -2411,10 +2484,17 @@ let fitAddonConsole = null;
 if (document.getElementById("terminal-container")) {
     term = new Terminal({
         cursorBlink: true,
+        scrollback: 10000,
+        scrollSensitivity: 5,
+        fastScrollSensitivity: 10,
+        allowProposedApi: true,
+        rightClickSelectsWord: true,
         theme: {
             background: '#05080f',
             foreground: '#e2e8f0',
             cursor: '#00dfd8',
+            selectionBackground: 'rgba(0, 223, 216, 0.3)',
+            selectionForeground: '#ffffff',
             black: '#000000',
             red: '#ef4444',
             green: '#10b981',
@@ -2477,6 +2557,31 @@ if (document.getElementById("terminal-container")) {
             }
         });
     }, 100);
+
+    // Right-click to copy selected text from shell terminal
+    const shellEl = document.getElementById('terminal-container');
+    if (shellEl) {
+        shellEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const sel = term.getSelection();
+            if (sel) {
+                navigator.clipboard.writeText(sel).catch(() => {});
+                showCopyToast('Copied to clipboard!');
+            } else {
+                // If nothing selected, paste from clipboard into terminal
+                navigator.clipboard.readText().then(text => {
+                    if (text) {
+                        term.write(text);
+                        fetch("/api/terminal/write", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ data: text })
+                        });
+                    }
+                }).catch(() => {});
+            }
+        });
+    }
 }
 
 // Initialize Xterm.js Console Instance (Agent Console Logs)
@@ -2484,10 +2589,17 @@ let termConsole = null;
 if (document.getElementById("console-logs-container")) {
     termConsole = new Terminal({
         cursorBlink: false,
+        scrollback: 10000,
+        scrollSensitivity: 5,
+        fastScrollSensitivity: 10,
+        allowProposedApi: true,
+        rightClickSelectsWord: true,
         theme: {
             background: '#05080f',
             foreground: '#e2e8f0',
             cursor: 'transparent',
+            selectionBackground: 'rgba(0, 223, 216, 0.3)',
+            selectionForeground: '#ffffff',
             black: '#000000',
             red: '#ef4444',
             green: '#10b981',
@@ -2507,6 +2619,19 @@ if (document.getElementById("console-logs-container")) {
     termConsole.open(document.getElementById('console-logs-container'));
     try { fitAddonConsole.fit(); } catch(e) {}
     termConsole.write("🤖 Agent Console logs will stream here in real-time when simulation runs...\r\n");
+
+    // Right-click to copy selected text from console terminal
+    const consoleEl = document.getElementById('console-logs-container');
+    if (consoleEl) {
+        consoleEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const sel = termConsole.getSelection();
+            if (sel) {
+                navigator.clipboard.writeText(sel).catch(() => {});
+                showCopyToast('Copied to clipboard!');
+            }
+        });
+    }
 }
 
 // Bind Terminal Tabs Triggers
