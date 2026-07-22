@@ -2029,9 +2029,11 @@ if (recentPromptsTrigger && recentPromptsPopover) {
     recentPromptsTrigger.addEventListener("click", (e) => {
         const isVisible = recentPromptsPopover.classList.contains("show");
         if (!isVisible) {
-            // Position popover below the trigger button using fixed coordinates
+            // Position popover ABOVE the trigger button
             const rect = recentPromptsTrigger.getBoundingClientRect();
-            recentPromptsPopover.style.top = (rect.bottom + 6) + "px";
+            const popoverHeight = 296; // max-height of popover
+            const topPos = rect.top - popoverHeight - 6;
+            recentPromptsPopover.style.top = Math.max(4, topPos) + "px";
             recentPromptsPopover.style.left = Math.max(4, rect.right - 270) + "px";
         }
         recentPromptsPopover.classList.toggle("show");
