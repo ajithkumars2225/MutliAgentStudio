@@ -577,8 +577,8 @@ def generate_test_report(directory: str, state: dict, security_results: dict, te
     status_badge = "PASSED" if test_success else "FAILED"
     status_color = "#28a745" if test_success else "#dc3545"
     vulns = security_results.get("vulnerabilities", [])
-    incidents = state.get("incidents", [])
-    total_iterations = state.get('iterations', 1)
+    from visual_playwright_auditor import VisualPlaywrightAuditor
+    screenshots = VisualPlaywrightAuditor.capture_live_screenshots(directory)
     
     md = f"""# Multi-Agent QA Testing, Security Audit & Incident Resolution Report
 

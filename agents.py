@@ -837,9 +837,15 @@ def business_analyst_node(state: dict) -> dict:
     global active_agent_name
     active_agent_name = "analyst"
     check_pause()
-    print("\n[Business Analyst] Detailing specifications and criteria...")
-    llm = get_llm()
+    from database import get_active_workspace
+    from git_branching import GitBranchingManager
+    from db_provisioner import DatabaseProvisioner
     
+    workspace_dir = get_active_workspace()
+    if workspace_dir:
+        GitBranchingManager.create_feature_branch(workspace_dir, state.get("prompt", "feature"))
+        DatabaseProvisioner.verify_and_get_db_config("postgresql")
+        
     codebase_desc = ""
     if state.get("codebase"):
         codebase_desc = "Existing codebase contains these files:\n" + "\n".join([f"- {f}" for f in state["codebase"].keys()])
@@ -1524,6 +1530,9 @@ Write the deployment scripts:"""
     
     # Auto-commit on successful deployment
     if success:
+        from git_branching import GitBranchingManager
+        GitBranchingManager.commit_agent_changes(workspace_dir, "Completed feature implementation & QA tests passed")
+        
         # Generate walkthrough_agent.md handoff documentation
         print("\n[Deployment Agent] Generating walkthrough_agent.md handoff documentation...")
         walkthrough_prompt = f"""You are a Lead Software Engineer and Technical Writer.
