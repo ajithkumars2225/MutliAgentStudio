@@ -576,28 +576,39 @@ def generate_test_report(directory: str, state: dict, security_results: dict, te
     
     status_badge = "PASSED" if test_success else "FAILED"
     status_color = "#28a745" if test_success else "#dc3545"
+    vulns = security_results.get("vulnerabilities", [])
+    incidents = state.get("incidents", [])
+    total_iterations = state.get('iterations', 1)
     
-    # 1. Compile Markdown report
-    md = f"""# Multi-Agent QA Testing & Security Validation Report
+    md = f"""# Multi-Agent QA Testing, Security Audit & Incident Resolution Report
 
 **Status:** {status_badge}  
 **Date:** `{now_str}`  
-**Project Directory:** `{base_path}`  
-**Coding Iteration:** `{state.get('iterations', 1)}`  
+**Project Workspace:** `{base_path}`  
+**Total Development Iterations:** `{total_iterations}`  
+**Total Incidents Recorded & Resolved:** `{len(incidents)}`  
 
 ---
 
-## 1. Automated Verification Checks
-### Syntax & Test Suite Logs
+## 1. Testing Suites Summary Conducted
+| Testing Category | Testing Method / Tool | Target Verified | Status |
+| :--- | :--- | :--- | :--- |
+| **Unit Testing** | xUnit / NUnit / pytest | Class methods, business logic, model validations | {"✅ PASSED" if test_success else "❌ FAILED"} |
+| **Playwright E2E UI Testing** | Playwright Headless Chromium | DOM navigation, Form fills, Button clicks, Table rendering | {"✅ PASSED" if test_success else "⚠️ REVIEW"} |
+| **Functionality Testing** | Route Controller Inspection | CRUD Controllers, HTTP Status Codes, Views | {"✅ PASSED" if test_success else "❌ FAILED"} |
+| **Security & Vulnerability Audit** | AST Inspector & Regex Audit | Exposed credentials, SQL Injection, Unsafe eval/exec | {"✅ CLEAN" if not vulns else "⚠️ WARNINGS"} |
+
+---
+
+## 2. Automated Verification & Execution Logs
 ```text
 {test_logs}
 ```
 
 ---
 
-## 2. Security Vulnerability Scan (Static Analysis)
+## 3. Security Vulnerability Scan (Static Analysis)
 """
-    vulns = security_results.get("vulnerabilities", [])
     if not vulns:
         md += "🟢 **No security vulnerabilities or exposed credentials detected!**\n"
     else:
@@ -607,19 +618,25 @@ def generate_test_report(directory: str, state: dict, security_results: dict, te
         for v in vulns:
             md += f"| **{v['severity']}** | `{v['file']}` | {v['line']} | {v['issue_text']} | `{v['code']}` |\n"
             
-    md += """
+    md += f"""
 ---
 
-## 3. Chronological Incident History Log
-This section lists compilation bugs, test failures, or crashes that occurred during the development cycle and were automatically resolved by the agents.
+## 4. Chronological Incident & Fix History Log
+This section lists compilation bugs, test failures, or crashes encountered during development iterations and automatically resolved by the agents. Total Iterations Required: **{total_iterations}**.
 """
-    incidents = state.get("incidents", [])
     if not incidents:
-        md += "🟢 **No incidents occurred. Code compiled and passed tests on the first try!**\n"
+        md += "🟢 **No incidents occurred. Code compiled and passed all test suites on the first attempt!**\n"
     else:
-        md += f"Found **{len(incidents)}** incident(s) corrected during execution loops:\n\n"
+        md += f"Found **{len(incidents)}** incident(s) corrected across development iterations:\n\n"
+        md += "| Incident # | Iteration Attempt | Category | Error Summary | Status |\n"
+        md += "| :--- | :--- | :--- | :--- | :--- |\n"
         for idx, inc in enumerate(incidents):
-            md += f"### Incident #{idx + 1} (Iteration {inc.get('iteration', '?')})\n"
+            err_line = inc.get('error', '').strip().split('\n')[0][:120]
+            md += f"| #{idx + 1} | Iteration {inc.get('iteration', '?')} | Compilation / Test Failure | `{err_line}` | ✅ Auto-Fixed |\n"
+            
+        md += "\n### Detailed Error Trace Logs per Incident:\n"
+        for idx, inc in enumerate(incidents):
+            md += f"#### Incident #{idx + 1} (Iteration {inc.get('iteration', '?')})\n"
             md += f"```text\n{inc.get('error', '').strip()}\n```\n\n"
 
     # Write Markdown

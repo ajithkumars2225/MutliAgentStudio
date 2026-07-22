@@ -844,8 +844,12 @@ def business_analyst_node(state: dict) -> dict:
     if state.get("codebase"):
         codebase_desc = "Existing codebase contains these files:\n" + "\n".join([f"- {f}" for f in state["codebase"].keys()])
         
-    custom_prompts = load_custom_prompts()
-    default_analyst = "You are an expert Business Analyst.\nAnalyze the following request and detail the user requirements, criteria, and edge cases."
+    default_analyst = """You are a Lead Enterprise Business Analyst and Solutions Architect.
+Analyze the user request and define comprehensive, IEEE-grade technical requirements:
+1. Functional Requirements (CRUD operations, navigation, business logic rules)
+2. Non-Functional Requirements (UI Responsiveness, Modern Glassmorphism Design, Database Auto-Migration, Security & Validation)
+3. Acceptance Criteria & Edge Cases
+4. QA Test Scenarios (Unit, Functionality, Playwright E2E UI testing, Security Audits)"""
     analyst_header = (custom_prompts.get("analyst") or "").strip() or default_analyst
     
     memory_str = get_memory_context_string(state.get("prompt", ""))
@@ -1228,20 +1232,26 @@ IMPORTANT: The previous execution or test validation failed with the following e
 Your task is to write clean, fully operational, and production-ready code according to the requirements and impact plan.
 
 CRITICAL ARCHITECTURAL REQUIREMENTS:
-1. AUTOMATIC DB MIGRATION & SAMPLE DATA SEEDING:
-   - For database apps (.NET EF Core, Node Prisma/Sequelize, Python SQLAlchemy/Django), you MUST include automatic DB migration AND sample data seeding (e.g. `DbInitializer.Seed(db)`) on startup in `Program.cs` / `app.py` / `server.js`.
-   - Never leave database tables empty on startup! Seed at least 3-5 realistic records so the UI immediately displays data.
+1. MODERN & ELEGANT FRONTEND UI STANDARDS:
+   - Create modern, elegant, user-friendly, and responsive UI layouts.
+   - Use CSS custom properties (`:root` variables), glassmorphism card containers, vibrant action buttons, hover micro-interactions, and mobile/desktop responsive Flexbox/Grid alignment.
+   - ALWAYS include `<meta name="viewport" content="width=device-width, initial-scale=1.0">` in HTML / Razor Layouts.
+   - Empty State Views MUST include a prominent, attractive action button (e.g. `➕ Add First Entry Now`).
 
-2. PLAYWRIGHT & AUTOMATED E2E UI TESTING:
-   - For web apps, write an automated Playwright or E2E UI test suite (`tests/ui.spec.ts` or `ui_test.py` or `UITests.cs`) that tests:
+2. BACKEND ARCHITECTURE & AUTOMATIC DATA SEEDING:
+   - Follow Clean Architecture, Repository Pattern / MVC Separation, SOLID principles, async/await queries, and strongly typed DTOs.
+   - For database apps (.NET EF Core, Node Prisma/Sequelize, Python SQLAlchemy/Django), you MUST include automatic DB migration AND sample data seeding (e.g. `DbInitializer.Seed(db)`) on startup in `Program.cs` / `app.py` / `server.js`.
+   - Never leave database tables empty on startup! Seed 3-5 realistic initial records.
+
+3. AUTOMATED PLAYWRIGHT E2E & UNIT TESTING:
+   - Write an automated Playwright or E2E UI test spec (`tests/ui.spec.ts` or `ui_test.py` or `UITests.cs`) that tests:
      a) Navigating to the main CRUD list page.
      b) Clicking the 'Create New' button and verifying form rendering.
      c) Submitting a new record form and asserting DOM table rendering.
      d) Testing Edit, Details, and Delete action links.
 
-3. COMPLETE OPERATIONAL CODE:
-   - Write 100% complete, fully working code. Do NOT use placeholders, `// TODO`, `...`, or missing namespaces.
-   - Use standard assertion libraries and verified syntax so test suites compile and execute with 0 errors."""
+4. 100% OPERATIONAL ZERO-PLACEHOLDER CODE:
+   - Write complete, production-ready code. Do NOT use placeholders, `// TODO`, `...`, or missing namespaces."""
     programmer_header = (custom_prompts.get("programmer") or "").strip() or default_programmer
     
     memory_str = get_memory_context_string(state.get("prompt", ""))
