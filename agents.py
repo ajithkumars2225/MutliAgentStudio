@@ -856,6 +856,7 @@ Analyze the user request and define comprehensive, IEEE-grade technical requirem
 2. Non-Functional Requirements (UI Responsiveness, Modern Glassmorphism Design, Database Auto-Migration, Security & Validation)
 3. Acceptance Criteria & Edge Cases
 4. QA Test Scenarios (Unit, Functionality, Playwright E2E UI testing, Security Audits)"""
+    custom_prompts = load_custom_prompts()
     analyst_header = (custom_prompts.get("analyst") or "").strip() or default_analyst
     
     memory_str = get_memory_context_string(state.get("prompt", ""))
@@ -1258,6 +1259,7 @@ CRITICAL ARCHITECTURAL REQUIREMENTS:
 
 4. 100% OPERATIONAL ZERO-PLACEHOLDER CODE:
    - Write complete, production-ready code. Do NOT use placeholders, `// TODO`, `...`, or missing namespaces."""
+    custom_prompts = load_custom_prompts()
     programmer_header = (custom_prompts.get("programmer") or "").strip() or default_programmer
     
     memory_str = get_memory_context_string(state.get("prompt", ""))
