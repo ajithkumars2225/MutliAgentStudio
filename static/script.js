@@ -3030,6 +3030,8 @@ function loadTelemetry() {
                     </div>
                 `;
 
+                if (!window.telemetryLogMap) window.telemetryLogMap = new Map();
+                
                 if (!run.details || run.details.length === 0) {
                     detailsHtml += `<p style="margin: 0; font-size: 0.74rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">No individual LLM calls recorded (e.g. bypassed via cached files or CLI providers).</p>`;
                 } else {
@@ -3050,6 +3052,9 @@ function loadTelemetry() {
                     `;
 
                     run.details.forEach(detail => {
+                        if (detail.id) {
+                            window.telemetryLogMap.set(detail.id, detail);
+                        }
                         detailsHtml += `
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);" class="hover-row">
                                 <td style="padding: 6px 8px;">${new Date(detail.timestamp).toLocaleTimeString()}</td>
@@ -3059,7 +3064,7 @@ function loadTelemetry() {
                                 <td style="padding: 6px 8px; text-align: right;">${detail.latency_sec}s</td>
                                 <td style="padding: 6px 8px; text-align: right;">$${detail.cost_usd.toFixed(6)}</td>
                                 <td style="padding: 6px 8px; text-align: center;">
-                                    <button class="inspect-btn text-btn" data-log-json='${encodeURIComponent(JSON.stringify(detail))}' style="font-size: 0.68rem; padding: 0.1rem 0.4rem; color: var(--accent-cyan) !important; border-color: rgba(6, 182, 212, 0.25) !important;">🔍 Inspect</button>
+                                    <button class="inspect-btn text-btn" data-log-id="${detail.id}" style="font-size: 0.68rem; padding: 0.1rem 0.4rem; color: var(--accent-cyan) !important; border-color: rgba(6, 182, 212, 0.25) !important;">🔍 Inspect</button>
                                 </td>
                             </tr>
                         `;
@@ -3075,6 +3080,19 @@ function loadTelemetry() {
                 detailTd.appendChild(containerDiv);
                 detailTr.appendChild(detailTd);
                 tableBody.appendChild(detailTr);
+
+                // Bind inspect button click handlers directly inside containerDiv
+                containerDiv.querySelectorAll(".inspect-btn").forEach(btn => {
+                    btn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const logId = parseInt(btn.getAttribute("data-log-id"));
+                        const log = window.telemetryLogMap.get(logId);
+                        if (log) {
+                            showTelemetryDetailDrawer(log);
+                        }
+                    });
+                });
 
                 // Toggle click bind with state memory
                 tr.addEventListener("click", (e) => {
