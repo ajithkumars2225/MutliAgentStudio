@@ -109,57 +109,9 @@
                     </div>
                 </aside>
 
-                <!-- MAIN WORKSPACE CONTAINER -->
-                <div class="main-content" style="display: flex; flex-direction: column; gap: 0.8rem; overflow: hidden; height: 100%; padding: 0.5rem;">
+                <!-- MAIN WORKSPACE CONTAINER (FULL SCREEN HEIGHT) -->
+                <div class="main-content" style="display: grid; grid-template-rows: 1fr 6px 220px; gap: 0; overflow: hidden; height: 100%; padding: 0;">
                     
-                    <!-- TOP PROMINENT CENTER FLOATING PROMPT STUDIO DECK -->
-                    <section class="antigravity-center-prompt-deck glass-card" style="padding: 0.8rem 1.2rem; border-radius: 14px; border: 1px solid rgba(0, 223, 216, 0.25); background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); flex-shrink: 0;">
-                        <!-- Antigravity Presets Row -->
-                        <div class="antigravity-presets-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.4rem;">
-                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                                <button type="button" class="preset-chip" onclick="applyPresetPrompt('employee_crud')" title="Click to fill template">✨ .NET MVC CRUD (PostgreSQL)</button>
-                                <button type="button" class="preset-chip" onclick="applyPresetPrompt('add_feature')" title="Click to fill template">🚀 Add Feature to Project</button>
-                                <button type="button" class="preset-chip" onclick="applyPresetPrompt('playwright_ui')" title="Click to fill template">🎭 Playwright UI Testing</button>
-                                <button type="button" class="preset-chip" onclick="applyPresetPrompt('security_audit')" title="Click to fill template">🛡️ Audit & Fix Security</button>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.4rem;">
-                                <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent-cyan);">🌌 Prompt Studio</span>
-                                <select id="agent-execution-mode" style="background: rgba(0,0,0,0.4); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 12px; font-size: 0.75rem; padding: 0.2rem 0.6rem; outline: none; cursor: pointer;">
-                                    <option value="auto">⚡ Auto-Orchestrator</option>
-                                    <option value="interactive">🖐️ Interactive Approval</option>
-                                    <option value="fast">🚀 Fast Mode</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Main Center Textarea Input -->
-                        <div style="position: relative; width: 100%; margin-bottom: 0.6rem;">
-                            <textarea id="prompt-input" placeholder="Ask MultiAgentStudio to build, modify, or test anything... (Press Ctrl + Enter to run)" style="width: 100%; min-height: 80px; max-height: 160px; resize: vertical; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(5, 8, 15, 0.8); font-size: 0.92rem; line-height: 1.5; color: var(--text-primary); transition: all 0.2s ease; outline: none;"></textarea>
-                            <span style="position: absolute; right: 12px; bottom: 10px; font-size: 0.7rem; color: var(--text-secondary); opacity: 0.6; pointer-events: none;">Ctrl + Enter ↵</span>
-                        </div>
-
-                        <!-- Action Buttons Bar -->
-                        <div style="display: flex; gap: 0.8rem; align-items: center; justify-content: flex-end;">
-                            <div class="studio-action-btn-wrap" style="width: auto;">
-                                <button id="new-create-btn" class="btn secondary-btn" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
-                                    🆕 New Create
-                                </button>
-                            </div>
-                            <div class="studio-action-btn-wrap" style="width: auto;" id="retry-btn-wrap">
-                                <button id="retry-btn" class="btn secondary-btn" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: 8px; font-weight: 600; display: none; align-items: center; gap: 0.4rem;">
-                                    🔄 Retry
-                                </button>
-                            </div>
-                            <div class="studio-action-btn-wrap" style="width: auto;">
-                                <button id="start-btn" class="btn primary-btn" style="padding: 0.45rem 1.6rem; font-size: 0.88rem; border-radius: 8px; font-weight: 700; background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%); border: none; box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; color: white;">
-                                    ⚡ Run Studio
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- BOTTOM HALF: WORKSPACE & TERMINAL GRID -->
-                    <div style="display: grid; grid-template-rows: 1fr 6px 200px; gap: 0; flex: 1; min-height: 0; overflow: hidden;">
                     <!-- TOP HALF: GENERATED WORKSPACE (IDE VIEW) -->
                     <section class="workspace-area glass-card" style="height: auto; min-height: 0;">
                         <div class="panel-header">
@@ -834,8 +786,51 @@
                             <button id="system-dialog-confirm-btn" class="action-btn primary-btn" style="width: auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">OK</button>
                         </div>
                     </div>
+        <!-- SIGNATURE GOOGLE ANTIGRAVITY FLOATING COMMAND PILL BAR -->
+        <div id="antigravity-floating-bar" class="antigravity-floating-pill">
+            <!-- Top Controls Row -->
+            <div class="floating-top-row">
+                <div class="preset-chips-container">
+                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('employee_crud')" title="Click to fill template">✨ .NET MVC CRUD (PostgreSQL)</button>
+                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('add_feature')" title="Click to fill template">🚀 Add Feature</button>
+                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('playwright_ui')" title="Click to fill template">🎭 Playwright UI</button>
+                    <button type="button" class="preset-chip" onclick="applyPresetPrompt('security_audit')" title="Click to fill template">🛡️ Audit Security</button>
                 </div>
+                <div class="floating-mode-container">
+                    <select id="agent-execution-mode" class="floating-select">
+                        <option value="auto">⚡ Auto-Orchestrator</option>
+                        <option value="interactive">🖐️ Interactive Approval</option>
+                        <option value="fast">🚀 Fast Mode</option>
+                    </select>
+                </div>
+            </div>
 
-                <script src="script.js?v=46"></script>
-            </body>
-            </html>
+            <!-- Middle Textarea Prompt Row -->
+            <div class="floating-input-row">
+                <textarea id="prompt-input" class="floating-textarea" placeholder="Ask MultiAgentStudio to build, edit, or test anything... (Press Ctrl + Enter to run)"></textarea>
+            </div>
+
+            <!-- Bottom Actions Row -->
+            <div class="floating-bottom-row">
+                <div class="left-actions">
+                    <button id="new-create-btn" class="floating-icon-btn" title="New Create — Start Fresh">
+                        🆕 <span class="btn-label">New Create</span>
+                    </button>
+                    <div id="retry-btn-wrap" style="display: inline-block;">
+                        <button id="retry-btn" class="floating-icon-btn" style="display: none;" title="Retry Last Attempt">
+                            🔄 <span class="btn-label">Retry</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="right-actions">
+                    <span class="shortcut-pill">Ctrl + Enter ↵</span>
+                    <button id="start-btn" class="antigravity-run-btn" title="Run Studio">
+                        ⚡ <span class="btn-text">Run Studio</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script src="script.js?v=46"></script>
+    </body>
+    </html>
