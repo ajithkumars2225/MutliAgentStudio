@@ -2924,10 +2924,11 @@ function loadTelemetry() {
     .then(data => {
         currentTelemetryData = data;
         
-        if (costBox) costBox.textContent = `$${data.totals.total_cost.toFixed(6)}`;
-        if (tokensBox) tokensBox.textContent = data.totals.total_tokens.toLocaleString();
-        if (latencyBox) latencyBox.textContent = `${data.totals.avg_latency}s`;
-        if (callsBox) callsBox.textContent = data.totals.total_calls;
+        const totals = data.totals || data.summary || { total_cost: 0, total_tokens: 0, avg_latency: 0, total_calls: 0 };
+        if (costBox) costBox.textContent = `$${(totals.total_cost || 0).toFixed(6)}`;
+        if (tokensBox) tokensBox.textContent = (totals.total_tokens || 0).toLocaleString();
+        if (latencyBox) latencyBox.textContent = `${totals.avg_latency || 0}s`;
+        if (callsBox) callsBox.textContent = totals.total_calls || 0;
         
         if (!tableBody) return;
         tableBody.innerHTML = "";

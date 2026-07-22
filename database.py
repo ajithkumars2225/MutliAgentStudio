@@ -402,6 +402,7 @@ def get_telemetry_data() -> dict:
     conn.close()
     return {
         "summary": summary,
+        "totals": summary,
         "agent_breakdown": agent_breakdown,
         "grouped_runs": grouped_runs,
         "orphaned_logs": orphaned_logs
