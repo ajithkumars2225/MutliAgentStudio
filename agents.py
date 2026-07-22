@@ -1224,8 +1224,24 @@ IMPORTANT: The previous execution or test validation failed with the following e
             except Exception:
                 pass
 
-    custom_prompts = load_custom_prompts()
-    default_programmer = "You are a senior Software Implementation Engineer.\nYour task is to write clean, operational, and well-commented code files according to the requirements and impact plan.\nWrite the complete code for each target file. Do not use placeholders or skip details."
+    default_programmer = """You are a Principal Software Implementation Engineer.
+Your task is to write clean, fully operational, and production-ready code according to the requirements and impact plan.
+
+CRITICAL ARCHITECTURAL REQUIREMENTS:
+1. AUTOMATIC DB MIGRATION & SAMPLE DATA SEEDING:
+   - For database apps (.NET EF Core, Node Prisma/Sequelize, Python SQLAlchemy/Django), you MUST include automatic DB migration AND sample data seeding (e.g. `DbInitializer.Seed(db)`) on startup in `Program.cs` / `app.py` / `server.js`.
+   - Never leave database tables empty on startup! Seed at least 3-5 realistic records so the UI immediately displays data.
+
+2. PLAYWRIGHT & AUTOMATED E2E UI TESTING:
+   - For web apps, write an automated Playwright or E2E UI test suite (`tests/ui.spec.ts` or `ui_test.py` or `UITests.cs`) that tests:
+     a) Navigating to the main CRUD list page.
+     b) Clicking the 'Create New' button and verifying form rendering.
+     c) Submitting a new record form and asserting DOM table rendering.
+     d) Testing Edit, Details, and Delete action links.
+
+3. COMPLETE OPERATIONAL CODE:
+   - Write 100% complete, fully working code. Do NOT use placeholders, `// TODO`, `...`, or missing namespaces.
+   - Use standard assertion libraries and verified syntax so test suites compile and execute with 0 errors."""
     programmer_header = (custom_prompts.get("programmer") or "").strip() or default_programmer
     
     memory_str = get_memory_context_string(state.get("prompt", ""))
@@ -1315,7 +1331,7 @@ def tester_node(state: dict) -> dict:
     active_agent_name = "tester"
     check_pause()
     print("\n[QA Tester] Running test checks...")
-    from utils import run_tests, run_security_scan, generate_test_report, scan_workspace
+    from utils import run_tests, run_security_scan, run_playwright_e2e_tests, generate_test_report, scan_workspace
     from database import get_active_workspace
     
     workspace_dir = get_active_workspace()
@@ -1325,6 +1341,12 @@ def tester_node(state: dict) -> dict:
     success, test_logs = run_tests(workspace_dir)
     check_pause()
     
+    # Run Playwright E2E UI verification if Playwright tests exist
+    pw_success, pw_logs = run_playwright_e2e_tests(workspace_dir)
+    if not pw_success:
+        success = False
+        test_logs += "\n\n--- PLAYWRIGHT E2E UI TEST FAILURE ---\n" + pw_logs
+        
     print("--- Test Logs ---")
     print(test_logs)
     print(f"Validation Success: {success}")

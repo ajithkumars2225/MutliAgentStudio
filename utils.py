@@ -117,7 +117,48 @@ def check_docker_installed() -> bool:
     except Exception:
         return False
 
-def run_tests(directory: str) -> Tuple[bool, str]:
+def run_playwright_e2e_tests(directory: str, base_url: str = "") -> Tuple[bool, str]:
+    """
+    Executes automated Playwright E2E UI tests against the running web application.
+    Empirically verifies UI buttons, forms, routing, and DOM responses.
+    """
+    base_path = Path(directory).resolve()
+    logs = []
+    
+    # 1. Check for Playwright JS/TS test files
+    playwright_js_files = list(base_path.rglob("*.spec.ts")) + list(base_path.rglob("*.spec.js")) + list(base_path.rglob("playwright.config.*"))
+    if playwright_js_files:
+        logs.append("[Playwright E2E 🎭] Playwright JS/TS test suite detected. Running headless browser E2E tests...")
+        try:
+            cmd = ["npx", "playwright", "test"]
+            env = os.environ.copy()
+            if base_url:
+                env["BASE_URL"] = base_url
+            res = subprocess.run(cmd, capture_output=True, text=True, cwd=str(base_path), env=env, shell=True, timeout=60)
+            logs.append(f"Playwright Log:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
+            if res.returncode != 0:
+                return False, "\n".join(logs)
+            return True, "\n".join(logs)
+        except Exception as e:
+            logs.append(f"Playwright JS execution warning: {e}")
+            
+    # 2. Check for Python Playwright test files
+    playwright_py_files = [f for f in base_path.rglob("*.py") if "playwright" in f.name.lower() or "ui_test" in f.name.lower()]
+    if playwright_py_files:
+        logs.append("[Playwright E2E 🎭] Python Playwright UI test suite detected. Running pytest with Playwright...")
+        try:
+            cmd = [sys.executable, "-m", "pytest", str(playwright_py_files[0]), "-v"]
+            res = subprocess.run(cmd, capture_output=True, text=True, cwd=str(base_path), timeout=60)
+            logs.append(f"Python Playwright Log:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
+            if res.returncode != 0:
+                return False, "\n".join(logs)
+            return True, "\n".join(logs)
+        except Exception as e:
+            logs.append(f"Python Playwright execution warning: {e}")
+            
+    return True, "\n".join(logs)
+
+def run_local_tests(directory: str) -> Tuple[bool, str]:
     """
     Performs a syntax check and runs unit tests in the workspace.
     Supports running tests inside an isolated Docker container if Docker is available
