@@ -615,38 +615,8 @@ if (promptInput) {
         }
     });
 }
-    
-    // Check if it is currently in "Apply & Restart" state
-    if (startBtn.innerHTML.includes("Apply & Restart")) {
-        startBtn.disabled = true;
-        startBtn.innerHTML = '<span class="btn-spinner"></span> Restarting Studio...';
-        
-        // Terminate active agent
-        fetch("/api/terminate", { method: "POST" })
-        .then(r => r.json())
-        .then(() => {
-            // Poll status until not running, then trigger the new run
-            let checkInterval = setInterval(() => {
-                fetch("/api/status")
-                .then(r => r.json())
-                .then(status => {
-                    if (!status.running) {
-                        clearInterval(checkInterval);
-                        triggerAgentRun(prompt);
-                    }
-                });
-            }, 500);
-        })
-        .catch(err => {
-            alert("Failed to restart: " + err);
-            pollStatus();
-        });
-        return;
-    }
-    
-    // Normal start
-    triggerAgentRun(prompt);
-});
+
+
 
 if (promptInput) {
     promptInput.addEventListener("input", () => {
