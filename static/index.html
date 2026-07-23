@@ -133,22 +133,23 @@
 
                             <!-- Developer Requirements Input Group -->
                             <div class="form-group prompt-group" style="flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; margin-top: 0.3rem;">
-                                <!-- Reduced Height Compact Textarea wrapper with New Chat and Run Send buttons in bottom-right -->
+                                <!-- Compact Textarea wrapper with New Chat button on left and dynamic Send button on right -->
                                 <div class="prompt-input-wrapper" style="position: relative; display: flex; height: 80px; min-height: 80px; width: 100%;">
                                     <button id="start-btn" style="display: none;"></button>
-                                    <textarea id="prompt-input" placeholder="Type prompt requirements or follow-up chat... (Press Enter or click ➢)" style="height: 100%; min-height: 80px; width: 100%; resize: none; overflow-y: auto; padding-right: 88px; padding-bottom: 6px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
+                                    <textarea id="prompt-input" placeholder="Type prompt requirements or follow-up chat... (Press Enter to send)" style="height: 100%; min-height: 80px; width: 100%; resize: none; overflow-y: auto; padding-left: 44px; padding-right: 48px; padding-bottom: 6px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
                                     
-                                    <!-- Action buttons inside Text Area bottom-right -->
-                                    <div style="position: absolute; right: 8px; bottom: 8px; display: flex; align-items: center; gap: 6px; z-index: 5;">
-                                        <!-- New Chat button inside text area -->
+                                    <!-- New Chat button on LEFT bottom inside textarea -->
+                                    <div class="studio-icon-btn-wrap" style="position: absolute; left: 8px; bottom: 8px; z-index: 5;">
                                         <button id="new-create-btn" class="studio-icon-btn" title="New Chat — Start fresh session" aria-label="New Chat" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-color); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                                         </button>
-                                        <!-- Embedded Run Send Button -->
-                                        <button id="inline-send-btn" class="inline-send-btn" title="Run Studio Prompt (Enter)" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                                        </button>
+                                        <div class="studio-tooltip">🆕 New Chat</div>
                                     </div>
+                                    
+                                    <!-- Embedded Run Send Button on RIGHT bottom (Shown ONLY when typing) -->
+                                    <button id="inline-send-btn" class="inline-send-btn" title="Run Studio Prompt (Enter)" style="position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; display: none; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4); z-index: 5;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>

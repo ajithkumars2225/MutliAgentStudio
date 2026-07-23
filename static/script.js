@@ -534,6 +534,7 @@ function triggerAgentRun(promptText, startFresh = false) {
     appendChatMessage("user", promptText);
     appendChatMessage("assistant", "🚀 Agents activated! Processing your requirements...");
     if (promptInput) promptInput.value = "";
+    if (inlineSendBtn) inlineSendBtn.style.display = "none";
 
     fetch("/api/start", {
         method: "POST",
@@ -625,6 +626,10 @@ if (promptInput) {
 
 if (promptInput) {
     promptInput.addEventListener("input", () => {
+        const val = promptInput.value.trim();
+        if (inlineSendBtn) {
+            inlineSendBtn.style.display = val.length > 0 ? "flex" : "none";
+        }
         if (isAgentRunning) {
             const currentPrompt = promptInput.value.trim();
             if (currentPrompt !== runningPrompt) {
