@@ -212,17 +212,22 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
         logs.append(f"Node.js project detected at {pkg_dir.relative_to(base_path) if pkg_dir != base_path else '.'}. Running local Node.js validation...")
         try:
             # npm install
-            install_result = subprocess.run(
-                ["npm", "install"],
-                capture_output=True,
-                text=True,
-                cwd=str(pkg_dir),
-                shell=True,
-                check=False
-            )
-            logs.append(f"npm install Log:\n{install_result.stdout}\n{install_result.stderr}")
-            if install_result.returncode != 0:
-                return False, "\n".join(logs) + "\nnpm install failed."
+            try:
+                install_result = subprocess.run(
+                    ["npm", "install"],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(pkg_dir),
+                    shell=True,
+                    check=False,
+                    timeout=60
+                )
+                logs.append(f"npm install Log:\n{install_result.stdout}\n{install_result.stderr}")
+                if install_result.returncode != 0:
+                    return False, "\n".join(logs) + "\nnpm install failed."
+            except subprocess.TimeoutExpired:
+                logs.append("npm install timed out after 60 seconds.")
+                return False, "\n".join(logs)
                 
             # npm test (or fallback to npm run build)
             test_cmd = ["npm", "test"]
@@ -232,17 +237,22 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
                 logs.append("No custom test script defined. Running npm run build as fallback verification...")
                 test_cmd = ["npm", "run", "build"]
                 
-            test_result = subprocess.run(
-                test_cmd,
-                capture_output=True,
-                text=True,
-                cwd=str(pkg_dir),
-                shell=True,
-                check=False
-            )
-            success = (test_result.returncode == 0)
-            logs.append(f"npm test/build Log:\n{test_result.stdout}\n{test_result.stderr}")
-            return success, "\n".join(logs)
+            try:
+                test_result = subprocess.run(
+                    test_cmd,
+                    capture_output=True,
+                    text=True,
+                    cwd=str(pkg_dir),
+                    shell=True,
+                    check=False,
+                    timeout=60
+                )
+                success = (test_result.returncode == 0)
+                logs.append(f"npm test/build Log:\n{test_result.stdout}\n{test_result.stderr}")
+                return success, "\n".join(logs)
+            except subprocess.TimeoutExpired:
+                logs.append(f"{' '.join(test_cmd)} timed out after 60 seconds.")
+                return False, "\n".join(logs)
         except Exception as e:
             return False, f"Local Node.js execution failed: {str(e)}"
             
@@ -288,26 +298,38 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
             dotnet_target = str(sln_files[0]) if sln_files else str(csproj_files[0])
             logs.append(f"Using project file: {dotnet_target}")
 
-            # dotnet test with explicit project/solution path
-            test_result = subprocess.run(
-                ["dotnet", "test", dotnet_target],
-                capture_output=True,
-                text=True,
-                cwd=str(base_path),
-                check=False
-            )
-            logs.append(f"dotnet test Log:\n{test_result.stdout}\n{test_result.stderr}")
-            if test_result.returncode != 0:
-                logs.append("dotnet test failed or not found. Running dotnet build as fallback...")
-                build_result = subprocess.run(
-                    ["dotnet", "build", dotnet_target],
+            # dotnet test with explicit project/solution path and 60s timeout
+            try:
+                test_result = subprocess.run(
+                    ["dotnet", "test", dotnet_target, "--no-restore"],
                     capture_output=True,
                     text=True,
                     cwd=str(base_path),
-                    check=False
+                    check=False,
+                    timeout=60
                 )
-                success = (build_result.returncode == 0)
-                logs.append(f"dotnet build Log:\n{build_result.stdout}\n{build_result.stderr}")
+                logs.append(f"dotnet test Log:\n{test_result.stdout}\n{test_result.stderr}")
+                test_success = (test_result.returncode == 0)
+            except subprocess.TimeoutExpired:
+                test_success = False
+                logs.append("dotnet test timed out after 60 seconds.")
+
+            if not test_success:
+                logs.append("dotnet test failed or timed out. Running dotnet build as fallback...")
+                try:
+                    build_result = subprocess.run(
+                        ["dotnet", "build", dotnet_target],
+                        capture_output=True,
+                        text=True,
+                        cwd=str(base_path),
+                        check=False,
+                        timeout=60
+                    )
+                    success = (build_result.returncode == 0)
+                    logs.append(f"dotnet build Log:\n{build_result.stdout}\n{build_result.stderr}")
+                except subprocess.TimeoutExpired:
+                    success = False
+                    logs.append("dotnet build timed out after 60 seconds.")
                 
                 # If building .sln failed due to test project compilation errors, fallback to main app .csproj
                 if not success and csproj_files:
@@ -315,15 +337,20 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
                     if main_csproj_list:
                         main_target = str(main_csproj_list[0])
                         logs.append(f"Solution build failed. Trying fallback build on main app project: {main_target}")
-                        main_build = subprocess.run(
-                            ["dotnet", "build", main_target],
-                            capture_output=True,
-                            text=True,
-                            cwd=str(base_path),
-                            check=False
-                        )
-                        success = (main_build.returncode == 0)
-                        logs.append(f"Main App dotnet build Log:\n{main_build.stdout}\n{main_build.stderr}")
+                        try:
+                            main_build = subprocess.run(
+                                ["dotnet", "build", main_target],
+                                capture_output=True,
+                                text=True,
+                                cwd=str(base_path),
+                                check=False,
+                                timeout=60
+                            )
+                            success = (main_build.returncode == 0)
+                            logs.append(f"Main App dotnet build Log:\n{main_build.stdout}\n{main_build.stderr}")
+                        except subprocess.TimeoutExpired:
+                            success = False
+                            logs.append("Main App dotnet build timed out after 60 seconds.")
 
                 return success, "\n".join(logs)
             return True, "\n".join(logs)
@@ -450,7 +477,8 @@ def run_security_scan(directory: str) -> dict:
                 capture_output=True,
                 text=True,
                 cwd=str(base_path),
-                check=False
+                check=False,
+                timeout=30
             )
             
             if res.stdout.strip():
