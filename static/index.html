@@ -54,7 +54,10 @@
                 <button id="nav-telemetry-btn" class="nav-btn">📊 Observability</button>
             </nav>
 
-            <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+            <div class="header-actions" style="display: flex; align-items: center; gap: 0.6rem;">
+                <button id="top-terminal-toggle-btn" class="nav-btn active" title="Toggle Terminal Show/Hide" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500; cursor: pointer; background: rgba(0, 223, 216, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 223, 216, 0.3);">
+                    🐚 <span>Terminal</span>
+                </button>
                 <button id="theme-toggle-btn" class="text-btn icon-btn" title="Switch Theme" style="font-size: 1.1rem; padding: 0.3rem 0.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 32px; width: 32px; transition: all 0.2s ease;">☀️</button>
                 <div class="status-indicator">
                     <span class="status-dot" id="global-status-dot"></span>
@@ -240,7 +243,6 @@
                                     <button id="term-tab-shell" class="text-btn" style="display: none !important; font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 3px; cursor: pointer; color: var(--text-secondary); background: none; border: none;">🐚 Shell Session</button>
                                     <button id="term-tab-console" class="text-btn active" style="font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 3px; cursor: pointer; color: var(--accent-cyan); background: rgba(255,255,255,0.03); border: none;">🤖 Agent Console</button>
                                 </div>
-                                <button id="toggle-terminal-btn" class="text-btn icon-btn" title="Collapse Terminal" style="font-size: 0.65rem; padding: 0.15rem 0.35rem; margin-left: 0.6rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px;">▼</button>
                             </div>
                              <div class="terminal-header-actions" style="display: flex; align-items: center; gap: 0.3rem;">
                                   <button id="pause-btn" class="text-btn icon-btn success-btn-text" title="Pause Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">⏸️ Pause</button>

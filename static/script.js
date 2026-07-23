@@ -1491,27 +1491,34 @@ if (toggleInputBtn && controlPanel && appBody) {
     });
 }
 
-// 4. Terminal Collapse
-const toggleTerminalBtn = document.getElementById("toggle-terminal-btn");
+// 4. Top Header Terminal Show / Hide Toggle
+const topTerminalToggleBtn = document.getElementById("top-terminal-toggle-btn");
 const mainContent = document.querySelector(".main-content");
-const terminalSplitBody = document.querySelector(".terminal-split-body");
+const logPanel = document.getElementById("log-panel");
 const resizeHandleTerminalEl = document.getElementById("resize-handle-terminal");
 
-if (toggleTerminalBtn && mainContent) {
-    toggleTerminalBtn.addEventListener("click", () => {
-        mainContent.classList.toggle("terminal-collapsed");
-        const isCollapsed = mainContent.classList.contains("terminal-collapsed");
-        if (isCollapsed) {
-            mainContent.style.gridTemplateRows = "1fr 0px 44px";
-            toggleTerminalBtn.textContent = "▲";
-            toggleTerminalBtn.title = "Expand Terminal";
-            if (terminalSplitBody) terminalSplitBody.style.display = "none";
+if (topTerminalToggleBtn && mainContent) {
+    topTerminalToggleBtn.addEventListener("click", () => {
+        const isHidden = mainContent.classList.contains("terminal-hidden");
+        if (!isHidden) {
+            // Hide Terminal completely
+            mainContent.classList.add("terminal-hidden");
+            mainContent.style.gridTemplateRows = "1fr 0px 0px";
+            topTerminalToggleBtn.classList.remove("active");
+            topTerminalToggleBtn.style.background = "rgba(255, 255, 255, 0.05)";
+            topTerminalToggleBtn.style.color = "var(--text-secondary)";
+            topTerminalToggleBtn.style.borderColor = "var(--border-color)";
+            if (logPanel) logPanel.style.display = "none";
             if (resizeHandleTerminalEl) resizeHandleTerminalEl.style.display = "none";
         } else {
+            // Show Terminal
+            mainContent.classList.remove("terminal-hidden");
             mainContent.style.gridTemplateRows = "1fr 6px 220px";
-            toggleTerminalBtn.textContent = "▼";
-            toggleTerminalBtn.title = "Collapse Terminal";
-            if (terminalSplitBody) terminalSplitBody.style.display = "flex";
+            topTerminalToggleBtn.classList.add("active");
+            topTerminalToggleBtn.style.background = "rgba(0, 223, 216, 0.15)";
+            topTerminalToggleBtn.style.color = "var(--accent-cyan)";
+            topTerminalToggleBtn.style.borderColor = "rgba(0, 223, 216, 0.3)";
+            if (logPanel) logPanel.style.display = "flex";
             if (resizeHandleTerminalEl) resizeHandleTerminalEl.style.display = "block";
         }
         if (codeEditor) {
