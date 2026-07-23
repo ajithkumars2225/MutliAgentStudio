@@ -117,23 +117,22 @@
                     <div class="panel-form-container">
                         <div class="panel-form" style="display: flex; flex-direction: column; gap: 0.5rem; height: 100%;">
                             
-                            <!-- Live Chat & Last Response Feed Container (TOP AREA) -->
-                            <div class="chat-feed-header" style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; padding-bottom: 0.2rem;">
-                                <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Chat & AI Responses</span>
-                                <span id="chat-session-badge" style="font-size: 0.65rem; color: var(--accent-cyan); background: rgba(0, 223, 216, 0.1); padding: 1px 6px; border-radius: 10px; border: 1px solid rgba(0, 223, 216, 0.2);">Session Active</span>
-                            </div>
-                            <div id="chat-feed-box" class="chat-feed-box" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); border-radius: 8px;">
-                                <div class="chat-msg-assistant" style="align-self: flex-start; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.55rem 0.75rem; border-radius: 8px 8px 8px 2px; font-size: 0.78rem; width: 100%; box-sizing: border-border;">
-                                    <div style="font-weight: 600; font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 0.25rem;">🤖 Studio Assistant</div>
-                                    <div id="latest-assistant-response">Ready to build! Enter your application requirements below or type follow-up requests to continue.</div>
+                            <!-- Session Active Status (TOP RIGHT OF FEED) -->
+                            <div class="chat-feed-header" style="display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0; padding-bottom: 0.2rem;">
+                                <div class="studio-icon-btn-wrap" style="position: relative;">
+                                    <span id="chat-session-badge" style="font-size: 0.68rem; color: var(--accent-cyan); background: rgba(0, 223, 216, 0.12); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(0, 223, 216, 0.25); display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan);"></span>
+                                        <span style="font-size: 0.65rem; font-weight: 600;">Active Context</span>
+                                    </span>
+                                    <div class="studio-tooltip">⚡ Session Active — Conversation Context Preserved</div>
                                 </div>
+                            </div>
+                            <!-- Live Chat & Response Feed Container (USES PARENT BACKGROUND NATIVELY) -->
+                            <div id="chat-feed-box" class="chat-feed-box" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.2rem 0; background: transparent; border: none;">
                             </div>
 
-                            <!-- Developer Requirements Input Group (COMPACT REDUCED HEIGHT BOTTOM INPUT) -->
-                            <div class="form-group prompt-group" style="flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0;">
-                                <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.3rem; flex-shrink: 0;">
-                                    <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Next Chat / Prompt Input</span>
-                                </div>
+                            <!-- Developer Requirements Input Group -->
+                            <div class="form-group prompt-group" style="flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; margin-top: 0.3rem;">
                                 <!-- Reduced Height Compact Textarea wrapper with New Chat and Run Send buttons in bottom-right -->
                                 <div class="prompt-input-wrapper" style="position: relative; display: flex; height: 80px; min-height: 80px; width: 100%;">
                                     <button id="start-btn" style="display: none;"></button>
