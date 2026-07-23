@@ -46,19 +46,27 @@
                 <h1>Multi-Agent Developer Studio</h1>
             </div>
             
-            <!-- Tabbed Navigation Links (Icon-Only with Tooltips) -->
-            <nav class="nav-links" style="display: flex; gap: 0.35rem;">
-                <button id="nav-workspace-btn" class="nav-btn active" title="💻 Workspace Editor" style="font-size: 1.1rem; padding: 0.35rem 0.65rem; border-radius: 6px;">💻</button>
-                <button id="nav-settings-btn" class="nav-btn" title="⚙️ LLM Settings" style="font-size: 1.1rem; padding: 0.35rem 0.65rem; border-radius: 6px;">⚙️</button>
-                <button id="nav-history-btn" class="nav-btn" title="📜 Simulation History" style="font-size: 1.1rem; padding: 0.35rem 0.65rem; border-radius: 6px;">📜</button>
-                <button id="nav-telemetry-btn" class="nav-btn" title="📊 Observability & Telemetry" style="font-size: 1.1rem; padding: 0.35rem 0.65rem; border-radius: 6px;">📊</button>
+            <!-- Tabbed Navigation Links -->
+            <nav class="nav-links">
+                <button id="nav-workspace-btn" class="nav-btn active">💻 Workspace</button>
+                <button id="nav-settings-btn" class="nav-btn">⚙️ LLM Settings</button>
+                <button id="nav-history-btn" class="nav-btn">📜 History</button>
+                <button id="nav-telemetry-btn" class="nav-btn">📊 Observability</button>
             </nav>
 
-            <div class="header-actions" style="display: flex; align-items: center; gap: 0.5rem;">
-                <button id="top-terminal-toggle-btn" class="nav-btn active" title="🐚 Toggle Terminal Show/Hide" style="display: inline-flex; align-items: center; justify-content: center; padding: 0.35rem 0.65rem; border-radius: 6px; font-size: 1.1rem; cursor: pointer; background: rgba(0, 223, 216, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 223, 216, 0.3);">
-                    🐚
-                </button>
-                <button id="theme-toggle-btn" class="text-btn icon-btn" title="Switch Light/Dark Theme" style="font-size: 1.1rem; padding: 0.3rem 0.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 32px; width: 32px; transition: all 0.2s ease;">☀️</button>
+            <div class="header-actions" style="display: flex; align-items: center; gap: 0.6rem;">
+                <!-- Terminal Show / Hide Icon Button with Tooltip -->
+                <div class="studio-icon-btn-wrap" style="position: relative;">
+                    <button id="top-terminal-toggle-btn" class="studio-icon-btn active" aria-label="Toggle Terminal Show/Hide" style="width: 32px; height: 32px; border-radius: 6px; background: rgba(0, 223, 216, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 223, 216, 0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                    </button>
+                    <div class="studio-tooltip">🐚 Terminal Console (Show/Hide)</div>
+                </div>
+                <!-- Theme Switcher Icon Button with Tooltip -->
+                <div class="studio-icon-btn-wrap" style="position: relative;">
+                    <button id="theme-toggle-btn" class="text-btn icon-btn" aria-label="Switch Theme" style="font-size: 1.1rem; padding: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 32px; width: 32px; transition: all 0.2s ease;">☀️</button>
+                    <div class="studio-tooltip">🎨 Toggle Dark/Light Theme</div>
+                </div>
                 <div class="status-indicator">
                     <span class="status-dot" id="global-status-dot"></span>
                     <span class="status-text" id="global-status-text">Idle</span>
@@ -74,8 +82,9 @@
                     <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 0.4rem;">
                             <h2>Developer Input</h2>
-                            <button id="fullview-dev-input-btn" class="text-btn icon-btn" title="💻 Full View Window Modal — Expand Input & AI Chat" style="font-size: 0.72rem; padding: 0.2rem 0.45rem; border-radius: 4px; background: rgba(0, 223, 216, 0.1); border: 1px solid rgba(0, 223, 216, 0.25); color: var(--accent-cyan); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                            <button id="fullview-dev-input-btn" class="text-btn icon-btn" title="Full View Window — Expand Developer Input & AI Chat" style="font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(0, 223, 216, 0.1); border: 1px solid rgba(0, 223, 216, 0.25); color: var(--accent-cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                                <span style="font-size: 0.65rem; font-weight: 600;">Full View</span>
                             </button>
                         </div>
                         <button id="toggle-input-btn" class="text-btn icon-btn" title="Collapse Sidebar">◄</button>
@@ -181,12 +190,13 @@
                                 </div>
                                 
                                 <div id="editor-tab-content" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
-                                    <div id="editor-tabs-bar" style="display: flex; gap: 6px; overflow-x: auto; background: rgba(5, 8, 15, 0.4); padding: 6px 10px 0 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; min-height: 35px; align                                     <div class="code-view-header">
+                                    <div id="editor-tabs-bar" style="display: flex; gap: 6px; overflow-x: auto; background: rgba(5, 8, 15, 0.4); padding: 6px 10px 0 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; min-height: 35px; align-items: flex-end; scrollbar-width: none;"></div>
+                                    <div class="code-view-header">
                                         <span id="active-filename">Select a file from explorer</span>
                                         <div class="editor-header-actions">
-                                            <button id="save-code-btn" class="text-btn icon-btn success-btn-text" title="💾 Save File Changes" style="display: none;">💾</button>
-                                            <button id="copy-code-btn" class="text-btn icon-btn" title="📋 Copy File Content" style="display: none;">📋</button>
-                                            <button id="toggle-explorer-btn" class="text-btn icon-btn" title="📁 Toggle File Explorer">📁</button>
+                                            <button id="save-code-btn" class="text-btn icon-btn success-btn-text" style="display: none;">💾 Save</button>
+                                            <button id="copy-code-btn" class="text-btn icon-btn" style="display: none;">📋 Copy</button>
+                                            <button id="toggle-explorer-btn" class="text-btn icon-btn" title="Toggle File Explorer">📁 Files</button>
                                         </div>
                                     </div>
                                     <div class="code-view-editor" id="editor-container" style="flex: 1; min-height: 0;">
@@ -197,9 +207,8 @@
                                 <div id="preview-tab-content" style="display: none; flex-direction: column; flex: 1; height: 100%;">
                                     <div class="preview-address-bar" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background-color: var(--bg-darker); border-bottom: 1px solid var(--border-color);">
                                         <input type="text" id="preview-url" value="http://localhost:3000" style="flex: 1; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.35rem 0.6rem; color: var(--text-primary); font-size: 0.8rem; outline: none; font-family: monospace;">
-                                        <button id="preview-reload" class="text-btn icon-btn" title="🔄 Reload Live Web Preview" style="padding: 0.35rem 0.6rem; font-size: 0.85rem; border-radius: 4px;">🔄</button>
-                                        <button id="preview-open-tab" class="text-btn icon-btn" title="↗️ Open Live Preview in New Tab" style="padding: 0.35rem 0.6rem; font-size: 0.85rem; border-radius: 4px;">↗️</button>
-                                    </div>�️ Open Tab</button>
+                                        <button id="preview-reload" class="text-btn icon-btn" title="Reload Preview" style="padding: 0.35rem 0.7rem; font-size: 0.8rem; border-radius: 4px;">🔄 Reload</button>
+                                        <button id="preview-open-tab" class="text-btn icon-btn" title="Open in new tab" style="padding: 0.35rem 0.7rem; font-size: 0.8rem; border-radius: 4px;">↗️ Open Tab</button>
                                     </div>
                                     <iframe id="preview-iframe" src="" style="flex: 1; width: 100%; border: none; background: #fff; border-bottom-left-radius: 8px;"></iframe>
                                 </div>
@@ -244,11 +253,11 @@
                                 </div>
                             </div>
                              <div class="terminal-header-actions" style="display: flex; align-items: center; gap: 0.3rem;">
-                                  <button id="pause-btn" class="text-btn icon-btn success-btn-text" title="⏸️ Pause Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.85rem;">⏸️</button>
-                                  <button id="resume-btn" class="text-btn icon-btn success-btn-text" title="▶️ Resume Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.85rem;">▶️</button>
-                                  <button id="terminate-btn" class="text-btn icon-btn danger-btn-text" title="🛑 Terminate Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.85rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">🛑</button>
-                                  <button id="copy-terminal-btn" class="text-btn" title="📋 Copy Terminal Logs" style="padding: 0.2rem 0.5rem; font-size: 0.85rem;">📋</button>
-                                  <button id="clear-logs-btn" class="text-btn" title="🗑️ Clear Console Logs" style="padding: 0.2rem 0.5rem; font-size: 0.85rem;">🗑️</button>
+                                  <button id="pause-btn" class="text-btn icon-btn success-btn-text" title="Pause Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">⏸️ Pause</button>
+                                  <button id="resume-btn" class="text-btn icon-btn success-btn-text" title="Resume Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">▶️ Resume</button>
+                                  <button id="terminate-btn" class="text-btn icon-btn danger-btn-text" title="Terminate Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">🛑 Terminate</button>
+                                  <button id="copy-terminal-btn" class="text-btn" title="Copy selected text (or all output if nothing selected) — also Ctrl+Shift+C" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">📋 Copy</button>
+                                  <button id="clear-logs-btn" class="text-btn" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">🗑️ Clear</button>
                              </div>
                         </div>
 
