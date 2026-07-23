@@ -230,9 +230,9 @@
                     <!-- Terminal Horizontal Resizer Handle -->
                     <div class="resize-handle-horizontal" id="resize-handle-terminal" title="Drag to Resize Terminal"></div>
 
-                    <!-- BOTTOM HALF: TERMINAL CONSOLE -->
-                    <section class="log-area-horizontal glass-card" id="log-panel" style="height: 100%; min-height: 0;">
-                        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border-color);">
+                    <!-- BOTTOM HALF: TERMINAL CONSOLE WITH FIXED AGENT EXECUTION FLOW -->
+                    <section class="log-area-horizontal glass-card" id="log-panel" style="height: 100%; min-height: 0; display: flex; flex-direction: column;">
+                        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
                             <div class="panel-title-group" style="display: flex; align-items: center; gap: 0.6rem; flex: 1;">
                                 <span class="terminal-icon">🐚</span>
                                 <h2 style="margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--text-primary);">Terminal</h2>
@@ -243,15 +243,60 @@
                                 <button id="toggle-terminal-btn" class="text-btn icon-btn" title="Collapse Terminal" style="font-size: 0.65rem; padding: 0.15rem 0.35rem; margin-left: 0.6rem; vertical-align: middle; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px;">▼</button>
                             </div>
                              <div class="terminal-header-actions" style="display: flex; align-items: center; gap: 0.3rem;">
-                                 <button id="pause-btn" class="text-btn icon-btn success-btn-text" title="Pause Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">⏸️ Pause</button>
-                                 <button id="resume-btn" class="text-btn icon-btn success-btn-text" title="Resume Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">▶️ Resume</button>
-                                 <button id="terminate-btn" class="text-btn icon-btn danger-btn-text" title="Terminate Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">🛑 Terminate</button>
-                                 <button id="copy-terminal-btn" class="text-btn" title="Copy selected text (or all output if nothing selected) — also Ctrl+Shift+C" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">📋 Copy</button>
-                                 <button id="clear-logs-btn" class="text-btn" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">🗑️ Clear</button>
+                                  <button id="pause-btn" class="text-btn icon-btn success-btn-text" title="Pause Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">⏸️ Pause</button>
+                                  <button id="resume-btn" class="text-btn icon-btn success-btn-text" title="Resume Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; margin-right: 0.3rem;">▶️ Resume</button>
+                                  <button id="terminate-btn" class="text-btn icon-btn danger-btn-text" title="Terminate Simulation" style="display: none; padding: 0.2rem 0.5rem; font-size: 0.72rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">🛑 Terminate</button>
+                                  <button id="copy-terminal-btn" class="text-btn" title="Copy selected text (or all output if nothing selected) — also Ctrl+Shift+C" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">📋 Copy</button>
+                                  <button id="clear-logs-btn" class="text-btn" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">🗑️ Clear</button>
                              </div>
                         </div>
-                        <div id="terminal-container" style="flex: 1; width: 100%; height: calc(100% - 38px); background-color: #05080f; padding: 0.5rem 0.2rem 0.5rem 0.6rem; box-sizing: border-box; overflow: hidden; border-radius: 0 0 8px 8px; display: none;"></div>
-                        <div id="console-logs-container" style="flex: 1; width: 100%; height: calc(100% - 38px); background-color: #05080f; padding: 0.5rem 0.2rem 0.5rem 0.6rem; box-sizing: border-box; overflow: hidden; border-radius: 0 0 8px 8px; display: block;"></div>
+
+                        <!-- Split container: Reduced Width Terminal on Left + Fixed Agent Execution Flow Visualizer on Right -->
+                        <div class="terminal-split-body" style="display: flex; flex: 1; min-height: 0; width: 100%; overflow: hidden;">
+                            <!-- Reduced Width Terminal Console -->
+                            <div class="terminal-logs-wrapper" style="flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; position: relative;">
+                                <div id="terminal-container" style="flex: 1; width: 100%; height: 100%; background-color: #05080f; padding: 0.5rem 0.2rem 0.5rem 0.6rem; box-sizing: border-box; overflow: hidden; display: none;"></div>
+                                <div id="console-logs-container" style="flex: 1; width: 100%; height: 100%; background-color: #05080f; padding: 0.5rem 0.2rem 0.5rem 0.6rem; box-sizing: border-box; overflow: hidden; display: block;"></div>
+                            </div>
+
+                            <!-- Fixed Agent Execution Flow Panel on Right side of Terminal -->
+                            <div id="agent-flow-fixed-panel" class="agent-flow-fixed-panel" style="width: 250px; flex: 0 0 250px; height: 100%; background: rgba(5, 8, 15, 0.55); border-left: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden;">
+                                <div class="flow-panel-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.6rem; background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
+                                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                        <span style="font-size: 0.78rem;">🤖</span>
+                                        <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-primary);">Agent Flow</span>
+                                    </div>
+                                    <span id="floating-flow-status-pill" style="font-size: 0.58rem; padding: 1px 6px; border-radius: 10px; background: rgba(0, 223, 216, 0.15); color: var(--accent-cyan); font-weight: 600; border: 1px solid rgba(0, 223, 216, 0.3);">Idle</span>
+                                </div>
+                                
+                                <div id="agent-flow-card-body" style="display: flex; flex-direction: column; gap: 4px; padding: 6px; flex: 1; overflow-y: auto;">
+                                    <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                                        <span>🤖 Orchestrator</span>
+                                        <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-analyst" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                                        <span>📝 Business Analyst</span>
+                                        <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-impact" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                                        <span>🔍 Impact Analyzer</span>
+                                        <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-programmer" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                                        <span>💻 Implementer Coder</span>
+                                        <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-tester" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                                        <span>🧪 QA Tester</span>
+                                        <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                                    </div>
+                                    <div class="flow-viz-node" id="node-deployer" style="display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                                        <span>🚀 Deployment Engineer</span>
+                                        <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </section>
                 </div>
             </main>
@@ -881,44 +926,6 @@
                     </div>
                 </div>
 
-                <!-- FLOATING BOTTOM-RIGHT COLLAPSIBLE AGENT EXECUTION FLOW CARD -->
-                <div id="agent-flow-floating-card" class="agent-flow-floating-card glass-card">
-                    <div class="flow-card-header" id="floating-flow-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.7rem; background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--border-color); cursor: pointer;">
-                        <div style="display: flex; align-items: center; gap: 0.4rem;">
-                            <span style="font-size: 0.8rem;">🤖</span>
-                            <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-primary);">Agent Flow</span>
-                            <span id="floating-flow-status-pill" style="font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: rgba(0, 223, 216, 0.15); color: var(--accent-cyan); font-weight: 600; border: 1px solid rgba(0, 223, 216, 0.3);">Idle</span>
-                        </div>
-                        <button id="toggle-flow-card-btn" class="text-btn icon-btn" title="Expand/Collapse Flow" style="font-size: 0.68rem; padding: 0.1rem 0.3rem; border: none; background: none; color: var(--text-secondary); cursor: pointer;">▲</button>
-                    </div>
-                    <div id="agent-flow-card-body" style="display: flex; flex-direction: column; gap: 4px; padding: 6px; background: rgba(5, 8, 15, 0.6);">
-                        <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
-                            <span>🤖 Orchestrator</span>
-                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
-                        </div>
-                        <div class="flow-viz-node" id="node-analyst" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
-                            <span>📝 Business Analyst</span>
-                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
-                        </div>
-                        <div class="flow-viz-node" id="node-impact" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
-                            <span>🔍 Impact Analyzer</span>
-                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
-                        </div>
-                        <div class="flow-viz-node" id="node-programmer" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
-                            <span>💻 Implementer Coder</span>
-                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
-                        </div>
-                        <div class="flow-viz-node" id="node-tester" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
-                            <span>🧪 QA Tester</span>
-                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
-                        </div>
-                        <div class="flow-viz-node" id="node-deployer" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
-                            <span>🚀 Deployment Engineer</span>
-                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
-                        </div>
-                    </div>
-                </div>
-
-                <script src="script.js?v=49"></script>
+                <script src="script.js?v=50"></script>
             </body>
             </html>
