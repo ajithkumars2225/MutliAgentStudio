@@ -3650,10 +3650,7 @@ function appendChatMessage(role, text) {
         } else if (role === "assistant") {
             const astDiv = document.createElement("div");
             astDiv.className = "chat-msg-assistant";
-            astDiv.innerHTML = `
-                <div style="font-weight: 600; font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 0.25rem;">🤖 Studio Assistant</div>
-                <div class="ast-msg-content">${escapeHtml(text)}</div>
-            `;
+            astDiv.innerHTML = `<div class="ast-msg-content">${escapeHtml(text)}</div>`;
             chatBox.appendChild(astDiv);
         }
         chatBox.scrollTop = chatBox.scrollHeight;
