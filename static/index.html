@@ -74,42 +74,24 @@
                     </div>
                     
                     <div class="panel-form-container">
-                        <div class="panel-form" style="display: flex; flex-direction: column; gap: 0.6rem; height: 100%;">
-                            <!-- Agent Flow Visualizer Flowchart (TOP - FIXED WITHOUT SCROLL) -->
-                            <div class="form-group flow-viz-group" style="flex: 0 0 auto; display: flex; flex-direction: column;">
-                                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 600;">Agent Execution Flow</label>
-                                <div id="agent-flow-viz" style="display: flex; flex-direction: column; gap: 5px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; overflow: visible;">
-                                    <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.7rem; color: var(--text-secondary);">
-                                        <span>🤖 Orchestrator</span>
-                                        <span class="node-status-pill" style="font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
-                                    </div>
-                                    <div class="flow-viz-node" id="node-analyst" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.7rem; color: var(--text-secondary);">
-                                        <span>📝 Business Analyst</span>
-                                        <span class="node-status-pill" style="font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
-                                    </div>
-                                    <div class="flow-viz-node" id="node-impact" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.7rem; color: var(--text-secondary);">
-                                        <span>🔍 Impact Analyzer</span>
-                                        <span class="node-status-pill" style="font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
-                                    </div>
-                                    <div class="flow-viz-node" id="node-programmer" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.7rem; color: var(--text-secondary);">
-                                        <span>💻 Implementer Coder</span>
-                                        <span class="node-status-pill" style="font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
-                                    </div>
-                                    <div class="flow-viz-node" id="node-tester" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.7rem; color: var(--text-secondary);">
-                                        <span>🧪 QA Tester</span>
-                                        <span class="node-status-pill" style="font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
-                                    </div>
-                                    <div class="flow-viz-node" id="node-deployer" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; font-size: 0.7rem; color: var(--text-secondary);">
-                                        <span>🚀 Deployment Engineer</span>
-                                        <span class="node-status-pill" style="font-size: 0.6rem; padding: 1px 5px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Idle</span>
-                                    </div>
+                        <div class="panel-form" style="display: flex; flex-direction: column; gap: 0.5rem; height: 100%;">
+                            
+                            <!-- Live Chat & Last Response Feed Container (TOP AREA) -->
+                            <div class="chat-feed-header" style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; padding-bottom: 0.2rem;">
+                                <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Chat & AI Responses</span>
+                                <span id="chat-session-badge" style="font-size: 0.65rem; color: var(--accent-cyan); background: rgba(0, 223, 216, 0.1); padding: 1px 6px; border-radius: 10px; border: 1px solid rgba(0, 223, 216, 0.2);">Session Active</span>
+                            </div>
+                            <div id="chat-feed-box" class="chat-feed-box" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); border-radius: 8px;">
+                                <div class="chat-msg-assistant" style="align-self: flex-start; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.55rem 0.75rem; border-radius: 8px 8px 8px 2px; font-size: 0.78rem; width: 100%; box-sizing: border-border;">
+                                    <div style="font-weight: 600; font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 0.25rem;">🤖 Studio Assistant</div>
+                                    <div id="latest-assistant-response">Ready to build! Enter your application requirements below or type follow-up requests to continue.</div>
                                 </div>
                             </div>
 
-                            <!-- Developer Requirements Input Group (EXPANDS TO FILL REMAINING SPACE) -->
-                            <div class="form-group prompt-group" style="flex: 1; display: flex; flex-direction: column; min-height: 0; margin-top: 0.4rem;">
+                            <!-- Developer Requirements Input Group (COMPACT REDUCED HEIGHT BOTTOM INPUT) -->
+                            <div class="form-group prompt-group" style="flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0;">
                                 <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.3rem; flex-shrink: 0;">
-                                    <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Requirements Input</span>
+                                    <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Next Chat / Prompt Input</span>
                                     <div style="display: flex; gap: 0.3rem; align-items: center;">
                                         <!-- Retry icon button -->
                                         <div class="studio-icon-btn-wrap" id="retry-btn-wrap" style="display: none;">
@@ -148,10 +130,10 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Textarea wrapper with embedded arrow send button filling vertical space -->
-                                <div class="prompt-input-wrapper" style="position: relative; display: flex; flex: 1; min-height: 0; width: 100%;">
+                                <!-- Reduced Height Compact Textarea wrapper -->
+                                <div class="prompt-input-wrapper" style="position: relative; display: flex; height: 75px; min-height: 75px; width: 100%;">
                                     <button id="start-btn" style="display: none;"></button>
-                                    <textarea id="prompt-input" placeholder="Type prompt requirements here... (Press Enter or Click ➢)" style="height: 100%; min-height: 140px; width: 100%; resize: none; overflow-y: auto; padding-right: 48px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
+                                    <textarea id="prompt-input" placeholder="Type next chat / follow-up request... (Press Enter or Click ➢)" style="height: 100%; min-height: 75px; width: 100%; resize: none; overflow-y: auto; padding-right: 48px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
                                     <!-- Embedded Arrow Send Button -->
                                     <button id="inline-send-btn" class="inline-send-btn" title="Run Studio Prompt (Enter)" style="position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -841,6 +823,44 @@
                     </div>
                 </div>
 
-                <script src="script.js?v=48"></script>
+                <!-- FLOATING BOTTOM-RIGHT COLLAPSIBLE AGENT EXECUTION FLOW CARD -->
+                <div id="agent-flow-floating-card" class="agent-flow-floating-card glass-card">
+                    <div class="flow-card-header" id="floating-flow-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.7rem; background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--border-color); cursor: pointer;">
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <span style="font-size: 0.8rem;">🤖</span>
+                            <span style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-primary);">Agent Flow</span>
+                            <span id="floating-flow-status-pill" style="font-size: 0.6rem; padding: 1px 6px; border-radius: 10px; background: rgba(0, 223, 216, 0.15); color: var(--accent-cyan); font-weight: 600; border: 1px solid rgba(0, 223, 216, 0.3);">Idle</span>
+                        </div>
+                        <button id="toggle-flow-card-btn" class="text-btn icon-btn" title="Expand/Collapse Flow" style="font-size: 0.68rem; padding: 0.1rem 0.3rem; border: none; background: none; color: var(--text-secondary); cursor: pointer;">▲</button>
+                    </div>
+                    <div id="agent-flow-card-body" style="display: flex; flex-direction: column; gap: 4px; padding: 6px; background: rgba(5, 8, 15, 0.6);">
+                        <div class="flow-viz-node" id="node-orchestrator" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                            <span>🤖 Orchestrator</span>
+                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                        </div>
+                        <div class="flow-viz-node" id="node-analyst" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                            <span>📝 Business Analyst</span>
+                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                        </div>
+                        <div class="flow-viz-node" id="node-impact" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                            <span>🔍 Impact Analyzer</span>
+                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                        </div>
+                        <div class="flow-viz-node" id="node-programmer" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                            <span>💻 Implementer Coder</span>
+                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                        </div>
+                        <div class="flow-viz-node" id="node-tester" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                            <span>🧪 QA Tester</span>
+                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                        </div>
+                        <div class="flow-viz-node" id="node-deployer" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; font-size: 0.68rem; color: var(--text-secondary);">
+                            <span>🚀 Deployment Engineer</span>
+                            <span class="node-status-pill" style="font-size: 0.58rem; padding: 1px 5px; border-radius: 8px;">Idle</span>
+                        </div>
+                    </div>
+                </div>
+
+                <script src="script.js?v=49"></script>
             </body>
             </html>

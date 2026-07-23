@@ -530,6 +530,11 @@ function triggerAgentRun(promptText, startFresh = false) {
     
     if (retryBtnWrap) retryBtnWrap.style.display = "none";
     
+    // Append message to live chat feed in Developer Input sidebar
+    appendChatMessage("user", promptText);
+    appendChatMessage("assistant", "🚀 Agents activated! Processing your requirements...");
+    if (promptInput) promptInput.value = "";
+
     fetch("/api/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -852,6 +857,16 @@ function pollStatus() {
                 }
             }
         });
+        
+        // Update floating bottom-right flow card status badge
+        const floatingFlowPill = document.getElementById("floating-flow-status-pill");
+        if (floatingFlowPill) {
+            if (!status.running || activeAgent === "idle") {
+                floatingFlowPill.textContent = "Idle";
+            } else {
+                floatingFlowPill.textContent = activeAgent.toUpperCase();
+            }
+        }
         
         if (activeFolderPath && status.active_workspace) {
             activeFolderPath.textContent = status.active_workspace;
@@ -3606,6 +3621,52 @@ function appConfirm(message, onConfirm, onCancel = null, confirmText = "Confirm"
 window.alert = function(message) {
     appAlert(message);
 };
+
+// ── Live Chat Feed Helpers & Floating Agent Flow Card Toggle ───────────────
+function escapeHtml(str) {
+    return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function appendChatMessage(role, text) {
+    const chatBox = document.getElementById("chat-feed-box");
+    if (!chatBox) return;
+    
+    if (role === "user") {
+        const userDiv = document.createElement("div");
+        userDiv.className = "chat-msg-user";
+        userDiv.textContent = text;
+        chatBox.appendChild(userDiv);
+    } else if (role === "assistant") {
+        const astDiv = document.createElement("div");
+        astDiv.className = "chat-msg-assistant";
+        astDiv.innerHTML = `
+            <div style="font-weight: 600; font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 0.25rem;">🤖 Studio Assistant</div>
+            <div class="ast-msg-content">${escapeHtml(text)}</div>
+        `;
+        chatBox.appendChild(astDiv);
+    }
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Floating Agent Execution Flow Card Expand/Collapse Toggle
+const toggleFlowCardBtn = document.getElementById("toggle-flow-card-btn");
+const floatingFlowHeader = document.getElementById("floating-flow-header");
+const agentFlowFloatingCard = document.getElementById("agent-flow-floating-card");
+
+if (agentFlowFloatingCard && (toggleFlowCardBtn || floatingFlowHeader)) {
+    const toggleCard = (e) => {
+        agentFlowFloatingCard.classList.toggle("collapsed");
+        const isCollapsed = agentFlowFloatingCard.classList.contains("collapsed");
+        if (toggleFlowCardBtn) {
+            toggleFlowCardBtn.textContent = isCollapsed ? "▲" : "▼";
+        }
+    };
+    if (toggleFlowCardBtn) toggleFlowCardBtn.addEventListener("click", toggleCard);
+    if (floatingFlowHeader) floatingFlowHeader.addEventListener("click", (e) => {
+        if (e.target !== toggleFlowCardBtn) toggleCard(e);
+    });
+}
+
 
 
 
