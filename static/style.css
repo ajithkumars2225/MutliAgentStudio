@@ -488,7 +488,7 @@ body {
 
 .workspace-body {
     display: grid;
-    grid-template-columns: 1fr 4px 220px;
+    grid-template-columns: 1fr 4px 280px;
     flex-grow: 1;
     overflow: hidden;
     background-color: var(--bg-darker);
