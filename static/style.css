@@ -194,15 +194,19 @@ body {
 }
 
 .main-content.terminal-collapsed {
-    grid-template-rows: 1fr 0px 50px;
+    grid-template-rows: 1fr 0px 38px !important;
+}
+
+.main-content.terminal-collapsed .terminal-split-body {
+    display: none !important;
 }
 
 .main-content.terminal-collapsed .console-box {
-    display: none;
+    display: none !important;
 }
 
 .main-content.terminal-collapsed .resize-handle-horizontal {
-    display: none;
+    display: none !important;
 }
 
 .resize-handle-horizontal {

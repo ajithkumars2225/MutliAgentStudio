@@ -1494,23 +1494,24 @@ if (toggleInputBtn && controlPanel && appBody) {
 // 4. Terminal Collapse
 const toggleTerminalBtn = document.getElementById("toggle-terminal-btn");
 const mainContent = document.querySelector(".main-content");
-const consoleBoxEl = document.getElementById("terminal-container");
+const terminalSplitBody = document.querySelector(".terminal-split-body");
 const resizeHandleTerminalEl = document.getElementById("resize-handle-terminal");
 
 if (toggleTerminalBtn && mainContent) {
     toggleTerminalBtn.addEventListener("click", () => {
         mainContent.classList.toggle("terminal-collapsed");
-        if (mainContent.classList.contains("terminal-collapsed")) {
-            mainContent.style.gridTemplateRows = "1fr 0px 50px";
+        const isCollapsed = mainContent.classList.contains("terminal-collapsed");
+        if (isCollapsed) {
+            mainContent.style.gridTemplateRows = "1fr 0px 38px";
             toggleTerminalBtn.textContent = "▲";
             toggleTerminalBtn.title = "Expand Terminal";
-            if (consoleBoxEl) consoleBoxEl.style.display = "none";
+            if (terminalSplitBody) terminalSplitBody.style.display = "none";
             if (resizeHandleTerminalEl) resizeHandleTerminalEl.style.display = "none";
         } else {
             mainContent.style.gridTemplateRows = "1fr 6px 220px";
             toggleTerminalBtn.textContent = "▼";
             toggleTerminalBtn.title = "Collapse Terminal";
-            if (consoleBoxEl) consoleBoxEl.style.display = "block";
+            if (terminalSplitBody) terminalSplitBody.style.display = "flex";
             if (resizeHandleTerminalEl) resizeHandleTerminalEl.style.display = "block";
         }
         if (codeEditor) {
