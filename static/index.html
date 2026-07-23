@@ -98,7 +98,7 @@
                             <div class="form-group prompt-group" style="flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0;">
                                 <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.3rem; flex-shrink: 0;">
                                     <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Next Chat / Prompt Input</span>
-                                    <div style="display: flex; gap: 0.3rem; align-items: center;">
+                                    <div style="display: flex; gap: 0.35rem; align-items: center;">
                                         <!-- Retry icon button -->
                                         <div class="studio-icon-btn-wrap" id="retry-btn-wrap" style="display: none;">
                                             <button id="retry-btn" class="studio-icon-btn" aria-label="Retry Last Run" title="Retry Last Run">
@@ -106,26 +106,12 @@
                                             </button>
                                             <div class="studio-tooltip">🔄 Retry Last Run</div>
                                         </div>
-                                        <!-- New Create icon button -->
-                                        <div class="studio-icon-btn-wrap">
-                                            <button id="new-create-btn" class="studio-icon-btn" aria-label="New Create — Start fresh session" title="New Create — Start fresh session">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                                            </button>
-                                            <div class="studio-tooltip">🆕 New Create / Start Fresh</div>
-                                        </div>
-                                        <!-- Fullscreen icon button -->
-                                        <div class="studio-icon-btn-wrap">
-                                            <button id="expand-prompt-btn" class="studio-icon-btn" aria-label="Fullscreen Editor">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                                            </button>
-                                            <div class="studio-tooltip">Fullscreen Editor</div>
-                                        </div>
-                                        <!-- Recent Prompts icon button -->
+                                        <!-- Recent Prompts History icon button (TOP) -->
                                         <div class="studio-icon-btn-wrap recent-prompts-container">
-                                            <button id="recent-prompts-trigger" class="studio-icon-btn" aria-label="Recent Prompts">
+                                            <button id="recent-prompts-trigger" class="studio-icon-btn" aria-label="Recent Prompts History" title="Recent Prompts History">
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                             </button>
-                                            <div class="studio-tooltip">Recent Prompts</div>
+                                            <div class="studio-tooltip">History</div>
                                             <div id="recent-prompts-popover" class="recent-prompts-popover glass-card">
                                                 <div class="popover-header">
                                                     <span>Recent Prompts</span>
@@ -134,16 +120,31 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <!-- Full View Fullscreen icon button (TOP) -->
+                                        <div class="studio-icon-btn-wrap">
+                                            <button id="expand-prompt-btn" class="studio-icon-btn" aria-label="Full View Window Modal" title="Full View Window Modal">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                                            </button>
+                                            <div class="studio-tooltip">Full View</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <!-- Reduced Height Compact Textarea wrapper -->
-                                <div class="prompt-input-wrapper" style="position: relative; display: flex; height: 75px; min-height: 75px; width: 100%;">
+                                <!-- Reduced Height Compact Textarea wrapper with New Chat and Run Send buttons in bottom-right -->
+                                <div class="prompt-input-wrapper" style="position: relative; display: flex; height: 80px; min-height: 80px; width: 100%;">
                                     <button id="start-btn" style="display: none;"></button>
-                                    <textarea id="prompt-input" placeholder="Type next chat / follow-up request... (Press Enter or Click ➢)" style="height: 100%; min-height: 75px; width: 100%; resize: none; overflow-y: auto; padding-right: 48px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
-                                    <!-- Embedded Arrow Send Button -->
-                                    <button id="inline-send-btn" class="inline-send-btn" title="Run Studio Prompt (Enter)" style="position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                                    </button>
+                                    <textarea id="prompt-input" placeholder="Type prompt requirements or follow-up chat... (Press Enter or click ➢)" style="height: 100%; min-height: 80px; width: 100%; resize: none; overflow-y: auto; padding-right: 88px; padding-bottom: 6px; border-radius: 8px; font-size: 0.82rem; line-height: 1.4;"></textarea>
+                                    
+                                    <!-- Action buttons inside Text Area bottom-right -->
+                                    <div style="position: absolute; right: 8px; bottom: 8px; display: flex; align-items: center; gap: 6px; z-index: 5;">
+                                        <!-- New Chat button inside text area -->
+                                        <button id="new-create-btn" class="studio-icon-btn" title="New Chat — Start fresh session" aria-label="New Chat" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-color); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                        </button>
+                                        <!-- Embedded Run Send Button -->
+                                        <button id="inline-send-btn" class="inline-send-btn" title="Run Studio Prompt (Enter)" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
