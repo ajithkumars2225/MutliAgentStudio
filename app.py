@@ -309,14 +309,19 @@ def run_agent_in_thread(prompt: str, max_iterations: int, provider: str, model_n
             print("\n🎉 SIMULATION COMPLETED SUCCESSFULLY!")
             database.update_history_record_status(history_id, "completed")
             last_execution_error = ""
-    except SystemExit:
+    except (SystemExit, agents.AgentTerminatedException):
         print("\n🛑 SIMULATION TERMINATED BY USER.")
         database.update_history_record_status(history_id, "terminated")
         last_execution_error = "Simulation terminated by user."
     except Exception as e:
-        print(f"\n[FATAL ERROR DURING GRAPH EXECUTION]: {str(e)}")
-        database.update_history_record_status(history_id, "failed")
-        last_execution_error = str(e)
+        if "terminated" in str(e).lower():
+            print("\n🛑 SIMULATION TERMINATED BY USER.")
+            database.update_history_record_status(history_id, "terminated")
+            last_execution_error = "Simulation terminated by user."
+        else:
+            print(f"\n[FATAL ERROR DURING GRAPH EXECUTION]: {str(e)}")
+            database.update_history_record_status(history_id, "failed")
+            last_execution_error = str(e)
     finally:
         agent_running = False
         agents.web_mode = False
@@ -327,9 +332,7 @@ def run_agent_in_thread(prompt: str, max_iterations: int, provider: str, model_n
 @app.post("/api/start")
 def start_agent(req: StartRequest):
     global agent_thread, agent_running
-    if agent_running:
-        raise HTTPException(status_code=400, detail="An agent simulation is already running.")
-        
+    agents.stop_event.clear()
     workspace_dir = database.get_active_workspace()
     
     # ── 1. True Fresh Start Cleanup ──────────────────────────────────────────
@@ -564,18 +567,25 @@ def terminate_thread(thread: threading.Thread):
 @app.post("/api/terminate")
 def terminate_agent():
     global agent_thread, agent_running
-    if not agent_running or not agent_thread:
-        raise HTTPException(status_code=400, detail="No agent simulation is currently running.")
     
-    try:
-        terminate_thread(agent_thread)
-        # Release execution event locks to wake up thread and trigger SystemExit exception immediately
-        agents.pause_event.set()
-        agents.approval_event.set()
-        print("\n🛑 [Web Signal] Terminating agent simulation flow...")
-        return {"status": "terminated"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # 1. Set global stop event in agents module
+    agents.stop_event.set()
+    
+    # 2. Unblock execution locks so waiting thread breaks immediately
+    agents.pause_event.set()
+    agents.approval_event.set()
+    agents.active_agent_name = "idle"
+    agent_running = False
+    
+    # 3. Raise async exception on thread if alive
+    if agent_thread and agent_thread.is_alive():
+        try:
+            terminate_thread(agent_thread)
+        except Exception as e:
+            print(f"[Terminate note]: {e}")
+            
+    print("\n🛑 [Web Signal] Terminated agent simulation flow successfully.")
+    return {"status": "terminated"}
 
 
 @app.post("/api/approve")

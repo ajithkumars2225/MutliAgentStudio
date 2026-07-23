@@ -781,7 +781,22 @@ if (terminateBtn) {
         terminateBtn.textContent = "⌛ Terminating...";
         fetch("/api/terminate", { method: "POST" })
         .then(r => r.json())
-        .then(() => pollStatus())
+        .then(() => {
+            isAgentRunning = false;
+            updateStatusUI(false, "idle", false);
+            if (pollingInterval) clearInterval(pollingInterval);
+            appendChatMessage("assistant", "🛑 Agent simulation terminated by user.");
+            if (termConsole) {
+                termConsole.write("\r\n🛑 Multi-Agent Orchestration Flow Terminated.\r\n");
+            }
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.className = "studio-action-icon-btn studio-action-run";
+                startBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M13 2L4.09 12.26a1 1 0 0 0-.09 1.05A1 1 0 0 0 5 14h6v8l8.91-10.26a1 1 0 0 0 .09-1.05A1 1 0 0 0 19 10h-6V2z"/></svg><span class="action-label">Run Studio</span>';
+            }
+            terminateBtn.disabled = false;
+            terminateBtn.textContent = "🛑 Terminate";
+        })
         .catch(err => {
             alert("Failed to terminate: " + err);
             terminateBtn.disabled = false;

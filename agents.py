@@ -10,6 +10,8 @@ web_mode = False
 approval_event = threading.Event()
 pause_event = threading.Event()
 pause_event.set() # Default to running (not paused)
+stop_event = threading.Event()
+stop_event.clear()
 is_thread_paused = False
 pending_approval_stage = ""
 pending_approval_text = ""
@@ -17,13 +19,21 @@ web_feedback = ""
 active_agent_name = "idle"
 active_history_id = None
 
+class AgentTerminatedException(Exception):
+    """Exception raised when user manually stops/terminates the agent simulation."""
+    pass
+
 def check_pause():
-    global pause_event, is_thread_paused
+    global pause_event, is_thread_paused, stop_event
+    if stop_event.is_set():
+        raise AgentTerminatedException("Simulation terminated by user request.")
     if not pause_event.is_set():
         is_thread_paused = True
         print("\n⏸️ [Execution Paused] Waiting for Play/Resume trigger...")
         pause_event.wait()
         is_thread_paused = False
+        if stop_event.is_set():
+            raise AgentTerminatedException("Simulation terminated by user request.")
 
 
 # Load environment variables
