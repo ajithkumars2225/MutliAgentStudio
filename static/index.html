@@ -79,15 +79,39 @@
             <main class="app-body">
                 <!-- SIDEBAR PANEL: DEVELOPER REQUIREMENTS -->
                 <aside class="control-panel glass-card" id="control-panel">
-                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 0.4rem;">
-                            <h2>Developer Input</h2>
-                            <button id="fullview-dev-input-btn" class="text-btn icon-btn" title="Full View Window — Expand Developer Input & AI Chat" style="font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(0, 223, 216, 0.1); border: 1px solid rgba(0, 223, 216, 0.25); color: var(--accent-cyan); cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                                <span style="font-size: 0.65rem; font-weight: 600;">Full View</span>
-                            </button>
-                        </div>
+                    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.8rem;">
                         <button id="toggle-input-btn" class="text-btn icon-btn" title="Collapse Sidebar">◄</button>
+                        
+                        <div style="display: flex; gap: 0.4rem; align-items: center;">
+                            <!-- Retry icon button -->
+                            <div class="studio-icon-btn-wrap" id="retry-btn-wrap" style="display: none;">
+                                <button id="retry-btn" class="studio-icon-btn" aria-label="Retry Last Run" title="Retry Last Run">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                </button>
+                                <div class="studio-tooltip">🔄 Retry Last Run</div>
+                            </div>
+                            <!-- Recent Prompts History icon button (TOP RIGHT) -->
+                            <div class="studio-icon-btn-wrap recent-prompts-container">
+                                <button id="recent-prompts-trigger" class="studio-icon-btn" aria-label="Recent Prompts History" title="Recent Prompts History">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </button>
+                                <div class="studio-tooltip">History</div>
+                                <div id="recent-prompts-popover" class="recent-prompts-popover glass-card">
+                                    <div class="popover-header">
+                                        <span>Recent Prompts</span>
+                                    </div>
+                                    <div class="popover-list" id="recent-prompts-list">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- SINGLE Full View Fullscreen Icon Button (TOP RIGHT) -->
+                            <div class="studio-icon-btn-wrap">
+                                <button id="expand-prompt-btn" class="studio-icon-btn" aria-label="Full View Window Modal" title="Full View Window Modal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                                </button>
+                                <div class="studio-tooltip">Full View</div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="panel-form-container">
@@ -109,36 +133,6 @@
                             <div class="form-group prompt-group" style="flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0;">
                                 <div class="prompt-header-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.3rem; flex-shrink: 0;">
                                     <span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Next Chat / Prompt Input</span>
-                                    <div style="display: flex; gap: 0.35rem; align-items: center;">
-                                        <!-- Retry icon button -->
-                                        <div class="studio-icon-btn-wrap" id="retry-btn-wrap" style="display: none;">
-                                            <button id="retry-btn" class="studio-icon-btn" aria-label="Retry Last Run" title="Retry Last Run">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                                            </button>
-                                            <div class="studio-tooltip">🔄 Retry Last Run</div>
-                                        </div>
-                                        <!-- Recent Prompts History icon button (TOP) -->
-                                        <div class="studio-icon-btn-wrap recent-prompts-container">
-                                            <button id="recent-prompts-trigger" class="studio-icon-btn" aria-label="Recent Prompts History" title="Recent Prompts History">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                            </button>
-                                            <div class="studio-tooltip">History</div>
-                                            <div id="recent-prompts-popover" class="recent-prompts-popover glass-card">
-                                                <div class="popover-header">
-                                                    <span>Recent Prompts</span>
-                                                </div>
-                                                <div class="popover-list" id="recent-prompts-list">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- Full View Fullscreen icon button (TOP) -->
-                                        <div class="studio-icon-btn-wrap">
-                                            <button id="expand-prompt-btn" class="studio-icon-btn" aria-label="Full View Window Modal" title="Full View Window Modal">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                                            </button>
-                                            <div class="studio-tooltip">Full View</div>
-                                        </div>
-                                    </div>
                                 </div>
                                 <!-- Reduced Height Compact Textarea wrapper with New Chat and Run Send buttons in bottom-right -->
                                 <div class="prompt-input-wrapper" style="position: relative; display: flex; height: 80px; min-height: 80px; width: 100%;">
