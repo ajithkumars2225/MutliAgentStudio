@@ -660,15 +660,9 @@ const closePromptModalBtn = document.getElementById("close-prompt-modal");
 const cancelPromptModalBtn = document.getElementById("cancel-prompt-modal-btn");
 const savePromptModalBtn = document.getElementById("save-prompt-modal-btn");
 
-if (expandPromptBtn && promptModal) {
+if (expandPromptBtn) {
     expandPromptBtn.addEventListener("click", () => {
-        if (promptModalTextarea && promptInput) {
-            promptModalTextarea.value = promptInput.value;
-        }
-        promptModal.style.display = "flex";
-        if (promptModalTextarea) {
-            promptModalTextarea.focus();
-        }
+        openDevInputFullView();
     });
 }
 
@@ -3628,24 +3622,29 @@ function escapeHtml(str) {
 }
 
 function appendChatMessage(role, text) {
-    const chatBox = document.getElementById("chat-feed-box");
-    if (!chatBox) return;
+    const chatBoxes = [
+        document.getElementById("chat-feed-box"),
+        document.getElementById("fullview-chat-feed-box")
+    ];
     
-    if (role === "user") {
-        const userDiv = document.createElement("div");
-        userDiv.className = "chat-msg-user";
-        userDiv.textContent = text;
-        chatBox.appendChild(userDiv);
-    } else if (role === "assistant") {
-        const astDiv = document.createElement("div");
-        astDiv.className = "chat-msg-assistant";
-        astDiv.innerHTML = `
-            <div style="font-weight: 600; font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 0.25rem;">🤖 Studio Assistant</div>
-            <div class="ast-msg-content">${escapeHtml(text)}</div>
-        `;
-        chatBox.appendChild(astDiv);
-    }
-    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBoxes.forEach(chatBox => {
+        if (!chatBox) return;
+        if (role === "user") {
+            const userDiv = document.createElement("div");
+            userDiv.className = "chat-msg-user";
+            userDiv.textContent = text;
+            chatBox.appendChild(userDiv);
+        } else if (role === "assistant") {
+            const astDiv = document.createElement("div");
+            astDiv.className = "chat-msg-assistant";
+            astDiv.innerHTML = `
+                <div style="font-weight: 600; font-size: 0.7rem; color: var(--accent-cyan); margin-bottom: 0.25rem;">🤖 Studio Assistant</div>
+                <div class="ast-msg-content">${escapeHtml(text)}</div>
+            `;
+            chatBox.appendChild(astDiv);
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
 }
 
 // Floating Agent Execution Flow Card Expand/Collapse Toggle
@@ -3664,6 +3663,85 @@ if (agentFlowFloatingCard && (toggleFlowCardBtn || floatingFlowHeader)) {
     if (toggleFlowCardBtn) toggleFlowCardBtn.addEventListener("click", toggleCard);
     if (floatingFlowHeader) floatingFlowHeader.addEventListener("click", (e) => {
         if (e.target !== toggleFlowCardBtn) toggleCard(e);
+    });
+}
+
+// Developer Input Full View Window Modal Logic
+const devInputFullviewModal = document.getElementById("dev-input-fullview-modal");
+const fullviewDevInputBtn = document.getElementById("fullview-dev-input-btn");
+const closeDevInputFullviewBtn = document.getElementById("close-dev-input-fullview-btn");
+const fullviewCloseBtn = document.getElementById("fullview-close-btn");
+const fullviewSendBtn = document.getElementById("fullview-send-btn");
+const fullviewClearBtn = document.getElementById("fullview-clear-btn");
+const fullviewPromptInput = document.getElementById("fullview-prompt-input");
+const mainPromptInput = document.getElementById("prompt-input");
+
+function openDevInputFullView() {
+    if (!devInputFullviewModal) return;
+    if (fullviewPromptInput && mainPromptInput) {
+        fullviewPromptInput.value = mainPromptInput.value;
+    }
+    const mainChatBox = document.getElementById("chat-feed-box");
+    const fullviewChatBox = document.getElementById("fullview-chat-feed-box");
+    if (mainChatBox && fullviewChatBox) {
+        fullviewChatBox.innerHTML = mainChatBox.innerHTML;
+        fullviewChatBox.scrollTop = fullviewChatBox.scrollHeight;
+    }
+    devInputFullviewModal.style.display = "flex";
+}
+
+function closeDevInputFullView() {
+    if (devInputFullviewModal) {
+        devInputFullviewModal.style.display = "none";
+    }
+}
+
+if (fullviewDevInputBtn) fullviewDevInputBtn.addEventListener("click", openDevInputFullView);
+if (expandPromptBtn) expandPromptBtn.addEventListener("click", openDevInputFullView);
+if (closeDevInputFullviewBtn) closeDevInputFullviewBtn.addEventListener("click", closeDevInputFullView);
+if (fullviewCloseBtn) fullviewCloseBtn.addEventListener("click", closeDevInputFullView);
+
+if (devInputFullviewModal) {
+    devInputFullviewModal.addEventListener("click", (e) => {
+        if (e.target === devInputFullviewModal) closeDevInputFullView();
+    });
+}
+
+if (fullviewPromptInput && mainPromptInput) {
+    fullviewPromptInput.addEventListener("input", () => {
+        mainPromptInput.value = fullviewPromptInput.value;
+    });
+    mainPromptInput.addEventListener("input", () => {
+        fullviewPromptInput.value = fullviewPromptInput.value;
+    });
+    fullviewPromptInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            const text = fullviewPromptInput.value.trim();
+            if (text) {
+                triggerAgentRun(text);
+                fullviewPromptInput.value = "";
+                mainPromptInput.value = "";
+            }
+        }
+    });
+}
+
+if (fullviewSendBtn) {
+    fullviewSendBtn.addEventListener("click", () => {
+        const text = fullviewPromptInput ? fullviewPromptInput.value.trim() : "";
+        if (text) {
+            triggerAgentRun(text);
+            if (fullviewPromptInput) fullviewPromptInput.value = "";
+            if (mainPromptInput) mainPromptInput.value = "";
+        }
+    });
+}
+
+if (fullviewClearBtn) {
+    fullviewClearBtn.addEventListener("click", () => {
+        if (fullviewPromptInput) fullviewPromptInput.value = "";
+        if (mainPromptInput) mainPromptInput.value = "";
     });
 }
 
