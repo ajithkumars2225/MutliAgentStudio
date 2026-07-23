@@ -1502,7 +1502,7 @@ if (toggleTerminalBtn && mainContent) {
         mainContent.classList.toggle("terminal-collapsed");
         const isCollapsed = mainContent.classList.contains("terminal-collapsed");
         if (isCollapsed) {
-            mainContent.style.gridTemplateRows = "1fr 0px 38px";
+            mainContent.style.gridTemplateRows = "1fr 0px 44px";
             toggleTerminalBtn.textContent = "▲";
             toggleTerminalBtn.title = "Expand Terminal";
             if (terminalSplitBody) terminalSplitBody.style.display = "none";

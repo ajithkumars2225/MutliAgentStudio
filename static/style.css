@@ -194,7 +194,19 @@ body {
 }
 
 .main-content.terminal-collapsed {
-    grid-template-rows: 1fr 0px 38px !important;
+    grid-template-rows: 1fr 0px 44px !important;
+}
+
+.main-content.terminal-collapsed #log-panel .panel-header {
+    padding: 0.3rem 0.8rem !important;
+    border-bottom: none !important;
+}
+
+.main-content.terminal-collapsed #toggle-terminal-btn {
+    background: rgba(0, 223, 216, 0.2) !important;
+    border: 1px solid rgba(0, 223, 216, 0.4) !important;
+    color: var(--accent-cyan) !important;
+    box-shadow: 0 0 10px rgba(0, 223, 216, 0.3) !important;
 }
 
 .main-content.terminal-collapsed .terminal-split-body {
