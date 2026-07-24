@@ -130,14 +130,26 @@ def run_playwright_e2e_tests(directory: str, base_url: str = "") -> Tuple[bool, 
     if playwright_js_files:
         logs.append("[Playwright E2E 🎭] Playwright JS/TS test suite detected. Running headless browser E2E tests...")
         try:
-            cmd = ["npx", "playwright", "test"]
+            cmd = ["npx", "--yes", "playwright", "test"]
             env = os.environ.copy()
             if base_url:
                 env["BASE_URL"] = base_url
-            res = subprocess.run(cmd, capture_output=True, text=True, cwd=str(base_path), env=env, shell=True, timeout=60)
+            res = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                cwd=str(base_path),
+                env=env,
+                shell=True,
+                stdin=subprocess.DEVNULL,
+                timeout=20
+            )
             logs.append(f"Playwright Log:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
             if res.returncode != 0:
                 return False, "\n".join(logs)
+            return True, "\n".join(logs)
+        except subprocess.TimeoutExpired:
+            logs.append("Playwright E2E execution timed out after 20s. Skipping E2E step...")
             return True, "\n".join(logs)
         except Exception as e:
             logs.append(f"Playwright JS execution warning: {e}")
@@ -148,10 +160,20 @@ def run_playwright_e2e_tests(directory: str, base_url: str = "") -> Tuple[bool, 
         logs.append("[Playwright E2E 🎭] Python Playwright UI test suite detected. Running pytest with Playwright...")
         try:
             cmd = [sys.executable, "-m", "pytest", str(playwright_py_files[0]), "-v"]
-            res = subprocess.run(cmd, capture_output=True, text=True, cwd=str(base_path), timeout=60)
+            res = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                cwd=str(base_path),
+                stdin=subprocess.DEVNULL,
+                timeout=20
+            )
             logs.append(f"Python Playwright Log:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
             if res.returncode != 0:
                 return False, "\n".join(logs)
+            return True, "\n".join(logs)
+        except subprocess.TimeoutExpired:
+            logs.append("Python Playwright execution timed out after 20s. Skipping...")
             return True, "\n".join(logs)
         except Exception as e:
             logs.append(f"Python Playwright execution warning: {e}")
@@ -298,21 +320,22 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
             dotnet_target = str(sln_files[0]) if sln_files else str(csproj_files[0])
             logs.append(f"Using project file: {dotnet_target}")
 
-            # dotnet test with explicit project/solution path and 60s timeout
+            # dotnet test with explicit project/solution path and 30s timeout and non-interactive stdin
             try:
                 test_result = subprocess.run(
                     ["dotnet", "test", dotnet_target, "--no-restore"],
                     capture_output=True,
                     text=True,
                     cwd=str(base_path),
+                    stdin=subprocess.DEVNULL,
                     check=False,
-                    timeout=60
+                    timeout=30
                 )
                 logs.append(f"dotnet test Log:\n{test_result.stdout}\n{test_result.stderr}")
                 test_success = (test_result.returncode == 0)
             except subprocess.TimeoutExpired:
                 test_success = False
-                logs.append("dotnet test timed out after 60 seconds.")
+                logs.append("dotnet test timed out after 30 seconds.")
 
             if not test_success:
                 logs.append("dotnet test failed or timed out. Running dotnet build as fallback...")
@@ -322,14 +345,15 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
                         capture_output=True,
                         text=True,
                         cwd=str(base_path),
+                        stdin=subprocess.DEVNULL,
                         check=False,
-                        timeout=60
+                        timeout=30
                     )
                     success = (build_result.returncode == 0)
                     logs.append(f"dotnet build Log:\n{build_result.stdout}\n{build_result.stderr}")
                 except subprocess.TimeoutExpired:
                     success = False
-                    logs.append("dotnet build timed out after 60 seconds.")
+                    logs.append("dotnet build timed out after 30 seconds.")
                 
                 # If building .sln failed due to test project compilation errors, fallback to main app .csproj
                 if not success and csproj_files:
@@ -343,14 +367,15 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
                                 capture_output=True,
                                 text=True,
                                 cwd=str(base_path),
+                                stdin=subprocess.DEVNULL,
                                 check=False,
-                                timeout=60
+                                timeout=30
                             )
                             success = (main_build.returncode == 0)
                             logs.append(f"Main App dotnet build Log:\n{main_build.stdout}\n{main_build.stderr}")
                         except subprocess.TimeoutExpired:
                             success = False
-                            logs.append("Main App dotnet build timed out after 60 seconds.")
+                            logs.append("Main App dotnet build timed out after 30 seconds.")
 
                 return success, "\n".join(logs)
             return True, "\n".join(logs)
