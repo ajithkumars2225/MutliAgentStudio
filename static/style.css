@@ -1597,10 +1597,72 @@ body {
     color: #475569 !important;
 }
 
-:root.light-theme .file-item:hover,
-:root.light-theme .file-item.active {
-    background-color: rgba(2, 132, 199, 0.08) !important;
+/* TERMINAL & FIXED FLOW LIGHT THEME COMPATIBILITY */
+:root.light-theme #log-panel .panel-header {
+    background-color: #0f172a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:root.light-theme #log-panel .panel-header h2 {
+    color: #ffffff !important;
+}
+
+:root.light-theme #console-logs-container,
+:root.light-theme #terminal-container {
+    background-color: #050811 !important;
+    color: #f8fafc !important;
+}
+
+/* WORKSPACE HEADER & TABS LIGHT THEME OVERRIDES */
+:root.light-theme .code-view-header {
+    background-color: #f8fafc !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+:root.light-theme #active-filename {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+:root.light-theme #editor-tabs-bar {
+    background-color: #f1f5f9 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+:root.light-theme #git-status-badge {
+    background: rgba(2, 132, 199, 0.1) !important;
+    border-color: rgba(2, 132, 199, 0.3) !important;
     color: #0284c7 !important;
+}
+
+:root.light-theme #file-count {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* FULL VIEW MODAL LIGHT THEME OVERRIDES */
+:root.light-theme #dev-input-fullview-modal .modal-card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.15) !important;
+}
+
+:root.light-theme #fullview-chat-feed-box {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+:root.light-theme #fullview-prompt-input {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+:root.light-theme #fullview-prompt-input::placeholder {
+    color: #64748b !important;
 }
 
 :root.light-theme .file-tab {
