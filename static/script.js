@@ -2429,6 +2429,83 @@ function toggleGitCenter() {
     }
 }
 
+function loadGitBranches() {
+    fetch("/api/git/branches")
+    .then(r => {
+        if (!r.ok) throw new Error("Failed to fetch branches");
+        return r.json();
+    })
+    .then(data => {
+        const branchSelects = [
+            document.getElementById("git-modal-branch-select"),
+            document.getElementById("git-sidebar-branch-select")
+        ];
+        
+        branchSelects.forEach(selectEl => {
+            if (!selectEl) return;
+            selectEl.innerHTML = "";
+            if (data.branches && data.branches.length > 0) {
+                data.branches.forEach(b => {
+                    const opt = document.createElement("option");
+                    opt.value = b;
+                    opt.textContent = b + (b === data.active ? " (active)" : "");
+                    if (b === data.active) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
+            } else {
+                const opt = document.createElement("option");
+                opt.value = "main";
+                opt.textContent = "main";
+                selectEl.appendChild(opt);
+            }
+            
+            if (!selectEl._hasChangeListener) {
+                selectEl._hasChangeListener = true;
+                selectEl.addEventListener("change", (e) => {
+                    const targetBranch = e.target.value;
+                    if (!targetBranch) return;
+                    fetch("/api/git/branch/switch", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ name: targetBranch })
+                    })
+                    .then(r => r.json())
+                    .then(d => {
+                        showCopyToast(`🌿 Switched to branch ${targetBranch}`);
+                        updateGitControlData();
+                        pollGitStatus();
+                    })
+                    .catch(err => alert("Failed to switch branch: " + err));
+                });
+            }
+        });
+    })
+    .catch(err => console.error("Failed to load git branches:", err));
+}
+
+function createNewGitBranch() {
+    const branchName = prompt("Enter new Git branch name (e.g. feature/my-new-task):");
+    if (!branchName || !branchName.trim()) return;
+    
+    fetch("/api/git/branch/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: branchName.trim() })
+    })
+    .then(r => r.json())
+    .then(d => {
+        showCopyToast(`🌿 Created & switched to ${branchName.trim()}`);
+        updateGitControlData();
+        pollGitStatus();
+    })
+    .catch(err => alert("Failed to create branch: " + err));
+}
+
+const newBranchBtn1 = document.getElementById("git-modal-new-branch-btn");
+const newBranchBtn2 = document.getElementById("git-sidebar-new-branch-btn");
+if (newBranchBtn1) newBranchBtn1.addEventListener("click", createNewGitBranch);
+if (newBranchBtn2) newBranchBtn2.addEventListener("click", createNewGitBranch);
+
 function updateGitControlData() {
     loadGitBranches();
     
