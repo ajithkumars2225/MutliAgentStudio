@@ -1268,6 +1268,9 @@ CRITICAL ARCHITECTURAL REQUIREMENTS:
      c) Submitting a new record form and asserting DOM table rendering.
      d) Testing Edit, Details, and Delete action links.
 
+4. DATABASE RESILIENCE & FALLBACK SAFEGUARD:
+   - When configuring PostgreSQL / SQL databases, wrap database initialization and migration (e.g. `DbInitializer.Initialize(db)`) in a try-catch block. If PostgreSQL connection fails (e.g. password auth error or service unavailable), catch the exception, log a warning, and fallback to SQLite (`UseSqlite("Data Source=app_fallback.db")`) or In-Memory database so the web application NEVER crashes on startup with an unhandled 500 error!
+
 4. 100% OPERATIONAL ZERO-PLACEHOLDER CODE:
    - Write complete, production-ready code. Do NOT use placeholders, `// TODO`, `...`, or missing namespaces."""
     custom_prompts = load_custom_prompts()
@@ -1546,6 +1549,15 @@ Write the deployment scripts:"""
     # Re-scan to capture deploy script in codebase metadata
     updated_metadata = scan_workspace(workspace_dir)
     
+    if not success:
+        print(f"[Deployment Agent ❌] Deployment or HTTP health check failed. Re-routing to ImplementEngineer to self-heal...")
+        return {
+            "errors": f"Deployment script execution or live HTTP health check failed:\n{deploy_logs}",
+            "deploy_logs": deploy_logs,
+            "codebase": updated_metadata,
+            "iterations": state.get("iterations", 0) + 1
+        }
+        
     # Auto-commit on successful deployment
     if success:
         from git_branching import GitBranchingManager

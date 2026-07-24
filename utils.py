@@ -986,7 +986,8 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
             if health_ok:
                 logs.append(f"🚀 Application deployed & active at: {detected_url}")
             else:
-                logs.append(f"⚠️ Warning: Application started, but HTTP ping on {detected_url} timed out.")
+                logs.append(f"❌ Deployment Health Warning: Application HTTP check on {detected_url} failed: {health_msg}")
+                success = False
         else:
             logs.append("ℹ️ No HTTP port binding detected in deploy logs.")
 
