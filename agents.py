@@ -1340,6 +1340,43 @@ Write all necessary code now:"""
     # Save new/modified files directly to workspace
     save_codebase(new_files, workspace_dir)
     
+    # ── Internal Pre-Submission Compilation & Syntax Self-Verification Guard ──
+    from utils import run_local_tests
+    build_success, build_logs = run_local_tests(workspace_dir)
+    if not build_success and new_files:
+        print(f"[Implement Engineer 🔍] Pre-submission build check detected syntax/compilation errors. Executing instant internal self-correction...")
+        retry_prompt = f"""{programmer_header}
+
+CRITICAL: Your code implementation failed local compilation verification with the following errors.
+Fix all syntax, missing namespaces, Razor tags, and type errors immediately!
+
+--- COMPILATION ERROR LOG ---
+{build_logs[-3500:]}
+------------------------------
+
+Requirements:
+{state['requirements']}
+
+Target files to implement/edit:
+{files_str}
+
+{existing_files_desc}
+
+For EACH file to fix, output it in this exact format:
+---FILE: relative/path/to/file.ext---
+```language
+... code contents here ...
+```"""
+        try:
+            retry_resp = invoke_llm(llm, retry_prompt, bypass_cache=True)
+            retry_code = retry_resp.content if hasattr(retry_resp, 'content') else str(retry_resp)
+            retry_files = parse_code_files(retry_code)
+            if retry_files:
+                save_codebase(retry_files, workspace_dir)
+                print("[Implement Engineer 🎯] Successfully auto-corrected compilation errors prior to QA stage!")
+        except Exception as e:
+            print(f"[Implement Engineer Warning] Pre-submission retry failed: {e}")
+
     # Re-scan codebase to update metadata in state
     updated_metadata = scan_workspace(workspace_dir)
     
