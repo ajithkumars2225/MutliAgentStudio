@@ -83,17 +83,20 @@ class MutationTestingEngine:
             # Write mutant
             target_path.write_text(mutated_code, encoding="utf-8")
 
-            # Run test on mutant
-            res = subprocess.run(
-                [sys.executable, str(test_path)],
-                capture_output=True,
-                text=True,
-                cwd=str(base),
-                check=False
-            )
+            # Run test on mutant with 8s timeout to prevent hanging on infinite loops
+            try:
+                res = subprocess.run(
+                    [sys.executable, str(test_path)],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(base),
+                    check=False,
+                    timeout=8
+                )
+                mutant_killed = res.returncode != 0
+            except subprocess.TimeoutExpired:
+                mutant_killed = True
 
-            # If test failed, mutant was killed (Good quality test suite!)
-            mutant_killed = res.returncode != 0
             return {
                 "status": "completed",
                 "mutant_killed": mutant_killed,
@@ -101,5 +104,5 @@ class MutationTestingEngine:
                 "summary": "Mutant killed! Test suite successfully detected injected code flaw." if mutant_killed else "Mutant survived! Test suite missed injected bug."
             }
         finally:
-            # Restore original code
+            # Always restore original code
             target_path.write_text(original_code, encoding="utf-8")

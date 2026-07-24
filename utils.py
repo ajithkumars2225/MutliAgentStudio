@@ -406,13 +406,17 @@ def run_local_tests(directory: str) -> Tuple[bool, str]:
                     capture_output=True,
                     text=True,
                     cwd=str(base_path),
-                    check=False
+                    check=False,
+                    timeout=15
                 )
                 if result.returncode != 0:
                     success = False
                     logs.append(f"Test Suite Failed on {relative_path}:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n")
                 else:
                     logs.append(f"Test Suite Passed on {relative_path}.\nSTDOUT:\n{result.stdout}\n")
+            except subprocess.TimeoutExpired:
+                success = False
+                logs.append(f"Test Suite Timed Out after 15 seconds on {relative_path}.\n")
             except Exception as e:
                 success = False
                 logs.append(f"Failed to run test suite {relative_path}: {str(e)}\n")

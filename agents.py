@@ -1381,8 +1381,10 @@ def tester_node(state: dict) -> dict:
     print(f"Validation Success: {success}")
     
     # Run security scans
+    check_pause()
     print("\n[QA Tester] Running Security and Vulnerability Audit...")
     security_results = run_security_scan(workspace_dir)
+    check_pause()
     
     # Audit for high-severity security vulnerabilities
     high_severity_vulns = [v for v in security_results.get("vulnerabilities", []) if v.get("severity") == "HIGH"]
@@ -1407,11 +1409,13 @@ def tester_node(state: dict) -> dict:
         })
         
     # Generate Markdown and HTML reports in the workspace
+    check_pause()
     print("\n[QA Tester] Generating comprehensive QA and Security Reports...")
     generate_test_report(workspace_dir, state, security_results, test_logs, success)
 
     # Enterprise Visual UI Auditor
     try:
+        check_pause()
         from visual_auditor import VisualUIAuditorEngine
         ui_audits = VisualUIAuditorEngine.audit_workspace_ui(workspace_dir)
         if ui_audits:
@@ -1427,6 +1431,7 @@ def tester_node(state: dict) -> dict:
     # Enterprise Mutation Testing Engine (runs on passing test suites)
     if success:
         try:
+            check_pause()
             from mutation_testing import MutationTestingEngine
             from pathlib import Path
             base_p = Path(workspace_dir)
