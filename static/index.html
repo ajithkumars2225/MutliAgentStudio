@@ -76,7 +76,7 @@
 
         <!-- WORKSPACE PAGE VIEW -->
         <div id="view-workspace" class="view-content active">
-            <main class="app-body">
+            <main class="app-body" id="app-body">
                 <!-- SIDEBAR PANEL: DEVELOPER REQUIREMENTS -->
                 <aside class="control-panel glass-card" id="control-panel">
                     <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.8rem;">
@@ -159,6 +159,9 @@
                         </div>
                     </div>
                 </aside>
+
+                <!-- VERTICAL RESIZE HANDLE FOR SIDEBAR -->
+                <div class="resize-handle-vertical" id="resize-handle-sidebar" title="Drag left/right to adjust Sidebar Width"></div>
 
                 <!-- MAIN WORKSPACE CONTAINER -->
                 <div class="main-content" style="display: grid; grid-template-rows: 1fr 6px 220px; gap: 0; overflow: hidden; height: 100%;">

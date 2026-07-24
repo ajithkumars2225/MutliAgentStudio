@@ -159,16 +159,30 @@ body {
 /* MAIN LAYOUT */
 .app-body {
     display: grid;
-    grid-template-columns: 330px 1fr;
-    gap: 0.5rem;
+    grid-template-columns: 330px 6px 1fr;
+    gap: 0;
     padding: 0.5rem;
     height: 100%;
     overflow: hidden;
-    transition: grid-template-columns 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .app-body.input-collapsed {
-    grid-template-columns: 48px 1fr;
+    grid-template-columns: 48px 6px 1fr;
+}
+
+.resize-handle-vertical {
+    width: 6px;
+    background-color: transparent;
+    cursor: col-resize;
+    user-select: none;
+    height: 100%;
+    z-index: 10;
+    transition: background-color var(--transition-speed);
+}
+
+.resize-handle-vertical:hover, .resize-handle-vertical.active {
+    background-color: var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(0, 223, 216, 0.6);
 }
 
 .control-panel.collapsed .panel-form-container {

@@ -1644,6 +1644,55 @@ if (revealOsBtn) {
     });
 }
 
+// 3.5. Sidebar Width Draggable Resizer (Smooth Cursor Dragging)
+const resizeHandleSidebar = document.getElementById("resize-handle-sidebar");
+const appBodyEl = document.getElementById("app-body");
+let isResizingSidebar = false;
+
+// Load saved sidebar width from localStorage if exists
+const savedSidebarWidth = localStorage.getItem("studio_sidebar_width");
+if (savedSidebarWidth && appBodyEl) {
+    const widthNum = parseInt(savedSidebarWidth, 10);
+    if (!isNaN(widthNum) && widthNum >= 240 && widthNum <= 700) {
+        appBodyEl.style.gridTemplateColumns = `${widthNum}px 6px 1fr`;
+    }
+}
+
+if (resizeHandleSidebar && appBodyEl) {
+    resizeHandleSidebar.addEventListener("mousedown", (e) => {
+        isResizingSidebar = true;
+        resizeHandleSidebar.classList.add("active");
+        document.body.style.cursor = "col-resize";
+        e.preventDefault(); // Prevent text selection
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!isResizingSidebar) return;
+        
+        const containerRect = appBodyEl.getBoundingClientRect();
+        let newSidebarWidth = e.clientX - containerRect.left;
+        
+        // Constrain sidebar width (min 240px, max 700px)
+        if (newSidebarWidth < 240) newSidebarWidth = 240;
+        if (newSidebarWidth > 700) newSidebarWidth = 700;
+        
+        appBodyEl.style.gridTemplateColumns = `${newSidebarWidth}px 6px 1fr`;
+        localStorage.setItem("studio_sidebar_width", newSidebarWidth);
+        
+        if (codeEditor) {
+            codeEditor.refresh();
+        }
+    });
+
+    document.addEventListener("mouseup", () => {
+        if (isResizingSidebar) {
+            isResizingSidebar = false;
+            resizeHandleSidebar.classList.remove("active");
+            document.body.style.cursor = "default";
+        }
+    });
+}
+
 // 4. File Explorer Width Draggable Resizer
 
 const resizeHandle = document.getElementById("resize-handle");
