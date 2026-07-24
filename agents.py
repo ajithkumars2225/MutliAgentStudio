@@ -817,9 +817,62 @@ def orchestrator_node(state: dict) -> dict:
     if next_agent == "FINISH":
         from utils import clear_studio_state
         from database import get_active_workspace
-        clear_studio_state(get_active_workspace())
+        ws_dir = get_active_workspace()
+        generate_walkthrough_if_missing(ws_dir, state)
+        clear_studio_state(ws_dir)
 
     return {"next_agent": next_agent}
+
+def generate_walkthrough_if_missing(workspace_dir: str, state: dict):
+    walkthrough_path = os.path.join(workspace_dir, "walkthrough_agent.md")
+    if os.path.exists(walkthrough_path):
+        return
+        
+    print("\n[Orchestrator Handoff 📄] Generating final walkthrough_agent.md handoff documentation...")
+    try:
+        from utils import get_llm, scan_workspace, invoke_llm
+        from database import get_setting
+        
+        provider = get_setting("llm_provider", "google")
+        model = get_setting("llm_model", "gemini-2.5-flash")
+        api_key = get_setting("api_key", "")
+        base_url = get_setting("base_url", "")
+        llm = get_llm(provider, model, api_key, base_url)
+        
+        updated_metadata = scan_workspace(workspace_dir)
+        
+        walkthrough_prompt = f"""You are a Lead Software Engineer and Technical Writer.
+Produce a clean, professional, and comprehensive handoff document `walkthrough_agent.md` for the completed project.
+
+Initial Requirements Prompt:
+{state.get('prompt', '')}
+
+Requirements Specifications:
+{state.get('requirements', '')}
+
+Final Codebase Files:
+{", ".join(updated_metadata.keys())}
+
+Agent Execution History:
+- Coder Iterations: {state.get('iterations', 0)}
+- Test Incidents/Bugs recorded: {state.get('incidents', [])}
+
+Write a detailed Markdown report containing:
+1. Summary of Accomplishments: High-level overview of what was successfully built and why.
+2. Agent Execution Telemetry Table detailing what each agent did.
+3. Detailed File Changes Table listing created files.
+4. Local Verification & Running Instructions (`dotnet run`, `deploy.bat`).
+5. Future Recommendations.
+
+Output ONLY the raw markdown content."""
+
+        response = invoke_llm(llm, walkthrough_prompt)
+        content = response.content if hasattr(response, 'content') else str(response)
+        with open(walkthrough_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"[Orchestrator Handoff] Successfully wrote walkthrough_agent.md to {walkthrough_path}")
+    except Exception as e:
+        print(f"[Orchestrator Handoff Warning] Failed to generate walkthrough: {e}")
 
 def get_memory_context_string(prompt: str) -> str:
     """
