@@ -1681,6 +1681,8 @@ if (resizeHandleSidebar && appBodyEl) {
         if (codeEditor) {
             codeEditor.refresh();
         }
+        if (typeof fitAddonConsole !== "undefined" && fitAddonConsole) { try { fitAddonConsole.fit(); } catch(err) {} }
+        if (typeof fitAddon !== "undefined" && fitAddon) { try { fitAddon.fit(); } catch(err) {} }
     });
 
     document.addEventListener("mouseup", () => {
@@ -1688,9 +1690,18 @@ if (resizeHandleSidebar && appBodyEl) {
             isResizingSidebar = false;
             resizeHandleSidebar.classList.remove("active");
             document.body.style.cursor = "default";
+            if (typeof fitAddonConsole !== "undefined" && fitAddonConsole) { try { fitAddonConsole.fit(); } catch(err) {} }
+            if (typeof fitAddon !== "undefined" && fitAddon) { try { fitAddon.fit(); } catch(err) {} }
         }
     });
 }
+
+// Window resize refit handler
+window.addEventListener("resize", () => {
+    if (typeof fitAddonConsole !== "undefined" && fitAddonConsole) { try { fitAddonConsole.fit(); } catch(err) {} }
+    if (typeof fitAddon !== "undefined" && fitAddon) { try { fitAddon.fit(); } catch(err) {} }
+    if (codeEditor) { codeEditor.refresh(); }
+});
 
 // 4. File Explorer Width Draggable Resizer
 
