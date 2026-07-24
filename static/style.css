@@ -816,6 +816,52 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
+/* TERMINAL CONSOLE SCROLLBAR & OVERFLOW */
+#console-logs-container,
+#terminal-container {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    outline: none;
+}
+
+#console-logs-container::-webkit-scrollbar,
+#terminal-container::-webkit-scrollbar {
+    width: 8px !important;
+    display: block !important;
+}
+
+#console-logs-container::-webkit-scrollbar-track,
+#terminal-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+#console-logs-container::-webkit-scrollbar-thumb,
+#terminal-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 223, 216, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+#console-logs-container::-webkit-scrollbar-thumb:hover,
+#terminal-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 223, 216, 0.6) !important;
+}
+
+:root.light-theme #console-logs-container::-webkit-scrollbar-track,
+:root.light-theme #terminal-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+:root.light-theme #console-logs-container::-webkit-scrollbar-thumb,
+:root.light-theme #terminal-container::-webkit-scrollbar-thumb {
+    background: rgba(2, 132, 199, 0.4) !important;
+    border-radius: 4px !important;
+}
+
+:root.light-theme #console-logs-container::-webkit-scrollbar-thumb:hover,
+:root.light-theme #terminal-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(2, 132, 199, 0.7) !important;
+}
+
 /* XTERM SCROLLBAR CUSTOM GLOW */
 .xterm .xterm-viewport::-webkit-scrollbar {
     width: 8px !important;

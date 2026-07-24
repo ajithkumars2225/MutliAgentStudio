@@ -516,6 +516,32 @@ clearLogsBtn.addEventListener("click", () => {
     lastLogCount = 0;
 });
 
+// Keyboard Navigation (Arrow Keys / PageUp / PageDown) for Terminal Console Logs
+const consoleLogsBox = document.getElementById("console-logs-container");
+if (consoleLogsBox) {
+    consoleLogsBox.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowUp") {
+            consoleLogsBox.scrollBy({ top: -50, behavior: "smooth" });
+            e.preventDefault();
+        } else if (e.key === "ArrowDown") {
+            consoleLogsBox.scrollBy({ top: 50, behavior: "smooth" });
+            e.preventDefault();
+        } else if (e.key === "PageUp") {
+            consoleLogsBox.scrollBy({ top: -250, behavior: "smooth" });
+            e.preventDefault();
+        } else if (e.key === "PageDown") {
+            consoleLogsBox.scrollBy({ top: 250, behavior: "smooth" });
+            e.preventDefault();
+        } else if (e.key === "Home") {
+            consoleLogsBox.scrollTo({ top: 0, behavior: "smooth" });
+            e.preventDefault();
+        } else if (e.key === "End") {
+            consoleLogsBox.scrollTo({ top: consoleLogsBox.scrollHeight, behavior: "smooth" });
+            e.preventDefault();
+        }
+    });
+}
+
 const retryBtnWrap = document.getElementById("retry-btn-wrap");
 
 // Run agent trigger
