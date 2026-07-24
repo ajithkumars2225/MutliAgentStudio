@@ -2483,28 +2483,112 @@ function loadGitBranches() {
     .catch(err => console.error("Failed to load git branches:", err));
 }
 
-function createNewGitBranch() {
-    const branchName = prompt("Enter new Git branch name (e.g. feature/my-new-task):");
-    if (!branchName || !branchName.trim()) return;
+function submitNewGitBranch(inputEl, formEl, btnEl) {
+    if (!inputEl) return;
+    const branchName = inputEl.value.trim();
+    if (!branchName) {
+        alert("Please enter a valid branch name!");
+        return;
+    }
+    
+    if (btnEl) btnEl.disabled = true;
     
     fetch("/api/git/branch/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: branchName.trim() })
+        body: JSON.stringify({ name: branchName })
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) return r.json().then(e => { throw new Error(e.detail || "Failed to create branch") });
+        return r.json();
+    })
     .then(d => {
-        showCopyToast(`🌿 Created & switched to ${branchName.trim()}`);
+        if (btnEl) btnEl.disabled = false;
+        if (inputEl) inputEl.value = "";
+        if (formEl) formEl.style.display = "none";
+        showCopyToast(`🌿 Created & switched to ${branchName}`);
         updateGitControlData();
         pollGitStatus();
     })
-    .catch(err => alert("Failed to create branch: " + err));
+    .catch(err => {
+        if (btnEl) btnEl.disabled = false;
+        alert("Failed to create branch: " + err.message);
+    });
 }
 
-const newBranchBtn1 = document.getElementById("git-modal-new-branch-btn");
-const newBranchBtn2 = document.getElementById("git-sidebar-new-branch-btn");
-if (newBranchBtn1) newBranchBtn1.addEventListener("click", createNewGitBranch);
-if (newBranchBtn2) newBranchBtn2.addEventListener("click", createNewGitBranch);
+// Sidebar inline branch form bindings
+const sidebarNewBranchBtn = document.getElementById("git-sidebar-new-branch-btn");
+const sidebarNewBranchForm = document.getElementById("sidebar-new-branch-form");
+const sidebarNewBranchInput = document.getElementById("sidebar-new-branch-input");
+const sidebarCancelBranchBtn = document.getElementById("sidebar-cancel-branch-btn");
+const sidebarConfirmBranchBtn = document.getElementById("sidebar-confirm-branch-btn");
+
+if (sidebarNewBranchBtn && sidebarNewBranchForm) {
+    sidebarNewBranchBtn.addEventListener("click", () => {
+        const isVisible = sidebarNewBranchForm.style.display === "flex";
+        sidebarNewBranchForm.style.display = isVisible ? "none" : "flex";
+        if (!isVisible && sidebarNewBranchInput) {
+            sidebarNewBranchInput.focus();
+        }
+    });
+}
+if (sidebarCancelBranchBtn && sidebarNewBranchForm) {
+    sidebarCancelBranchBtn.addEventListener("click", () => {
+        sidebarNewBranchForm.style.display = "none";
+    });
+}
+if (sidebarConfirmBranchBtn && sidebarNewBranchInput) {
+    sidebarConfirmBranchBtn.addEventListener("click", () => {
+        submitNewGitBranch(sidebarNewBranchInput, sidebarNewBranchForm, sidebarConfirmBranchBtn);
+    });
+}
+if (sidebarNewBranchInput) {
+    sidebarNewBranchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            submitNewGitBranch(sidebarNewBranchInput, sidebarNewBranchForm, sidebarConfirmBranchBtn);
+        } else if (e.key === "Escape") {
+            if (sidebarNewBranchForm) sidebarNewBranchForm.style.display = "none";
+        }
+    });
+}
+
+// Popover inline branch form bindings
+const popoverNewBranchBtn = document.getElementById("git-modal-new-branch-btn");
+const popoverNewBranchForm = document.getElementById("popover-new-branch-form");
+const popoverNewBranchInput = document.getElementById("popover-new-branch-input");
+const popoverCancelBranchBtn = document.getElementById("popover-cancel-branch-btn");
+const popoverConfirmBranchBtn = document.getElementById("popover-confirm-branch-btn");
+
+if (popoverNewBranchBtn && popoverNewBranchForm) {
+    popoverNewBranchBtn.addEventListener("click", () => {
+        const isVisible = popoverNewBranchForm.style.display === "flex";
+        popoverNewBranchForm.style.display = isVisible ? "none" : "flex";
+        if (!isVisible && popoverNewBranchInput) {
+            popoverNewBranchInput.focus();
+        }
+    });
+}
+if (popoverCancelBranchBtn && popoverNewBranchForm) {
+    popoverCancelBranchBtn.addEventListener("click", () => {
+        popoverNewBranchForm.style.display = "none";
+    });
+}
+if (popoverConfirmBranchBtn && popoverNewBranchInput) {
+    popoverConfirmBranchBtn.addEventListener("click", () => {
+        submitNewGitBranch(popoverNewBranchInput, popoverNewBranchForm, popoverConfirmBranchBtn);
+    });
+}
+if (popoverNewBranchInput) {
+    popoverNewBranchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            submitNewGitBranch(popoverNewBranchInput, popoverNewBranchForm, popoverConfirmBranchBtn);
+        } else if (e.key === "Escape") {
+            if (popoverNewBranchForm) popoverNewBranchForm.style.display = "none";
+        }
+    });
+}
 
 function updateGitControlData() {
     loadGitBranches();

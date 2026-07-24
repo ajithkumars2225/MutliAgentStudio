@@ -187,14 +187,24 @@
 
                                     <div style="display: flex; flex-direction: column; gap: 0.8rem; overflow-y: auto; flex: 1; min-height: 0; padding-right: 4px;">
                                         <!-- Branch Switcher -->
-                                        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0;">
-                                            <div>
-                                                <span style="color: var(--text-secondary); font-size: 0.75rem;">Active Branch:</span>
-                                                <span id="git-modal-branch" style="font-size: 0.85rem; font-weight: bold; color: var(--accent-cyan); font-family: monospace; margin-left: 0.4rem;">main</span>
+                                        <div style="display: flex; flex-direction: column; gap: 0.4rem; background: rgba(255, 255, 255, 0.02); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div>
+                                                    <span style="color: var(--text-secondary); font-size: 0.75rem;">Active Branch:</span>
+                                                    <span id="git-modal-branch" style="font-size: 0.85rem; font-weight: bold; color: var(--accent-cyan); font-family: monospace; margin-left: 0.4rem;">main</span>
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                                    <select id="git-modal-branch-select" style="background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.2rem 0.4rem; color: var(--text-primary); font-size: 0.75rem; outline: none; cursor: pointer;"></select>
+                                                    <button id="git-modal-new-branch-btn" class="text-btn icon-btn" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; color: var(--accent-cyan) !important;" title="Create New Task Branch">➕ New</button>
+                                                </div>
                                             </div>
-                                            <div style="display: flex; align-items: center; gap: 0.4rem;">
-                                                <select id="git-modal-branch-select" style="background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.2rem 0.4rem; color: var(--text-primary); font-size: 0.75rem; outline: none; cursor: pointer;"></select>
-                                                <button id="git-modal-new-branch-btn" class="text-btn icon-btn" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; color: var(--accent-cyan) !important;" title="Create New Task Branch">➕ New</button>
+                                            <!-- INLINE IN-APP NEW BRANCH CREATION FORM (POPOVER) -->
+                                            <div id="popover-new-branch-form" style="display: none; flex-direction: column; gap: 0.3rem; margin-top: 0.3rem; padding-top: 0.35rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                                                <input type="text" id="popover-new-branch-input" placeholder="e.g. feature/my-new-task" style="width: 100%; background: var(--bg-darker); border: 1px solid var(--accent-cyan); border-radius: 4px; padding: 0.3rem 0.4rem; color: var(--text-primary); font-size: 0.73rem; outline: none; font-family: monospace;">
+                                                <div style="display: flex; justify-content: flex-end; gap: 0.3rem; margin-top: 0.2rem;">
+                                                    <button id="popover-cancel-branch-btn" class="text-btn" style="font-size: 0.72rem; padding: 2px 6px;">Cancel</button>
+                                                    <button id="popover-confirm-branch-btn" class="action-btn primary-btn" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;">✓ Create</button>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -318,6 +328,14 @@
                                         <div style="display: flex; gap: 0.4rem; margin-top: 0.2rem;">
                                             <select id="git-sidebar-branch-select" style="flex: 1; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.2rem 0.4rem; color: var(--text-primary); font-size: 0.72rem; outline: none; cursor: pointer;"></select>
                                             <button id="git-sidebar-new-branch-btn" class="text-btn icon-btn" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; color: var(--accent-cyan) !important;" title="Create New Task Branch">➕</button>
+                                        </div>
+                                        <!-- INLINE IN-APP NEW BRANCH CREATION FORM -->
+                                        <div id="sidebar-new-branch-form" style="display: none; flex-direction: column; gap: 0.3rem; margin-top: 0.35rem; padding-top: 0.35rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                                            <input type="text" id="sidebar-new-branch-input" placeholder="e.g. feature/my-new-task" style="width: 100%; background: var(--bg-darker); border: 1px solid var(--accent-cyan); border-radius: 4px; padding: 0.3rem 0.4rem; color: var(--text-primary); font-size: 0.72rem; outline: none; font-family: monospace;">
+                                            <div style="display: flex; justify-content: flex-end; gap: 0.3rem; margin-top: 0.2rem;">
+                                                <button id="sidebar-cancel-branch-btn" class="text-btn" style="font-size: 0.7rem; padding: 2px 6px;">Cancel</button>
+                                                <button id="sidebar-confirm-branch-btn" class="action-btn primary-btn" style="font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;">✓ Create</button>
+                                            </div>
                                         </div>
                                     </div>
 
