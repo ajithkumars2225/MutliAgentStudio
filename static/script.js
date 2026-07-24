@@ -2377,18 +2377,24 @@ pollGitStatus();
 
 // Git Version Control Modal Center bindings and fetches
 const gitModal = document.getElementById("git-modal");
-const closeGitModalBtn = document.getElementById("close-git-modal");
+const gitPopoverPanel = document.getElementById("git-popover-panel");
+const closeGitPopoverBtn = document.getElementById("close-git-popover-btn");
 const gitModalBranch = document.getElementById("git-modal-branch");
 const gitModalStatusSummary = document.getElementById("git-modal-status-summary");
 const gitModalChangesList = document.getElementById("git-modal-changes-list");
 const gitModalCommitsList = document.getElementById("git-modal-commits-list");
 const gitModalDiffBox = document.getElementById("git-modal-diff-box");
 
-function openGitCenter() {
-    if (!gitModal) return;
+function toggleGitCenter() {
+    if (!gitPopoverPanel) return;
     
-    // Show modal
-    gitModal.style.display = "flex";
+    const isVisible = gitPopoverPanel.style.display === "flex";
+    if (isVisible) {
+        gitPopoverPanel.style.display = "none";
+        return;
+    }
+    
+    gitPopoverPanel.style.display = "flex";
     
     loadGitBranches();
     
@@ -2518,23 +2524,27 @@ function openGitCenter() {
 // Bind triggers
 if (gitStatusBadge) {
     gitStatusBadge.style.cursor = "pointer";
-    gitStatusBadge.title = "Open Git Version Control Center";
-    gitStatusBadge.addEventListener("click", openGitCenter);
-}
-
-if (closeGitModalBtn) {
-    closeGitModalBtn.addEventListener("click", () => {
-        if (gitModal) gitModal.style.display = "none";
+    gitStatusBadge.title = "Click to toggle Git Version Control Drawer";
+    gitStatusBadge.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleGitCenter();
     });
 }
 
-if (gitModal) {
-    gitModal.addEventListener("click", (e) => {
-        if (e.target === gitModal) {
-            gitModal.style.display = "none";
+if (closeGitPopoverBtn) {
+    closeGitPopoverBtn.addEventListener("click", () => {
+        if (gitPopoverPanel) gitPopoverPanel.style.display = "none";
+    });
+}
+
+// Outside click listener to close Git popover drawer
+document.addEventListener("click", (e) => {
+    if (gitPopoverPanel && gitPopoverPanel.style.display === "flex") {
+        if (!gitPopoverPanel.contains(e.target) && (!gitStatusBadge || !gitStatusBadge.contains(e.target))) {
+            gitPopoverPanel.style.display = "none";
         }
-    });
-}
+    }
+});
 
 // ── Terminal Copy/Paste Utilities ──────────────────────────────────────────
 function showCopyToast(msg) {
