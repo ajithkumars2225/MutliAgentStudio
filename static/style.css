@@ -1597,20 +1597,72 @@ body {
     color: #475569 !important;
 }
 
-/* TERMINAL & FIXED FLOW LIGHT THEME COMPATIBILITY */
-:root.light-theme #log-panel .panel-header {
-    background-color: #0f172a !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+/* TERMINAL & FIXED FLOW LIGHT THEME FULL OVERRIDES */
+:root.light-theme #log-panel {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
 }
 
-:root.light-theme #log-panel .panel-header h2 {
-    color: #ffffff !important;
+:root.light-theme #log-panel .panel-header {
+    background-color: #f1f5f9 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+:root.light-theme #log-panel .panel-header h2,
+:root.light-theme #log-panel .terminal-icon {
+    color: #0f172a !important;
+}
+
+:root.light-theme .terminal-tabs {
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+}
+
+:root.light-theme #term-tab-console {
+    color: #475569 !important;
+    background: none !important;
+}
+
+:root.light-theme #term-tab-console.active {
+    color: #0284c7 !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 :root.light-theme #console-logs-container,
 :root.light-theme #terminal-container {
-    background-color: #050811 !important;
-    color: #f8fafc !important;
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+:root.light-theme #agent-flow-fixed-panel {
+    background: #ffffff !important;
+    border-left: 1px solid #cbd5e1 !important;
+}
+
+:root.light-theme #agent-flow-fixed-panel .flow-panel-header {
+    background: #f1f5f9 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+:root.light-theme #agent-flow-fixed-panel .flow-panel-header span {
+    color: #0f172a !important;
+}
+
+:root.light-theme #agent-flow-fixed-panel .flow-viz-node {
+    color: #334155 !important;
+}
+
+:root.light-theme #agent-flow-fixed-panel .flow-viz-node.active {
+    background-color: #e0f2fe !important;
+    border: 1px solid #7dd3fc !important;
+    color: #0284c7 !important;
+}
+
+:root.light-theme #agent-flow-fixed-panel .flow-viz-node.completed {
+    background-color: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    color: #166534 !important;
 }
 
 /* WORKSPACE HEADER & TABS LIGHT THEME OVERRIDES */
