@@ -2357,14 +2357,20 @@ function pollGitStatus() {
         return r.json();
     })
     .then(data => {
+        const branchName = (data.branch && data.branch !== "unknown") ? data.branch : "";
         if (gitBranchNameSpan && gitStatusBadge) {
-            if (data.branch && data.branch !== "unknown") {
-                gitBranchNameSpan.textContent = data.branch;
+            if (branchName) {
+                gitBranchNameSpan.textContent = branchName;
                 gitStatusBadge.style.display = "inline-flex";
             } else {
                 gitStatusBadge.style.display = "none";
             }
         }
+        
+        const b1 = document.getElementById("git-sidebar-branch");
+        const b2 = document.getElementById("git-modal-branch");
+        if (b1 && branchName) b1.textContent = branchName;
+        if (b2 && branchName) b2.textContent = branchName;
     })
     .catch(err => {
         console.warn("Failed to check Git status: ", err);
@@ -2436,6 +2442,14 @@ function loadGitBranches() {
         return r.json();
     })
     .then(data => {
+        if (data.active) {
+            const b1 = document.getElementById("git-sidebar-branch");
+            const b2 = document.getElementById("git-modal-branch");
+            if (b1) b1.textContent = data.active;
+            if (b2) b2.textContent = data.active;
+            if (gitBranchNameSpan) gitBranchNameSpan.textContent = data.active;
+        }
+
         const branchSelects = [
             document.getElementById("git-modal-branch-select"),
             document.getElementById("git-sidebar-branch-select")
@@ -2599,7 +2613,6 @@ function updateGitControlData() {
     const commitsEls = [document.getElementById("git-modal-commits-list"), document.getElementById("git-sidebar-commits-list")];
     const diffEls = [document.getElementById("git-modal-diff-box"), document.getElementById("git-sidebar-diff-box")];
     
-    branchEls.forEach(el => { if (el) el.textContent = "Checking branch..."; });
     statusEls.forEach(el => { if (el) el.textContent = "Loading status..."; });
     changesEls.forEach(el => { if (el) el.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">Loading status...</div>`; });
     commitsEls.forEach(el => { if (el) el.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">Loading history...</div>`; });
@@ -2608,12 +2621,18 @@ function updateGitControlData() {
     fetch("/api/git/status")
     .then(r => r.json())
     .then(data => {
-        branchEls.forEach(el => { if (el) el.textContent = data.branch || "unknown"; });
+        if (data.branch && data.branch !== "unknown") {
+            branchEls.forEach(el => { if (el) el.textContent = data.branch; });
+            if (gitBranchNameSpan) gitBranchNameSpan.textContent = data.branch;
+        }
+        
+        const modifiedList = Array.isArray(data.modified) ? data.modified : 
+                             (data.status_output ? data.status_output.split("\n").filter(l => l.trim()) : []);
         
         statusEls.forEach(el => {
             if (el) {
-                if (data.status_output && data.status_output.trim() !== "") {
-                    el.textContent = "Modified (Pending local commits)";
+                if (modifiedList.length > 0) {
+                    el.textContent = `Modified (${modifiedList.length} files pending)`;
                     el.style.color = "var(--warning)";
                 } else {
                     el.textContent = "Clean (All changes committed)";
@@ -2624,16 +2643,15 @@ function updateGitControlData() {
 
         changesEls.forEach(el => {
             if (!el) return;
-            if (data.status_output && data.status_output.trim() !== "") {
+            if (modifiedList.length > 0) {
                 el.innerHTML = "";
-                const lines = data.status_output.split("\n");
-                lines.forEach(line => {
-                    if (line.trim() === "") return;
+                modifiedList.forEach(line => {
+                    if (!line || line.trim() === "") return;
                     const fileDiv = document.createElement("div");
                     fileDiv.textContent = line;
-                    if (line.includes("modified:")) fileDiv.style.color = "var(--warning)";
-                    else if (line.includes("new file:")) fileDiv.style.color = "var(--success)";
-                    else if (line.includes("deleted:")) fileDiv.style.color = "var(--danger)";
+                    if (line.startsWith("M") || line.includes("modified:")) fileDiv.style.color = "var(--warning)";
+                    else if (line.startsWith("A") || line.startsWith("??") || line.includes("new file:")) fileDiv.style.color = "var(--success)";
+                    else if (line.startsWith("D") || line.includes("deleted:")) fileDiv.style.color = "var(--danger)";
                     else fileDiv.style.color = "var(--text-secondary)";
                     el.appendChild(fileDiv);
                 });
