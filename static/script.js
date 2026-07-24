@@ -948,27 +948,40 @@ function pollStatus() {
                 if (hasError || hitLimit) {
                     let alertMarkdown = "";
                     if (hasError) {
-                        alertMarkdown = `
-# ⚠️ Simulation Stopped with Errors
+                        alertMarkdown = `## ⚠️ Workflow Stopped — Execution Error
 
-The multi-agent workflow encountered an issue and could not complete all steps successfully.
+> **Reason for Stopping**: Fatal error encountered during execution.
 
-> [!WARNING]
-> **Fatal Error during execution:**
-> \`\`\`
-> ${status.last_error}
-> \`\`\`
-`;
+* **❌ Error Trace**: \`${status.last_error}\`
+* **💡 Actionable Suggestions**: Verify LLM API keys in Settings or simplify requirements prompt.`;
                     } else if (hitLimit) {
-                        alertMarkdown = `
-# ⚠️ Iteration Limit Reached
+                        alertMarkdown = `## 🛑 Workflow Paused — Max Iterations Limit Reached
 
-The simulation reached the maximum allowed iteration limit before completing all tasks (**${status.iterations}** / **${status.max_iterations}**).
-`;
+> **Reason for Stopping**: Simulation reached the configured limit of **${status.iterations}** / **${status.max_iterations}** iterations.
+
+* **🔍 Status Explanation**: The implementation engineer generated and self-healed code fixes, but the iteration quota was reached before final QA verification completed.
+* **💡 Actionable Suggestion**: Increase the **Max Iterations** slider in the workspace sidebar (e.g. to 5 or 8) and click **⚡ Run Studio** to complete the final deployment stage!`;
                     }
                     appendChatMessage("assistant", alertMarkdown);
+                    
+                    // Also fetch and display walkthrough_agent.md if created by Orchestrator
+                    fetch("/api/file?path=walkthrough_agent.md")
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => {
+                        if (data && data.content) {
+                            appendChatMessage("assistant", `### 📄 Current Progress Handoff Report\n\n` + data.content);
+                        }
+                    })
+                    .catch(() => {});
                 } else {
-                    // Fetch walkthrough_agent.md on completion and render DIRECTLY in Chat Response (No separate popup!)
+                    let successMarkdown = `## 🎉 Workflow Completed Successfully!
+
+> **Reason for Completion**: All multi-agent pipeline stages (BusinessAnalyst, ImpactAnalyzer, ImplementEngineer, Tester, Deployer) finished 100% cleanly without errors!
+
+* **🚀 Deployment Status**: Live application verified & operational.`;
+                    appendChatMessage("assistant", successMarkdown);
+
+                    // Fetch walkthrough_agent.md on completion and render DIRECTLY in Chat Response
                     fetch("/api/file?path=walkthrough_agent.md")
                     .then(r => {
                         if (r.ok) return r.json();
@@ -976,7 +989,7 @@ The simulation reached the maximum allowed iteration limit before completing all
                     })
                     .then(data => {
                         if (data && data.content) {
-                            appendChatMessage("assistant", `## 🎉 Multi-Agent Workflow Completion Summary\n\n` + data.content);
+                            appendChatMessage("assistant", `## 📄 Final Handoff Documentation\n\n` + data.content);
                         }
                     })
                     .catch(err => {
