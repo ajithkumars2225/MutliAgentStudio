@@ -6,15 +6,15 @@
 }
 
 :root {
-    --bg-main: #0b0f19;
-    --bg-darker: #05080f;
-    --card-bg: rgba(15, 23, 42, 0.45);
-    --border-color: rgba(255, 255, 255, 0.06);
-    --accent-blue: #0066ff;
+    --bg-main: #090d16;
+    --bg-darker: #050811;
+    --card-bg: rgba(15, 23, 42, 0.65);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --accent-blue: #3b82f6;
     --accent-cyan: #00dfd8;
-    --accent-purple: #7000ff;
+    --accent-purple: #8b5cf6;
     --glow-color: rgba(0, 223, 216, 0.08);
-    --text-primary: #e2e8f0;
+    --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --success: #10b981;
     --danger: #ef4444;
@@ -275,7 +275,7 @@ body {
 .panel-header h2 {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #fff;
+    color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 0.8px;
 }
@@ -583,7 +583,7 @@ body {
     cursor: pointer;
     border-radius: 4px;
     font-size: 0.8rem;
-    color: #e2e8f0;
+    color: var(--text-primary);
     font-weight: 500;
     user-select: none;
     transition: background-color var(--transition-speed);
@@ -630,10 +630,10 @@ body {
 }
 
 .tree-file-node.active {
-    background-color: rgba(0, 102, 255, 0.12);
-    border-left: 2px solid var(--accent-blue);
-    color: #fff;
-    font-weight: 500;
+    background-color: rgba(0, 223, 216, 0.12);
+    border-left: 2px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    font-weight: 600;
 }
 
 .file-node-label {
@@ -1514,6 +1514,83 @@ body {
     color: #0f172a !important;
     border: 1px solid rgba(0, 102, 255, 0.2) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* FILE EXPLORER LIGHT THEME OVERRIDES */
+:root.light-theme .file-explorer {
+    background: #ffffff !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+:root.light-theme .explorer-title {
+    background-color: #f1f5f9 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #0f172a !important;
+}
+
+:root.light-theme .explorer-title span {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+:root.light-theme #active-folder-path {
+    background-color: #f8fafc !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #475569 !important;
+}
+
+:root.light-theme .file-tree {
+    background-color: #ffffff !important;
+}
+
+:root.light-theme .tree-placeholder {
+    color: #64748b !important;
+}
+
+:root.light-theme .folder-header {
+    color: #0f172a !important;
+}
+
+:root.light-theme .folder-header:hover {
+    background-color: rgba(2, 132, 199, 0.08) !important;
+    color: #0284c7 !important;
+}
+
+:root.light-theme .folder-header span {
+    color: #334155 !important;
+}
+
+:root.light-theme .folder-children {
+    border-left: 1px dashed rgba(0, 0, 0, 0.15) !important;
+}
+
+:root.light-theme .tree-file-node {
+    color: #334155 !important;
+}
+
+:root.light-theme .tree-file-node:hover {
+    background-color: rgba(2, 132, 199, 0.08) !important;
+    color: #0284c7 !important;
+}
+
+:root.light-theme .tree-file-node.active {
+    background-color: rgba(2, 132, 199, 0.14) !important;
+    border-left: 3px solid #0284c7 !important;
+    color: #0284c7 !important;
+    font-weight: 600 !important;
+}
+
+:root.light-theme .file-node-label span {
+    color: inherit !important;
+}
+
+:root.light-theme .file-delete-btn {
+    color: #64748b !important;
+}
+
+:root.light-theme .file-delete-btn:hover {
+    color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.1) !important;
 }
 
 :root.light-theme .file-item {
