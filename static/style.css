@@ -2113,11 +2113,48 @@ body {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 0.55rem 0.75rem;
+    padding: 0.65rem 0.85rem;
     border-radius: 10px 10px 10px 2px;
     font-size: 0.78rem;
-    line-height: 1.45;
+    line-height: 1.5;
     max-width: 96%;
     word-break: break-word;
+}
+
+.chat-msg-assistant h3 {
+    margin-top: 0.2rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--accent-cyan);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 0.3rem;
+}
+
+.chat-msg-assistant blockquote {
+    margin: 0.4rem 0;
+    padding: 0.4rem 0.6rem;
+    background: rgba(0, 223, 216, 0.06);
+    border-left: 3px solid var(--accent-cyan);
+    border-radius: 4px;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+}
+
+.chat-msg-assistant ul, .chat-msg-assistant ol {
+    margin: 0.4rem 0 0.4rem 1rem;
+    padding: 0;
+}
+
+.chat-msg-assistant li {
+    margin-bottom: 0.3rem;
+    font-size: 0.77rem;
+    line-height: 1.45;
+}
+
+.chat-msg-assistant strong {
+    color: var(--accent-cyan);
 }
 

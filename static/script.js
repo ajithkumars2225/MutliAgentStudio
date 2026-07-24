@@ -1003,15 +1003,7 @@ The simulation reached the maximum allowed iteration limit before completing all
                         const action = step.action || "Completed Stage";
                         const content = step.content || "";
                         if (content && agentName !== "Orchestrator") {
-                            const iconMap = {
-                                "BusinessAnalyst": "📋",
-                                "ImpactAnalyzer": "🌐",
-                                "ImplementEngineer": "⚙️",
-                                "Tester": "🧪",
-                                "Deployer": "🚀"
-                            };
-                            const icon = iconMap[agentName] || "🤖";
-                            const summaryMarkdown = `### ${icon} ${agentName} — ${action}\n\n${content.substring(0, 1500)}${content.length > 1500 ? '\n\n*(Truncated for preview)*' : ''}`;
+                            const summaryMarkdown = formatAgentSummaryForChat(agentName, action, content);
                             appendChatMessage("assistant", summaryMarkdown);
                         }
                     });
@@ -3679,6 +3671,37 @@ window.alert = function(message) {
 // ── Live Chat Feed Helpers & Floating Agent Flow Card Toggle ───────────────
 function escapeHtml(str) {
     return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function formatAgentSummaryForChat(agentName, action, content) {
+    if (!content) return "";
+    const iconMap = {
+        "BusinessAnalyst": "📋",
+        "ImpactAnalyzer": "🌐",
+        "ImplementEngineer": "⚙️",
+        "Tester": "🧪",
+        "Deployer": "🚀"
+    };
+    const icon = iconMap[agentName] || "🤖";
+    let text = String(content).trim();
+    
+    if (text.includes("###") || text.includes("* ") || text.includes("- ")) {
+        return `### ${icon} ${agentName} — ${action}\n\n${text.substring(0, 1500)}`;
+    }
+    
+    let lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith("```"));
+    let bullets = [];
+    lines.forEach(line => {
+        if (line.length > 10) {
+            bullets.push(`* **Takeaway**: ${line.substring(0, 180)}`);
+        }
+    });
+    
+    if (bullets.length === 0) {
+        bullets.push(`* **Status**: Completed successfully.`);
+    }
+    
+    return `### ${icon} ${agentName} — ${action}\n\n> **Stage Accomplishments**\n\n${bullets.slice(0, 6).join("\n")}`;
 }
 
 function loadHistoryChatSession(historyId, promptText) {
