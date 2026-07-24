@@ -1,5 +1,6 @@
 // GLOBAL STATES
 let lastLogCount = 0;
+let lastRenderedTranscriptIndex = 0;
 let existingFiles = [];
 let pollingInterval = null;
 let currentActiveFile = null;
@@ -945,12 +946,9 @@ function pollStatus() {
                 const hitLimit = status.iterations > 0 && status.max_iterations > 0 && status.iterations >= status.max_iterations;
                 
                 if (hasError || hitLimit) {
-                    const contentContainer = document.getElementById("work-summary-content");
-                    const modal = document.getElementById("work-summary-modal");
-                    if (contentContainer && modal) {
-                        let alertMarkdown = "";
-                        if (hasError) {
-                            alertMarkdown = `
+                    let alertMarkdown = "";
+                    if (hasError) {
+                        alertMarkdown = `
 # ⚠️ Simulation Stopped with Errors
 
 The multi-agent workflow encountered an issue and could not complete all steps successfully.
@@ -960,31 +958,17 @@ The multi-agent workflow encountered an issue and could not complete all steps s
 > \`\`\`
 > ${status.last_error}
 > \`\`\`
-
-### 🔍 Suggestions:
-* **Rate Limits / TPM**: If you see a \`429\` or \`413\` tokens per minute rate limit error, switch to a model/provider with higher limits (like **Google Gemini 2.5 Flash**).
-* **Workspace Cleanliness**: Ensure your active workspace folder does not contain large directories like \`.venv\` or \`node_modules\`, as these consume your model's tokens per minute.
-* **Credentials**: Verify your API keys under **LLM Settings**.
 `;
-                        } else if (hitLimit) {
-                            alertMarkdown = `
+                    } else if (hitLimit) {
+                        alertMarkdown = `
 # ⚠️ Iteration Limit Reached
 
-The simulation reached the maximum allowed iteration limit before completing all tasks.
-
-> [!IMPORTANT]
-> **Limit Reached**: **${status.iterations}** out of **${status.max_iterations}** iterations performed.
-
-### 🔍 Suggestions:
-* **Increase Limit**: Drag the **Max Iterations** slider in the workspace sidebar to a higher count (e.g. 5 or 8) to give the agents more attempts to compile, run tests, and debug.
-* **Refine Prompt**: Simplify your prompt requirements to make the tasks easier for the coder agent to solve.
+The simulation reached the maximum allowed iteration limit before completing all tasks (**${status.iterations}** / **${status.max_iterations}**).
 `;
-                        }
-                        contentContainer.innerHTML = marked.parse(alertMarkdown);
-                        modal.style.display = "flex";
                     }
+                    appendChatMessage("assistant", alertMarkdown);
                 } else {
-                    // Fetch walkthrough_agent.md on successful completion
+                    // Fetch walkthrough_agent.md on completion and render DIRECTLY in Chat Response (No separate popup!)
                     fetch("/api/file?path=walkthrough_agent.md")
                     .then(r => {
                         if (r.ok) return r.json();
@@ -992,12 +976,7 @@ The simulation reached the maximum allowed iteration limit before completing all
                     })
                     .then(data => {
                         if (data && data.content) {
-                            const contentContainer = document.getElementById("work-summary-content");
-                            const modal = document.getElementById("work-summary-modal");
-                            if (contentContainer && modal) {
-                                contentContainer.innerHTML = marked.parse(data.content);
-                                modal.style.display = "flex";
-                            }
+                            appendChatMessage("assistant", `## 🎉 Multi-Agent Workflow Completion Summary\n\n` + data.content);
                         }
                     })
                     .catch(err => {
@@ -1010,6 +989,36 @@ The simulation reached the maximum allowed iteration limit before completing all
             if (status.preview_url && previewUrlInput) {
                 previewUrlInput.value = status.preview_url;
             }
+        }
+
+        // Live streaming of individual agent completion summaries directly into Chat Feed
+        if (status.running || wasAgentRunning) {
+            fetch("/api/transcript")
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.transcript && data.transcript.length > lastRenderedTranscriptIndex) {
+                    const newSteps = data.transcript.slice(lastRenderedTranscriptIndex);
+                    newSteps.forEach(step => {
+                        const agentName = step.agent || step.node || "Agent";
+                        const action = step.action || "Completed Stage";
+                        const content = step.content || "";
+                        if (content && agentName !== "Orchestrator") {
+                            const iconMap = {
+                                "BusinessAnalyst": "📋",
+                                "ImpactAnalyzer": "🌐",
+                                "ImplementEngineer": "⚙️",
+                                "Tester": "🧪",
+                                "Deployer": "🚀"
+                            };
+                            const icon = iconMap[agentName] || "🤖";
+                            const summaryMarkdown = `### ${icon} ${agentName} — ${action}\n\n${content.substring(0, 1500)}${content.length > 1500 ? '\n\n*(Truncated for preview)*' : ''}`;
+                            appendChatMessage("assistant", summaryMarkdown);
+                        }
+                    });
+                    lastRenderedTranscriptIndex = data.transcript.length;
+                }
+            })
+            .catch(() => {});
         }
     })
     .catch(err => {
