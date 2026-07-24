@@ -2011,11 +2011,9 @@ function loadHistory() {
             const promptCell = document.createElement("td");
             promptCell.className = "history-prompt-cell";
             promptCell.textContent = item.prompt;
-            promptCell.title = "Click to load requirement prompt into Workspace";
+            promptCell.title = "Click to load requirement session chat history into Workspace";
             promptCell.addEventListener("click", () => {
-                promptInput.value = item.prompt;
-                currentActiveParentId = item.id;
-                if (navWorkspaceBtn) navWorkspaceBtn.click();
+                loadHistoryChatSession(item.id, item.prompt);
             });
             
             const loopsCell = document.createElement("td");
@@ -2158,9 +2156,8 @@ function populateRecentPromptsDropdown(history) {
             itemDiv.appendChild(metaSpan);
             
             itemDiv.addEventListener("click", () => {
-                promptInput.value = p;
-                currentActiveParentId = item.id;
-                recentPromptsPopover.classList.remove("show");
+                loadHistoryChatSession(item.id, p);
+                if (recentPromptsPopover) recentPromptsPopover.classList.remove("show");
             });
             
             recentPromptsList.appendChild(itemDiv);
@@ -3682,6 +3679,37 @@ window.alert = function(message) {
 // ── Live Chat Feed Helpers & Floating Agent Flow Card Toggle ───────────────
 function escapeHtml(str) {
     return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function loadHistoryChatSession(historyId, promptText) {
+    if (promptInput) promptInput.value = promptText;
+    currentActiveParentId = historyId;
+    
+    // Clear Chat Feed boxes
+    const chatBoxes = [
+        document.getElementById("chat-feed-box"),
+        document.getElementById("fullview-chat-feed-box")
+    ];
+    chatBoxes.forEach(cb => { if (cb) cb.innerHTML = ""; });
+
+    // Fetch past conversation messages and transcript for this history session
+    fetch(`/api/history/${historyId}/chat`)
+    .then(r => r.json())
+    .then(data => {
+        if (data && data.messages && data.messages.length > 0) {
+            data.messages.forEach(msg => {
+                appendChatMessage(msg.role, msg.text);
+            });
+        } else {
+            appendChatMessage("user", promptText);
+        }
+        if (navWorkspaceBtn) navWorkspaceBtn.click();
+    })
+    .catch(err => {
+        console.error("Failed to load history session chat:", err);
+        appendChatMessage("user", promptText);
+        if (navWorkspaceBtn) navWorkspaceBtn.click();
+    });
 }
 
 function appendChatMessage(role, text) {

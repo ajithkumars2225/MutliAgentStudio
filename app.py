@@ -536,6 +536,80 @@ def get_transcript():
             return {"error": f"Failed to read transcript: {e}"}
     return {"transcript": []}
 
+@app.get("/api/history/{history_id}/chat")
+def get_history_chat(history_id: int):
+    """
+    Returns full conversation chat messages & transcript for a past history session,
+    enabling seamless continuation of past chat sessions.
+    """
+    record = database.get_history_record(history_id)
+    if not record:
+        return {"error": "History record not found", "messages": []}
+        
+    workspace_dir = database.get_active_workspace()
+    messages = []
+    
+    # 1. Add User Initial Prompt Message
+    if record.get("prompt"):
+        messages.append({
+            "role": "user",
+            "text": record["prompt"],
+            "timestamp": record.get("timestamp")
+        })
+        
+    # 2. Add transcript steps from .studio/transcript.jsonl
+    transcript_file = os.path.join(workspace_dir, ".studio", "transcript.jsonl")
+    if os.path.exists(transcript_file):
+        try:
+            with open(transcript_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        step = json.loads(line.strip())
+                        agent_name = step.get("agent") or step.get("node") or "Agent"
+                        action = step.get("action") or "Completed Stage"
+                        content = step.get("content") or ""
+                        if content and agent_name != "Orchestrator":
+                            icon_map = {
+                                "BusinessAnalyst": "📋",
+                                "ImpactAnalyzer": "🌐",
+                                "ImplementEngineer": "⚙️",
+                                "Tester": "🧪",
+                                "Deployer": "🚀"
+                            }
+                            icon = icon_map.get(agent_name, "🤖")
+                            summary_md = f"### {icon} {agent_name} — {action}\n\n{content}"
+                            messages.append({
+                                "role": "assistant",
+                                "agent": agent_name,
+                                "action": action,
+                                "text": summary_md,
+                                "timestamp": step.get("timestamp", record.get("timestamp"))
+                            })
+        except Exception as e:
+            print(f"[History Chat Warning] Failed to read transcript: {e}")
+            
+    # 3. Add walkthrough_agent.md summary if available
+    walkthrough_file = os.path.join(workspace_dir, "walkthrough_agent.md")
+    if os.path.exists(walkthrough_file):
+        try:
+            with open(walkthrough_file, "r", encoding="utf-8") as f:
+                wt_content = f.read()
+                messages.append({
+                    "role": "assistant",
+                    "agent": "Deployer",
+                    "action": "Final Completion Summary",
+                    "text": f"## 🎉 Session Completion Summary\n\n{wt_content}",
+                    "timestamp": record.get("timestamp")
+                })
+        except Exception:
+            pass
+
+    return {
+        "record": record,
+        "messages": messages,
+        "workspace": workspace_dir
+    }
+
 
 @app.post("/api/pause")
 def pause_agent():

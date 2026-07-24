@@ -165,9 +165,15 @@ def get_all_history():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM requirements_history ORDER BY timestamp DESC")
-    rows = cursor.fetchall()
-    conn.close()
     return [dict(row) for row in rows]
+
+def get_history_record(record_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM requirements_history WHERE id = ?", (record_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 def add_history_record(prompt: str, provider: str, model: str, max_iterations: int, status: str, parent_id: Optional[int] = None) -> int:
     from typing import Optional
