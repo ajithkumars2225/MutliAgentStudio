@@ -3702,66 +3702,75 @@ function formatAgentSummaryForChat(agentName, action, content) {
         "deployer": "🚀"
     };
     const nameMap = {
-        "BusinessAnalyst": "Business Analyst",
-        "analyst": "Business Analyst",
+        "BusinessAnalyst": "Business Analyst Specifications",
+        "analyst": "Business Analyst Specifications",
         "ImpactAnalyzer": "Impact & Architecture Analyzer",
         "architect": "Impact & Architecture Analyzer",
         "ImplementEngineer": "Implementation Engineer",
         "coder": "Implementation Engineer",
-        "Tester": "QA & Security Tester",
-        "tester": "QA & Security Tester",
+        "Tester": "QA & Security Audit Tester",
+        "tester": "QA & Security Audit Tester",
         "Deployer": "Deployment Agent",
         "deployer": "Deployment Agent"
     };
 
     const icon = iconMap[agentName] || "🤖";
     const displayName = nameMap[agentName] || agentName;
-    const statusBadge = `\`✅ COMPLETED\``;
+    const statusBadge = `<span style="background: rgba(0, 223, 216, 0.15); color: #00dfd8; font-size: 0.65rem; padding: 2px 7px; border-radius: 10px; border: 1px solid rgba(0, 223, 216, 0.3); font-weight: bold; margin-left: 8px;">✅ COMPLETED</span>`;
     
     let text = String(content).trim();
     let bullets = [];
 
     if (agentName === "BusinessAnalyst" || agentName === "analyst") {
         bullets = [
-            `* **🎯 Specifications Defined**: Created IEEE-standard requirements for the application.`,
-            `* **📋 Functional Modules**: Formulated CRUD operations, paginated list view, search/filtering, and sample data seeding requirements.`,
-            `* **🛡️ Standards & Quality**: Specified input validation rules, parameterization, and responsive UI layout standards.`
+            `🎯 <strong>Specifications Defined</strong>: Formulated IEEE-standard functional & non-functional technical requirements.`,
+            `📋 <strong>Functional Scope</strong>: Planned CRUD operations, paginated table listing, search/filter, and default data seeding.`,
+            `🛡️ <strong>Quality Standards</strong>: Enforced input validation, PostgreSQL direct connection, and responsive glassmorphism UI rules.`
         ];
     } else if (agentName === "ImpactAnalyzer" || agentName === "architect") {
         let fileMatches = text.match(/\.(cs|csproj|json|cshtml|js|css|ts|py)/g);
         let fileCount = fileMatches ? fileMatches.length : 25;
         bullets = [
-            `* **🌐 Architecture Plan**: Evaluated codebase scope and designed modular folder architecture.`,
-            `* **📁 Identified Files**: Mapped **${fileCount}** core files across Models, Views, Controllers, and Data layers.`,
-            `* **⚡ Tech Stack Mapped**: Configured Entity Framework Core, PostgreSQL driver, and Playwright UI testing setup.`
+            `🌐 <strong>Architecture Plan</strong>: Evaluated codebase scope and designed modular folder architecture.`,
+            `📁 <strong>Identified Files</strong>: Mapped <strong>${fileCount}</strong> core files across Models, Views, Controllers, and Data layers.`,
+            `⚡ <strong>Tech Stack Mapped</strong>: Configured Entity Framework Core, PostgreSQL driver, and Playwright UI test suite.`
         ];
     } else if (agentName === "ImplementEngineer" || agentName === "coder") {
         let fileSaveMatches = text.match(/Saved:|Created:|Updated:/g);
         let fileCount = fileSaveMatches ? fileSaveMatches.length : "all required";
         bullets = [
-            `* **⚙️ Code Generation**: Written complete production-ready source code with 0 placeholders.`,
-            `* **📁 Created Files**: Created/Updated **${fileCount}** project files including Models, Controllers, Views, and Services.`,
-            `* **🛡️ Pre-Submission Verification**: Verified compilation — zero syntax errors before handing over to QA.`
+            `⚙️ <strong>Code Generation</strong>: Written complete production-ready source code with zero placeholders.`,
+            `📁 <strong>Created Files</strong>: Created/Updated <strong>${fileCount}</strong> project files including Models, Controllers, Views, and Services.`,
+            `🛡️ <strong>Pre-Submission Verification</strong>: Verified compilation — zero syntax errors before handing over to QA.`
         ];
     } else if (agentName === "Tester" || agentName === "tester") {
         bullets = [
-            `* **🧪 QA & Unit Verification**: Executed automated build and unit test suites.`,
-            `* **🌐 Playwright E2E UI Audit**: Tested DOM navigation, form submissions, and CRUD table rendering.`,
-            `* **🛡️ Security Audit**: Conducted static code analysis for SQL injection and exposed credentials.`
+            `🧪 <strong>QA & Unit Verification</strong>: Executed automated build and unit test suites.`,
+            `🌐 <strong>Playwright E2E UI Audit</strong>: Tested DOM navigation, form submissions, and CRUD table rendering.`,
+            `🛡️ <strong>Security Audit</strong>: Conducted static code analysis for SQL injection and exposed credentials.`
         ];
     } else if (agentName === "Deployer" || agentName === "deployer") {
         bullets = [
-            `* **🚀 Live Deployment**: Generated and executed deployment scripts (\`deploy.bat\` / \`deploy.sh\`).`,
-            `* **🩺 Health Check Ping**: Verified HTTP live server ping & page responsiveness.`,
-            `* **🌐 Application Link**: Live application verified & operational.`
+            `🚀 <strong>Live Deployment</strong>: Generated and executed deployment scripts (<code>deploy.bat</code> / <code>deploy.sh</code>).`,
+            `🩺 <strong>Health Check Ping</strong>: Verified HTTP live server ping & page responsiveness.`,
+            `🌐 <strong>Application Link</strong>: Live application verified & operational.`
         ];
     } else {
         bullets = [
-            `* **Task Status**: Stage completed successfully.`
+            `Task completed successfully.`
         ];
     }
 
-    return `### ${icon} ${displayName} ${statusBadge}\n\n${bullets.join("\n")}`;
+    const bulletList = bullets.map(b => `<li style="margin-bottom: 0.35rem;">${b}</li>`).join("");
+    return `<div style="font-family: var(--font-sans);">
+<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.3rem; margin-bottom: 0.4rem;">
+    <strong style="color: var(--accent-cyan); font-size: 0.85rem;">${icon} ${displayName}</strong>
+    ${statusBadge}
+</div>
+<ul style="margin: 0.3rem 0 0 1rem; padding: 0; color: var(--text-primary); font-size: 0.78rem; line-height: 1.5;">
+    ${bulletList}
+</ul>
+</div>`;
 }
 
 function loadHistoryChatSession(historyId, promptText) {
@@ -3811,7 +3820,13 @@ function appendChatMessage(role, text) {
         } else if (role === "assistant") {
             const astDiv = document.createElement("div");
             astDiv.className = "chat-msg-assistant";
-            astDiv.innerHTML = `<div class="ast-msg-content">${escapeHtml(text)}</div>`;
+            if (text.includes("<div") || text.includes("<ul") || text.includes("<p>")) {
+                astDiv.innerHTML = `<div class="ast-msg-content">${text}</div>`;
+            } else if (typeof marked !== "undefined") {
+                astDiv.innerHTML = `<div class="ast-msg-content">${marked.parse(text)}</div>`;
+            } else {
+                astDiv.innerHTML = `<div class="ast-msg-content">${text}</div>`;
+            }
             chatBox.appendChild(astDiv);
         }
         chatBox.scrollTop = chatBox.scrollHeight;
