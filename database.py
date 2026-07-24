@@ -5,7 +5,8 @@ from typing import Optional
 DB_FILE = "developer_studio.db"
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_FILE, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -163,9 +164,13 @@ def init_db():
 # History Helpers
 def get_all_history():
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM requirements_history ORDER BY timestamp DESC")
-    return [dict(row) for row in rows]
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM requirements_history ORDER BY timestamp DESC")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
 
 def get_history_record(record_id: int):
     conn = get_db_connection()
@@ -204,10 +209,12 @@ def delete_history_record(record_id: int):
 
 def clear_all_history():
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM requirements_history")
-    conn.commit()
-    conn.close()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM requirements_history")
+        conn.commit()
+    finally:
+        conn.close()
 
 # Settings Helpers
 def get_all_settings():
