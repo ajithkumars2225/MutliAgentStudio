@@ -2371,6 +2371,8 @@ function pollGitStatus() {
         const b2 = document.getElementById("git-modal-branch");
         if (b1 && branchName) b1.textContent = branchName;
         if (b2 && branchName) b2.textContent = branchName;
+        
+        loadGitBranches();
     })
     .catch(err => {
         console.warn("Failed to check Git status: ", err);
@@ -2458,23 +2460,21 @@ function loadGitBranches() {
         branchSelects.forEach(selectEl => {
             if (!selectEl) return;
             selectEl.innerHTML = "";
-            if (data.branches && data.branches.length > 0) {
-                data.branches.forEach(b => {
-                    const opt = document.createElement("option");
-                    opt.value = b;
-                    opt.textContent = b + (b === data.active ? " (active)" : "");
-                    if (b === data.active) opt.selected = true;
-                    selectEl.appendChild(opt);
-                });
-            } else {
+            const branchList = (data.branches && data.branches.length > 0) ? data.branches : [data.active || "main"];
+            
+            branchList.forEach(b => {
                 const opt = document.createElement("option");
-                opt.value = "main";
-                opt.textContent = "main";
+                opt.value = b;
+                opt.textContent = b + (b === data.active ? " (active)" : "");
+                opt.style.backgroundColor = "#0b0f19";
+                opt.style.color = "#e2e8f0";
+                if (b === data.active) opt.selected = true;
                 selectEl.appendChild(opt);
-            }
+            });
             
             if (!selectEl._hasChangeListener) {
                 selectEl._hasChangeListener = true;
+                selectEl.addEventListener("focus", () => loadGitBranches());
                 selectEl.addEventListener("change", (e) => {
                     const targetBranch = e.target.value;
                     if (!targetBranch) return;

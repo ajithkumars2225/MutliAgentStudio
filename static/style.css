@@ -36,6 +36,13 @@ body {
     overflow: hidden;
 }
 
+/* SELECT OPTION DARK STYLING */
+select option {
+    background-color: #0b0f19 !important;
+    color: #e2e8f0 !important;
+    padding: 6px 10px;
+}
+
 /* APP CONTAINER */
 .app-container {
     display: flex;
