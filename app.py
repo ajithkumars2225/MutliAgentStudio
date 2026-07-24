@@ -569,20 +569,12 @@ def get_history_chat(history_id: int):
                         action = step.get("action") or "Completed Stage"
                         content = step.get("content") or ""
                         if content and agent_name != "Orchestrator":
-                            icon_map = {
-                                "BusinessAnalyst": "📋",
-                                "ImpactAnalyzer": "🌐",
-                                "ImplementEngineer": "⚙️",
-                                "Tester": "🧪",
-                                "Deployer": "🚀"
-                            }
-                            icon = icon_map.get(agent_name, "🤖")
-                            summary_md = f"### {icon} {agent_name} — {action}\n\n{content}"
                             messages.append({
                                 "role": "assistant",
                                 "agent": agent_name,
                                 "action": action,
-                                "text": summary_md,
+                                "content": content,
+                                "text": content,
                                 "timestamp": step.get("timestamp", record.get("timestamp"))
                             })
         except Exception as e:
@@ -598,7 +590,8 @@ def get_history_chat(history_id: int):
                     "role": "assistant",
                     "agent": "Deployer",
                     "action": "Final Completion Summary",
-                    "text": f"## 🎉 Session Completion Summary\n\n{wt_content}",
+                    "content": wt_content,
+                    "text": wt_content,
                     "timestamp": record.get("timestamp")
                 })
         except Exception:

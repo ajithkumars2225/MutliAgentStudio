@@ -3849,7 +3849,14 @@ function loadHistoryChatSession(historyId, promptText) {
     .then(data => {
         if (data && data.messages && data.messages.length > 0) {
             data.messages.forEach(msg => {
-                appendChatMessage(msg.role, msg.text);
+                if (msg.role === "user") {
+                    appendChatMessage("user", msg.text || msg.content);
+                } else if (msg.agent) {
+                    const formatted = formatAgentSummaryForChat(msg.agent, msg.action || "Completed Stage", msg.content || msg.text);
+                    appendChatMessage("assistant", formatted);
+                } else {
+                    appendChatMessage("assistant", msg.text || msg.content);
+                }
             });
         } else {
             appendChatMessage("user", promptText);
