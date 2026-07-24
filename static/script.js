@@ -559,7 +559,6 @@ function triggerAgentRun(promptText, startFresh = false) {
     
     // Append message to live chat feed in Developer Input sidebar
     appendChatMessage("user", promptText);
-    appendChatMessage("assistant", "🚀 Agents activated! Processing your requirements...");
     if (promptInput) promptInput.value = "";
     if (inlineSendBtn) inlineSendBtn.style.display = "none";
 
