@@ -271,22 +271,91 @@
                             <!-- Resize Divider Handle -->
                             <div class="resize-handle" id="resize-handle" title="Drag to Resize Explorer"></div>
 
-                            <!-- Right-Inner Explorer Tree -->
+                            <!-- Right-Inner Explorer Panel with Dual Tabs -->
                             <div class="file-explorer" id="file-explorer">
-                                <div class="explorer-title">
-                                    <span>Files Explorer</span>
-                                    <div class="explorer-actions">
-                                        <button id="open-folder-btn" class="text-btn icon-btn" title="Open Repository Folder" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📂</button>
-                                        <button id="new-file-btn" class="text-btn icon-btn" title="New File" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📄+</button>
-                                        <button id="new-folder-btn" class="text-btn icon-btn" title="New Folder" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📁+</button>
-                                        <button id="reveal-os-btn" class="text-btn icon-btn" title="Reveal in OS Explorer" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">🖥️</button>
+                                <!-- Explorer Header Tab Selector -->
+                                <div class="explorer-tabs-bar" style="display: flex; background: rgba(0, 0, 0, 0.25); border-bottom: 1px solid var(--border-color); flex-shrink: 0; min-height: 36px;">
+                                    <button id="sidebar-tab-files" class="explorer-tab-btn active" style="flex: 1; padding: 0.45rem 0.5rem; background: none; border: none; border-bottom: 2px solid var(--accent-cyan); color: var(--text-primary); font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.3rem; outline: none; transition: all 0.2s ease;">
+                                        📁 Files
+                                    </button>
+                                    <button id="sidebar-tab-git" class="explorer-tab-btn" style="flex: 1; padding: 0.45rem 0.5rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.3rem; outline: none; transition: all 0.2s ease;">
+                                        🌿 Source Control
+                                    </button>
+                                </div>
+
+                                <!-- CONTENT TAB 1: 📁 FILES EXPLORER TREE -->
+                                <div id="sidebar-content-files" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                                    <div class="explorer-title">
+                                        <span>Files Explorer</span>
+                                        <div class="explorer-actions">
+                                            <button id="open-folder-btn" class="text-btn icon-btn" title="Open Repository Folder" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📂</button>
+                                            <button id="new-file-btn" class="text-btn icon-btn" title="New File" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📄+</button>
+                                            <button id="new-folder-btn" class="text-btn icon-btn" title="New Folder" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">📁+</button>
+                                            <button id="reveal-os-btn" class="text-btn icon-btn" title="Reveal in OS Explorer" style="font-size: 0.7rem; padding: 0.15rem 0.35rem;">🖥️</button>
+                                        </div>
+                                    </div>
+                                    <div id="active-folder-path" style="font-size: 0.65rem; color: var(--text-secondary); padding: 0.2rem 0.6rem; border-bottom: 1px solid var(--border-color); background-color: rgba(0, 0, 0, 0.08); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Active Workspace Path">
+                                        Loading workspace...
+                                    </div>
+                                    <div class="file-tree" id="file-tree">
+                                        <div class="tree-placeholder">Scan folder or run prompt to generate files.</div>
                                     </div>
                                 </div>
-                                <div id="active-folder-path" style="font-size: 0.65rem; color: var(--text-secondary); padding: 0.2rem 0.6rem; border-bottom: 1px solid var(--border-color); background-color: rgba(0, 0, 0, 0.08); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Active Workspace Path">
-                                    Loading workspace...
-                                </div>
-                                <div class="file-tree" id="file-tree">
-                                    <div class="tree-placeholder">Scan folder or run prompt to generate files.</div>
+
+                                <!-- CONTENT TAB 2: 🌿 COMPACT GIT VERSION CONTROL CENTER -->
+                                <div id="sidebar-content-git" style="display: none; flex-direction: column; flex: 1; min-height: 0; padding: 0.6rem; gap: 0.65rem; overflow-y: auto; scrollbar-width: thin;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem; flex-shrink: 0;">
+                                        <strong style="color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.72rem;">🌿 Source Control Manager</strong>
+                                        <button id="git-tab-refresh-btn" class="text-btn icon-btn" title="Refresh Git Status" style="font-size: 0.68rem; padding: 0.15rem 0.4rem;">🔄 Refresh</button>
+                                    </div>
+
+                                    <!-- Branch Switcher Bar -->
+                                    <div style="display: flex; flex-direction: column; gap: 0.3rem; background: rgba(0, 0, 0, 0.2); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="color: var(--text-secondary); font-size: 0.72rem;">Active Branch:</span>
+                                            <span id="git-sidebar-branch" style="font-size: 0.78rem; font-weight: bold; color: var(--accent-cyan); font-family: monospace;">main</span>
+                                        </div>
+                                        <div style="display: flex; gap: 0.4rem; margin-top: 0.2rem;">
+                                            <select id="git-sidebar-branch-select" style="flex: 1; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.2rem 0.4rem; color: var(--text-primary); font-size: 0.72rem; outline: none; cursor: pointer;"></select>
+                                            <button id="git-sidebar-new-branch-btn" class="text-btn icon-btn" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; color: var(--accent-cyan) !important;" title="Create New Task Branch">➕</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Commit Form -->
+                                    <div style="display: flex; flex-direction: column; gap: 0.35rem; flex-shrink: 0;">
+                                        <input type="text" id="git-sidebar-commit-input" placeholder="Message (press Commit to save)..." style="width: 100%; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.35rem 0.5rem; color: var(--text-primary); font-size: 0.75rem; outline: none; font-family: var(--font-sans);">
+                                        <button id="git-sidebar-commit-btn" class="action-btn primary-btn" style="width: 100%; padding: 0.35rem; font-size: 0.75rem; font-weight: 600; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                                            <span>✓ Commit Changes</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Repository Status Summary -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; flex-shrink: 0;">
+                                        <span style="color: var(--text-secondary);">Repository Status:</span>
+                                        <span id="git-sidebar-status-summary" style="font-weight: 500; color: var(--success);">Clean</span>
+                                    </div>
+
+                                    <!-- Pending Local Changes -->
+                                    <div style="display: flex; flex-direction: column; flex-shrink: 0;">
+                                        <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px;">Pending Changes</span>
+                                        <div id="git-sidebar-changes-list" style="background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.72rem; max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.2rem;">
+                                            <div style="color: var(--text-secondary); font-style: italic;">No uncommitted modifications.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Recent Commits History Log -->
+                                    <div style="display: flex; flex-direction: column; flex-shrink: 0;">
+                                        <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px;">Recent Commits</span>
+                                        <div id="git-sidebar-commits-list" style="background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.72rem; max-height: 100px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.2rem;">
+                                            <div style="color: var(--text-secondary); font-style: italic;">No commits available.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Active Code Diff Box -->
+                                    <div style="display: flex; flex-direction: column; flex: 1; min-height: 90px;">
+                                        <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px;">Active Code Diff</span>
+                                        <pre id="git-sidebar-diff-box" style="flex: 1; background: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.35; overflow: auto; white-space: pre-wrap; word-break: break-all; margin-top: 0.2rem; color: #a1b0cb; text-align: left;"></pre>
+                                    </div>
                                 </div>
                             </div>
                         </div>

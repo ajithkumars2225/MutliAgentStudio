@@ -1240,6 +1240,29 @@ def git_rollback(req: RollbackRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Git Rollback Error: {str(e)}")
 
+class CommitRequest(BaseModel):
+    message: str
+
+@app.post("/api/git/commit")
+def git_commit(req: CommitRequest):
+    workspace = database.get_active_workspace()
+    if not os.path.exists(os.path.join(workspace, ".git")):
+        raise HTTPException(status_code=400, detail="Not a git repository.")
+    try:
+        import subprocess
+        subprocess.run(["git", "add", "."], cwd=workspace, check=True)
+        msg = req.message.strip() or "Update workspace files via MultiAgent Studio"
+        res = subprocess.run(
+            ["git", "commit", "-m", msg],
+            cwd=workspace,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        return {"status": "committed", "message": msg, "output": res.stdout}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Git Commit Error: {str(e)}")
+
 # Pure Python Background PowerShell PTY Emulation for Xterm.js
 import queue
 import subprocess

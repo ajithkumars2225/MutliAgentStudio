@@ -2377,47 +2377,94 @@ pollGitStatus();
 
 // Git Version Control Modal Center bindings and fetches
 const gitModal = document.getElementById("git-modal");
+// Sidebar Dual Tabs: 📁 Files vs 🌿 Source Control
+const sidebarTabFiles = document.getElementById("sidebar-tab-files");
+const sidebarTabGit = document.getElementById("sidebar-tab-git");
+const sidebarContentFiles = document.getElementById("sidebar-content-files");
+const sidebarContentGit = document.getElementById("sidebar-content-git");
+
+function switchSidebarTab(tab) {
+    if (tab === "files") {
+        if (sidebarTabFiles) {
+            sidebarTabFiles.classList.add("active");
+            sidebarTabFiles.style.borderBottomColor = "var(--accent-cyan)";
+            sidebarTabFiles.style.color = "var(--text-primary)";
+        }
+        if (sidebarTabGit) {
+            sidebarTabGit.classList.remove("active");
+            sidebarTabGit.style.borderBottomColor = "transparent";
+            sidebarTabGit.style.color = "var(--text-secondary)";
+        }
+        if (sidebarContentFiles) sidebarContentFiles.style.display = "flex";
+        if (sidebarContentGit) sidebarContentGit.style.display = "none";
+    } else if (tab === "git") {
+        if (sidebarTabGit) {
+            sidebarTabGit.classList.add("active");
+            sidebarTabGit.style.borderBottomColor = "var(--accent-cyan)";
+            sidebarTabGit.style.color = "var(--text-primary)";
+        }
+        if (sidebarTabFiles) {
+            sidebarTabFiles.classList.remove("active");
+            sidebarTabFiles.style.borderBottomColor = "transparent";
+            sidebarTabFiles.style.color = "var(--text-secondary)";
+        }
+        if (sidebarContentFiles) sidebarContentFiles.style.display = "none";
+        if (sidebarContentGit) sidebarContentGit.style.display = "flex";
+        updateGitControlData();
+    }
+}
+
+if (sidebarTabFiles) sidebarTabFiles.addEventListener("click", () => switchSidebarTab("files"));
+if (sidebarTabGit) sidebarTabGit.addEventListener("click", () => switchSidebarTab("git"));
+
 const gitPopoverPanel = document.getElementById("git-popover-panel");
 const closeGitPopoverBtn = document.getElementById("close-git-popover-btn");
-const gitModalBranch = document.getElementById("git-modal-branch");
-const gitModalStatusSummary = document.getElementById("git-modal-status-summary");
-const gitModalChangesList = document.getElementById("git-modal-changes-list");
-const gitModalCommitsList = document.getElementById("git-modal-commits-list");
-const gitModalDiffBox = document.getElementById("git-modal-diff-box");
 
 function toggleGitCenter() {
     if (!gitPopoverPanel) return;
-    
     const isVisible = gitPopoverPanel.style.display === "flex";
-    if (isVisible) {
-        gitPopoverPanel.style.display = "none";
-        return;
+    gitPopoverPanel.style.display = isVisible ? "none" : "flex";
+    if (!isVisible) {
+        updateGitControlData();
     }
-    
-    gitPopoverPanel.style.display = "flex";
-    
+}
+
+function updateGitControlData() {
     loadGitBranches();
     
-    if (gitModalBranch) gitModalBranch.textContent = "Checking branch...";
-    if (gitModalStatusSummary) gitModalStatusSummary.textContent = "Loading status...";
-    if (gitModalChangesList) gitModalChangesList.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">Loading status...</div>`;
-    if (gitModalCommitsList) gitModalCommitsList.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">Loading history...</div>`;
-    if (gitModalDiffBox) gitModalDiffBox.textContent = "Loading changes diff...";
+    const branchEls = [document.getElementById("git-modal-branch"), document.getElementById("git-sidebar-branch")];
+    const statusEls = [document.getElementById("git-modal-status-summary"), document.getElementById("git-sidebar-status-summary")];
+    const changesEls = [document.getElementById("git-modal-changes-list"), document.getElementById("git-sidebar-changes-list")];
+    const commitsEls = [document.getElementById("git-modal-commits-list"), document.getElementById("git-sidebar-commits-list")];
+    const diffEls = [document.getElementById("git-modal-diff-box"), document.getElementById("git-sidebar-diff-box")];
     
-    // Fetch Git Status
+    branchEls.forEach(el => { if (el) el.textContent = "Checking branch..."; });
+    statusEls.forEach(el => { if (el) el.textContent = "Loading status..."; });
+    changesEls.forEach(el => { if (el) el.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">Loading status...</div>`; });
+    commitsEls.forEach(el => { if (el) el.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">Loading history...</div>`; });
+    diffEls.forEach(el => { if (el) el.textContent = "Loading changes diff..."; });
+    
     fetch("/api/git/status")
     .then(r => r.json())
     .then(data => {
-        if (gitModalBranch) {
-            gitModalBranch.textContent = data.branch || "unknown";
-        }
+        branchEls.forEach(el => { if (el) el.textContent = data.branch || "unknown"; });
         
-        if (gitModalStatusSummary && gitModalChangesList) {
+        statusEls.forEach(el => {
+            if (el) {
+                if (data.status_output && data.status_output.trim() !== "") {
+                    el.textContent = "Modified (Pending local commits)";
+                    el.style.color = "var(--warning)";
+                } else {
+                    el.textContent = "Clean (All changes committed)";
+                    el.style.color = "var(--success)";
+                }
+            }
+        });
+
+        changesEls.forEach(el => {
+            if (!el) return;
             if (data.status_output && data.status_output.trim() !== "") {
-                gitModalStatusSummary.textContent = "Modified (Pending local commits)";
-                gitModalStatusSummary.style.color = "var(--warning)";
-                
-                gitModalChangesList.innerHTML = "";
+                el.innerHTML = "";
                 const lines = data.status_output.split("\n");
                 lines.forEach(line => {
                     if (line.trim() === "") return;
@@ -2427,19 +2474,17 @@ function toggleGitCenter() {
                     else if (line.includes("new file:")) fileDiv.style.color = "var(--success)";
                     else if (line.includes("deleted:")) fileDiv.style.color = "var(--danger)";
                     else fileDiv.style.color = "var(--text-secondary)";
-                    gitModalChangesList.appendChild(fileDiv);
+                    el.appendChild(fileDiv);
                 });
             } else {
-                gitModalStatusSummary.textContent = "Clean (All changes committed)";
-                gitModalStatusSummary.style.color = "var(--success)";
-                gitModalChangesList.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">No uncommitted modifications in workspace.</div>`;
+                el.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">No uncommitted modifications in workspace.</div>`;
             }
-        }
+        });
 
-        // Render commits log history
-        if (gitModalCommitsList) {
+        commitsEls.forEach(el => {
+            if (!el) return;
             if (data.commits && data.commits.length > 0) {
-                gitModalCommitsList.innerHTML = "";
+                el.innerHTML = "";
                 data.commits.forEach(commit => {
                     const commitDiv = document.createElement("div");
                     commitDiv.style.display = "flex";
@@ -2454,19 +2499,23 @@ function toggleGitCenter() {
                     hashSpan.textContent = hash;
                     hashSpan.style.color = "var(--accent-cyan)";
                     hashSpan.style.fontWeight = "bold";
-                    hashSpan.style.marginRight = "0.8rem";
+                    hashSpan.style.marginRight = "0.6rem";
                     
                     const msgSpan = document.createElement("span");
                     msgSpan.textContent = msg;
                     msgSpan.style.flex = "1";
                     msgSpan.style.color = "var(--text-primary)";
+                    msgSpan.style.overflow = "hidden";
+                    msgSpan.style.textOverflow = "ellipsis";
+                    msgSpan.style.whiteSpace = "nowrap";
                     
                     const rollbackBtn = document.createElement("button");
                     rollbackBtn.className = "text-btn danger-btn-text";
-                    rollbackBtn.textContent = "⏪ Rollback";
-                    rollbackBtn.style.padding = "2px 6px";
-                    rollbackBtn.style.fontSize = "0.72rem";
-                    rollbackBtn.style.marginLeft = "0.6rem";
+                    rollbackBtn.textContent = "⏪";
+                    rollbackBtn.title = "Rollback to commit " + hash;
+                    rollbackBtn.style.padding = "1px 5px";
+                    rollbackBtn.style.fontSize = "0.68rem";
+                    rollbackBtn.style.marginLeft = "0.4rem";
                     rollbackBtn.style.color = "var(--danger)";
                     rollbackBtn.style.borderColor = "rgba(239, 68, 68, 0.2)";
                     rollbackBtn.addEventListener("click", () => executeGitRollback(hash));
@@ -2474,25 +2523,22 @@ function toggleGitCenter() {
                     commitDiv.appendChild(hashSpan);
                     commitDiv.appendChild(msgSpan);
                     commitDiv.appendChild(rollbackBtn);
-                    gitModalCommitsList.appendChild(commitDiv);
+                    el.appendChild(commitDiv);
                 });
             } else {
-                gitModalCommitsList.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">No commit history logs available yet.</div>`;
+                el.innerHTML = `<div style="color: var(--text-secondary); font-style: italic;">No commit history logs available yet.</div>`;
             }
-        }
+        });
     })
-    .catch(err => {
-        console.error("Failed to load Git status in modal:", err);
-        if (gitModalStatusSummary) gitModalStatusSummary.textContent = "Error checking status";
-    });
-    
-    // Fetch Git Diff
+    .catch(err => console.error("Failed to fetch Git status:", err));
+
     fetch("/api/git/diff")
     .then(r => r.json())
     .then(data => {
-        if (gitModalDiffBox) {
+        diffEls.forEach(el => {
+            if (!el) return;
             if (data.diff && data.diff.trim() !== "") {
-                gitModalDiffBox.innerHTML = "";
+                el.innerHTML = "";
                 const lines = data.diff.split("\n");
                 lines.forEach(line => {
                     const lineSpan = document.createElement("span");
@@ -2508,16 +2554,49 @@ function toggleGitCenter() {
                     } else if (line.startsWith("diff ") || line.startsWith("index ")) {
                         lineSpan.style.color = "var(--text-secondary)";
                     }
-                    gitModalDiffBox.appendChild(lineSpan);
+                    el.appendChild(lineSpan);
                 });
             } else {
-                gitModalDiffBox.textContent = "No differences detected (Workspace matches active branch head).";
+                el.textContent = "No differences detected (Workspace matches active branch head).";
             }
-        }
+        });
     })
-    .catch(err => {
-        console.error("Failed to load Git diff in modal:", err);
-        if (gitModalDiffBox) gitModalDiffBox.textContent = "Error loading differences.";
+    .catch(err => console.error("Failed to fetch Git diff:", err));
+}
+
+// Git Commit Button inside Sidebar Git Tab
+const gitSidebarCommitBtn = document.getElementById("git-sidebar-commit-btn");
+const gitSidebarCommitInput = document.getElementById("git-sidebar-commit-input");
+const gitTabRefreshBtn = document.getElementById("git-tab-refresh-btn");
+
+if (gitTabRefreshBtn) {
+    gitTabRefreshBtn.addEventListener("click", () => updateGitControlData());
+}
+
+if (gitSidebarCommitBtn) {
+    gitSidebarCommitBtn.addEventListener("click", () => {
+        const msg = gitSidebarCommitInput ? gitSidebarCommitInput.value.trim() : "";
+        gitSidebarCommitBtn.disabled = true;
+        gitSidebarCommitBtn.textContent = "⏳ Committing...";
+        
+        fetch("/api/git/commit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg || "Manual commit via MultiAgent Studio" })
+        })
+        .then(r => r.json())
+        .then(data => {
+            gitSidebarCommitBtn.disabled = false;
+            gitSidebarCommitBtn.textContent = "✓ Commit Changes";
+            if (gitSidebarCommitInput) gitSidebarCommitInput.value = "";
+            showCopyToast("✅ Changes committed to Git!");
+            updateGitControlData();
+        })
+        .catch(err => {
+            alert("Commit failed: " + err);
+            gitSidebarCommitBtn.disabled = false;
+            gitSidebarCommitBtn.textContent = "✓ Commit Changes";
+        });
     });
 }
 
