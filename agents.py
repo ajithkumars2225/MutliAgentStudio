@@ -1405,15 +1405,18 @@ Write all necessary code now:"""
     # ── Internal Pre-Submission Compilation & Syntax Self-Verification Guard ──
     from utils import run_local_tests
     build_success, build_logs = run_local_tests(workspace_dir)
-    if not build_success and new_files:
-        print(f"[Implement Engineer 🔍] Pre-submission build check detected syntax/compilation errors. Executing instant internal self-correction...")
+    max_heal_attempts = 2
+    heal_count = 0
+    while not build_success and new_files and heal_count < max_heal_attempts:
+        heal_count += 1
+        print(f"[Implement Engineer 🔍] Pre-submission build check detected syntax/compilation errors (Attempt {heal_count}/{max_heal_attempts}). Executing instant internal self-correction...")
         retry_prompt = f"""{programmer_header}
 
-CRITICAL: Your code implementation failed local compilation verification with the following errors.
-Fix all syntax, missing namespaces, Razor tags, and type errors immediately!
+CRITICAL STRICT REQUIREMENT: Your code MUST compile cleanly with ZERO errors.
+The current code failed local compilation verification. Fix all syntax, missing namespaces, Razor tags, CS errors, and type errors immediately!
 
 --- COMPILATION ERROR LOG ---
-{build_logs[-3500:]}
+{build_logs[-4000:]}
 ------------------------------
 
 Requirements:
@@ -1435,9 +1438,12 @@ For EACH file to fix, output it in this exact format:
             retry_files = parse_code_files(retry_code)
             if retry_files:
                 save_codebase(retry_files, workspace_dir)
-                print("[Implement Engineer 🎯] Successfully auto-corrected compilation errors prior to QA stage!")
+                build_success, build_logs = run_local_tests(workspace_dir)
+                if build_success:
+                    print("[Implement Engineer 🎯] Successfully auto-corrected compilation errors prior to QA stage!")
         except Exception as e:
             print(f"[Implement Engineer Warning] Pre-submission retry failed: {e}")
+            break
 
     # Re-scan codebase to update metadata in state
     updated_metadata = scan_workspace(workspace_dir)
@@ -1448,10 +1454,11 @@ For EACH file to fix, output it in this exact format:
     res = {
         "codebase": updated_metadata,
         "iterations": state["iterations"] + 1,
-        "errors": ""
+        "errors": "" if build_success else f"Pre-submission build verification failed after auto-correction attempts:\n{build_logs}"
     }
     from utils import save_studio_state
-    save_studio_state(workspace_dir, {**state, **res, "next_agent": "Tester"})
+    next_agent_node = "Tester" if build_success else "ImplementEngineer"
+    save_studio_state(workspace_dir, {**state, **res, "next_agent": next_agent_node})
     return res
 
 def tester_node(state: dict) -> dict:
