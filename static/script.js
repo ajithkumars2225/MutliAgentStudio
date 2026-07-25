@@ -2459,22 +2459,33 @@ function loadGitBranches() {
         
         branchSelects.forEach(selectEl => {
             if (!selectEl) return;
-            selectEl.innerHTML = "";
             const branchList = (data.branches && data.branches.length > 0) ? data.branches : [data.active || "main"];
             
-            branchList.forEach(b => {
-                const opt = document.createElement("option");
-                opt.value = b;
-                opt.textContent = b + (b === data.active ? " (active)" : "");
-                opt.style.backgroundColor = "#0b0f19";
-                opt.style.color = "#e2e8f0";
-                if (b === data.active) opt.selected = true;
-                selectEl.appendChild(opt);
-            });
+            // Check if options are already populated and match branchList
+            const existingValues = Array.from(selectEl.options).map(o => o.value);
+            const isMatch = existingValues.length === branchList.length && 
+                            existingValues.every((val, idx) => val === branchList[idx]);
+            
+            if (isMatch) {
+                // Options already populated; only update selected attribute without destroying DOM nodes
+                Array.from(selectEl.options).forEach(opt => {
+                    opt.selected = (opt.value === data.active);
+                });
+            } else {
+                selectEl.innerHTML = "";
+                branchList.forEach(b => {
+                    const opt = document.createElement("option");
+                    opt.value = b;
+                    opt.textContent = b + (b === data.active ? " (active)" : "");
+                    opt.style.backgroundColor = "#0b0f19";
+                    opt.style.color = "#e2e8f0";
+                    if (b === data.active) opt.selected = true;
+                    selectEl.appendChild(opt);
+                });
+            }
             
             if (!selectEl._hasChangeListener) {
                 selectEl._hasChangeListener = true;
-                selectEl.addEventListener("focus", () => loadGitBranches());
                 selectEl.addEventListener("change", (e) => {
                     const targetBranch = e.target.value;
                     if (!targetBranch) return;
