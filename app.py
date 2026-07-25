@@ -4,6 +4,26 @@ import io
 import json
 import threading
 from typing import Optional
+
+# ── HTTPX Compatibility Polyfill for httpx 0.28+ ───────────────────────────
+try:
+    import httpx
+    if not hasattr(httpx, "_types"):
+        import types
+        _httpx_types = types.ModuleType("httpx._types")
+        _httpx_types.HeaderTypes = None
+        _httpx_types.QueryParamTypes = None
+        _httpx_types.RequestData = None
+        _httpx_types.ResponseContent = None
+        _httpx_types.VerifyTypes = None
+        _httpx_types.CertTypes = None
+        _httpx_types.TimeoutTypes = None
+        sys.modules["httpx._types"] = _httpx_types
+        httpx._types = _httpx_types
+except Exception:
+    pass
+# ──────────────────────────────────────────────────────────────────────────
+
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
