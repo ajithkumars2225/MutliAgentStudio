@@ -502,6 +502,22 @@ def get_status():
         ))()
     }
 
+@app.get("/api/version")
+def get_studio_version():
+    return {
+        "version": "2.0.0",
+        "name": "Multi-Agent Developer Studio v2.0",
+        "engine": "v2.0 Enterprise Engine",
+        "status": "v2.0 Active",
+        "features": [
+            "Strict Zero-Error Self-Healing Guard",
+            "AST Transitive Impact Radius Analysis",
+            "ReAct v2 Retrospective Self-Reflection Engine",
+            "Dual-Tab File Explorer & Git Source Control Center",
+            "Live Interactive Terminal & Micro-Agent Telemetry"
+        ]
+    }
+
 @app.get("/api/checkpoint")
 def get_checkpoint():
     """
