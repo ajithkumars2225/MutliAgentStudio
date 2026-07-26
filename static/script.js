@@ -2814,6 +2814,46 @@ if (gitSidebarCommitBtn) {
     });
 }
 
+// ── GitHub Remote Push Action Handler ──────────────────────────────────────
+const gitGithubUrlInput = document.getElementById("git-github-url-input");
+const gitGithubPushBtn = document.getElementById("git-github-push-btn");
+
+if (gitGithubPushBtn) {
+    gitGithubPushBtn.addEventListener("click", () => {
+        const remoteUrl = gitGithubUrlInput ? gitGithubUrlInput.value.trim() : "";
+        if (!remoteUrl) {
+            appAlert("Please enter your GitHub Repository URL (e.g. https://github.com/username/repository.git)");
+            return;
+        }
+
+        gitGithubPushBtn.disabled = true;
+        gitGithubPushBtn.textContent = "⏳ Pushing to GitHub...";
+
+        fetch("/api/git/push-github", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ remote_url: remoteUrl, branch: "main" })
+        })
+        .then(r => r.json())
+        .then(res => {
+            gitGithubPushBtn.disabled = false;
+            gitGithubPushBtn.textContent = "🚀 Push to Remote GitHub";
+            if (res.status === "success") {
+                showCopyToast("✅ " + res.message);
+                appAlert("Success: " + res.message);
+                updateGitControlData();
+            } else {
+                appAlert("GitHub Push Error: " + res.message);
+            }
+        })
+        .catch(err => {
+            gitGithubPushBtn.disabled = false;
+            gitGithubPushBtn.textContent = "🚀 Push to Remote GitHub";
+            appAlert("Failed to push to GitHub: " + err);
+        });
+    });
+}
+
 // Bind triggers
 if (gitStatusBadge) {
     gitStatusBadge.style.cursor = "pointer";
