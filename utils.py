@@ -1014,6 +1014,97 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
     except Exception as e:
         return False, f"Deployment script error: {str(e)}"
 
+def save_workspace_rule(directory: str, rule_text: str) -> None:
+    """
+    Saves a persistent rule into <workspace>/.studio/rules/user_rules.json.
+    """
+    if not directory or not rule_text.strip():
+        return
+    base_path = Path(directory).resolve()
+    rules_dir = base_path / ".studio" / "rules"
+    rules_dir.mkdir(parents=True, exist_ok=True)
+    rules_file = rules_dir / "user_rules.json"
+    
+    rules = []
+    if rules_file.exists():
+        try:
+            rules = json.loads(rules_file.read_text(encoding="utf-8"))
+        except Exception:
+            rules = []
+            
+    clean_rule = rule_text.strip()
+    if clean_rule not in rules:
+        rules.append(clean_rule)
+        
+    rules_file.write_text(json.dumps(rules, indent=2), encoding="utf-8")
+    print(f"[Rules Engine 🧠] Saved persistent rule: {clean_rule}")
+
+def get_workspace_rules_string(directory: str) -> str:
+    """
+    Loads all persistent workspace rules and returns a formatted prompt header block.
+    """
+    if not directory:
+        return ""
+    base_path = Path(directory).resolve()
+    rules_file = base_path / ".studio" / "rules" / "user_rules.json"
+    if not rules_file.exists():
+        return ""
+    try:
+        rules = json.loads(rules_file.read_text(encoding="utf-8"))
+        if not rules:
+            return ""
+        formatted = "\n=== PERSISTENT WORKSPACE RULES & PREFERENCES (/learn) ===\n"
+        for idx, r in enumerate(rules, 1):
+            formatted += f"  {idx}. {r}\n"
+        formatted += "=========================================================\n"
+        return formatted
+    except Exception:
+        return ""
+
+def apply_surgical_edits(directory: str, text: str) -> Dict[str, str]:
+    """
+    Parses and applies surgical chunk replacements in the workspace:
+    ---SURGICAL_EDIT: path/to/file.ext---
+    <<<SEARCH
+    target code block
+    ===
+    replacement code block
+    >>>
+    """
+    base_path = Path(directory).resolve()
+    pattern = r'---SURGICAL_EDIT:\s*([a-zA-Z0-9_\-\./]+)\s*---.*?(?:```[a-zA-Z0-9_]*\n)?<<<SEARCH\n(.*?)\n===\n(.*?)\n>>>(?:```)?'
+    matches = re.findall(pattern, text, re.DOTALL)
+    
+    modified_files = {}
+    for filename, search_block, replace_block in matches:
+        rel_filename = filename.strip()
+        file_path = (base_path / rel_filename).resolve()
+        if not file_path.exists():
+            print(f"[Surgical Edit Warning] File {rel_filename} does not exist for surgical replacement.")
+            continue
+            
+        try:
+            original_content = file_path.read_text(encoding="utf-8", errors="ignore")
+            if search_block in original_content:
+                new_content = original_content.replace(search_block, replace_block, 1)
+                file_path.write_text(new_content, encoding="utf-8")
+                modified_files[rel_filename] = new_content
+                print(f"[Surgical Edit ✂️] Successfully replaced targeted chunk in {rel_filename}")
+            else:
+                clean_search = search_block.replace("\r\n", "\n")
+                clean_orig = original_content.replace("\r\n", "\n")
+                if clean_search in clean_orig:
+                    new_content = clean_orig.replace(clean_search, replace_block.replace("\r\n", "\n"), 1)
+                    file_path.write_text(new_content, encoding="utf-8")
+                    modified_files[rel_filename] = new_content
+                    print(f"[Surgical Edit ✂️] Successfully replaced targeted chunk (fuzzy) in {rel_filename}")
+                else:
+                    print(f"[Surgical Edit Warning] Search chunk not found in {rel_filename}")
+        except Exception as e:
+            print(f"[Surgical Edit Error] Failed to apply edit to {rel_filename}: {e}")
+            
+    return modified_files
+
 def parse_code_files(text: str) -> Dict[str, str]:
     """
     Parses file contents from a markdown output.

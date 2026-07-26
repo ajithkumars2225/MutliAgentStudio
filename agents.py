@@ -896,22 +896,32 @@ Output ONLY the raw markdown content."""
 
 def get_memory_context_string(prompt: str) -> str:
     """
-    Recalls top relevant episodic memories and user preferences for a prompt.
+    Recalls top relevant episodic memories and persistent workspace rules (/learn) for a prompt.
     """
-    if not prompt:
-        return ""
+    context_parts = []
     try:
-        from episodic_memory import EpisodicMemoryEngine
-        import database
-        provider = database.get_setting("llm_provider", "google")
-        memories = EpisodicMemoryEngine.recall_relevant_memories(prompt, top_k=3, provider=provider)
-        if memories:
-            mem_items = [f"  - [{m['category']}] {m['concept']}: {m['value']}" for m in memories]
-            print(f"[Episodic Memory 🧠] Recalled and injected {len(memories)} relevant user preferences into prompt.")
-            return "\n=== RECALLED LONG-TERM MEMORIES & USER PREFERENCES ===\n" + "\n".join(mem_items) + "\n======================================================\n"
-    except Exception as e:
-        print(f"[Memory Warning] Failed to recall memories: {e}")
-    return ""
+        from utils import get_workspace_rules_string
+        from database import get_active_workspace
+        ws_rules = get_workspace_rules_string(get_active_workspace())
+        if ws_rules:
+            context_parts.append(ws_rules)
+    except Exception:
+        pass
+        
+    if prompt:
+        try:
+            from episodic_memory import EpisodicMemoryEngine
+            import database
+            provider = database.get_setting("llm_provider", "google")
+            memories = EpisodicMemoryEngine.recall_relevant_memories(prompt, top_k=3, provider=provider)
+            if memories:
+                mem_items = [f"  - [{m['category']}] {m['concept']}: {m['value']}" for m in memories]
+                print(f"[Episodic Memory 🧠] Recalled and injected {len(memories)} relevant user preferences into prompt.")
+                context_parts.append("\n=== RECALLED LONG-TERM MEMORIES & USER PREFERENCES ===\n" + "\n".join(mem_items) + "\n======================================================\n")
+        except Exception as e:
+            print(f"[Memory Warning] Failed to recall memories: {e}")
+            
+    return "\n".join(context_parts)
 
 def business_analyst_node(state: dict) -> dict:
     """
@@ -929,6 +939,37 @@ def business_analyst_node(state: dict) -> dict:
     if workspace_dir:
         GitBranchingManager.create_feature_branch(workspace_dir, state.get("prompt", "feature"))
         DatabaseProvisioner.verify_and_get_db_config("postgresql")
+        
+    user_prompt = state.get("prompt", "")
+    
+    # ── Slash Command: /learn [rule] ──────────────────────────────────────────
+    if user_prompt.strip().lower().startswith("/learn"):
+        rule_content = user_prompt.strip()[6:].strip()
+        if rule_content:
+            from utils import save_workspace_rule
+            save_workspace_rule(workspace_dir, rule_content)
+            learned_msg = f"🧠 **Workspace Rule Learned & Saved!**\n\nRule: `{rule_content}`\n\nThis rule will now automatically apply to all future code implementation and architectural decisions in this workspace!"
+            print(f"[Rules Engine 🧠] Intercepted /learn command: Saved rule to workspace context!")
+            ask_user_approval("Workspace Rule Engine (/learn)", learned_msg)
+            return {
+                "requirements": f"Learned Rule: {rule_content}",
+                "next_agent": "FINISH"
+            }
+            
+    # ── Slash Command: /grill-me ──────────────────────────────────────────────
+    if "/grill-me" in user_prompt.lower():
+        print("[BA Gate 🎯] Interactive Interview Mode (/grill-me) active. Generating clarification questions...")
+        grill_prompt = f"""You are a Lead Enterprise Architect conducting an Interactive Alignment Interview (/grill-me).
+Analyze the user request and generate 3 to 5 clear, targeted architectural clarification questions:
+Request: {user_prompt}
+
+Output ONLY the markdown question list with clear options for the user to select or answer."""
+        interview_response = invoke_llm(llm, grill_prompt)
+        interview_questions = interview_response.content if hasattr(interview_response, 'content') else str(interview_response)
+        
+        user_answers = ask_user_approval("Interactive Design Interview (/grill-me)", f"### 🎯 Interactive Architectural Alignment Interview\nPlease review the questions below and provide your preferences or feedback in the response box before proceeding:\n\n{interview_questions}")
+        if user_answers:
+            state['prompt'] += f"\n\n[User Architectural Answers from /grill-me Interview]:\n{user_answers}"
         
     codebase_desc = ""
     if state.get("codebase"):
@@ -1375,19 +1416,23 @@ Target files to implement/edit:
 {existing_files_desc}
 {error_feedback}
 
-For EACH file to implement or update, output it in this exact format:
+For EACH file to implement or update, output full file format OR surgical edit format:
 ---FILE: relative/path/to/file.ext---
 ```language
-... code contents here ...
+... full code contents here ...
 ```
+
+Or for targeted chunk edits in large existing files:
+---SURGICAL_EDIT: relative/path/to/file.ext---
+<<<SEARCH
+exact lines to replace
+===
+new replacement lines
+>>>
 
 Write all necessary code now:"""
     
     check_pause()
-    # Always bypass cache for ImplementEngineer:
-    # - When errors exist: stale cached code would reproduce the same bugs
-    # - On any iteration > 0: the codebase has changed so the same prompt
-    #   would produce a different correct answer; a cache hit returns stale code
     has_errors = bool(state.get("errors"))
     is_subsequent_iteration = state.get("iterations", 0) > 0
     should_bypass = has_errors or is_subsequent_iteration
@@ -1395,11 +1440,16 @@ Write all necessary code now:"""
     check_pause()
     coder_output = response.content if hasattr(response, 'content') else str(response)
     
-    from utils import parse_code_files, save_codebase, scan_workspace
+    from utils import parse_code_files, save_codebase, scan_workspace, apply_surgical_edits
     from database import get_active_workspace
     new_files = parse_code_files(coder_output)
     
     workspace_dir = get_active_workspace()
+    
+    # Apply surgical chunk edits to existing files if outputted
+    surgical_files = apply_surgical_edits(workspace_dir, coder_output)
+    if surgical_files:
+        new_files.update(surgical_files)
     
     # Enterprise AST Refactoring Diff Engine
     try:
