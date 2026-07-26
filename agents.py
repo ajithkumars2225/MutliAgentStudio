@@ -1699,7 +1699,12 @@ For the application built under these requirements, write:
    - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines with remote deployment steps.
 3. Remote Cloud & Container Deployment:
    - Generate a production `Dockerfile` and `docker-compose.yml` for remote containerized deployment (Azure App Service, AWS ECS/EC2, Docker Hub).
-   - Generate a remote SSH deployment script (`deploy_remote.sh`) for deploying via SSH/SCP to Linux/AWS EC2 servers."""
+   - Generate a remote SSH deployment script (`deploy_remote.sh`) for deploying via SSH/SCP to Linux/AWS EC2 servers.
+4. Multi-Project & Monorepo Orchestration:
+   - If the workspace contains multiple sub-projects or microservices (e.g. Frontend React + Backend .NET API + Database), generate multi-service deployment orchestrations.
+   - In `deploy.bat` / `deploy.sh`: Launch each sub-project sequentially in non-blocking instances (e.g. `start /b dotnet run --project Backend/Backend.csproj` AND `start /b npm start --prefix Frontend/`).
+   - In `docker-compose.yml`: Define linked multi-container services (`frontend-ui`, `backend-api`, `database`) with shared network bridges.
+   - In CI/CD pipelines: Configure parallel build matrix jobs for all sub-projects."""
     deployer_header = (custom_prompts.get("deployer") or "").strip() or default_deployer
     
     import database
