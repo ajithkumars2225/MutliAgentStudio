@@ -57,30 +57,55 @@ class VisualUIAuditorEngine:
         return {
             "filepath": filepath,
             "aesthetic_score": max(0, score),
-            "passed": score >= 75,
             "findings": findings
         }
 
     @classmethod
-    def audit_workspace_ui(cls, workspace_directory: str) -> List[Dict[str, Any]]:
+    def audit_workspace_ui(cls, workspace_dir: str) -> List[Dict[str, Any]]:
         """
-        Audits all frontend assets in workspace.
+        Audits all frontend HTML and CSS files in the target workspace.
         """
-        base = Path(workspace_directory)
-        results = []
-        if not base.exists():
-            return results
+        base_path = Path(workspace_dir).resolve()
+        if not base_path.exists():
+            return []
 
-        for root, dirs, files in os.walk(base):
-            dirs[:] = [d for d in dirs if d not in {".git", ".venv", "venv", "node_modules"}]
+        audits = []
+        for root, _, files in os.walk(base_path):
+            if ".git" in root or "node_modules" in root or ".venv" in root:
+                continue
             for f in files:
-                filepath = Path(root) / f
-                if filepath.suffix.lower() in [".html", ".css"]:
+                ext = os.path.splitext(f)[1].lower()
+                if ext in [".html", ".htm", ".css"]:
+                    full_p = Path(root) / f
                     try:
-                        rel_path = str(filepath.relative_to(base)).replace("\\", "/")
-                        content = filepath.read_text(encoding="utf-8", errors="ignore")
-                        res = cls.audit_frontend_file(rel_path, content)
-                        results.append(res)
+                        rel_p = str(full_p.relative_to(base_path)).replace("\\", "/")
+                        content = full_p.read_text(encoding="utf-8", errors="ignore")
+                        audit_res = cls.audit_frontend_file(rel_p, content)
+                        audits.append(audit_res)
                     except Exception:
                         pass
-        return results
+        return audits
+
+    @classmethod
+    def capture_preview_screenshot(cls, workspace_dir: str, preview_url: str) -> Dict[str, Any]:
+        """
+        Uses Playwright headless browser to capture a real screenshot of the live preview URL
+        and saves it to <workspace>/.studio/preview_audit.png.
+        """
+        studio_dir = Path(workspace_dir) / ".studio"
+        studio_dir.mkdir(parents=True, exist_ok=True)
+        screenshot_path = studio_dir / "preview_audit.png"
+        
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page(viewport={"width": 1280, "height": 800})
+                page.goto(preview_url, timeout=10000, wait_until="networkidle")
+                page.screenshot(path=str(screenshot_path))
+                browser.close()
+                print(f"[Visual Auditor 📸] Successfully captured live UI screenshot: {screenshot_path}")
+                return {"status": "success", "screenshot_path": str(screenshot_path), "url": preview_url}
+        except Exception as e:
+            print(f"[Visual Auditor Warning] Could not capture live screenshot: {e}")
+            return {"status": "skipped", "reason": str(e)}

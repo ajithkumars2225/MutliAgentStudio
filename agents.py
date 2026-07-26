@@ -894,6 +894,23 @@ Output ONLY the raw markdown content."""
     except Exception as e:
         print(f"[Orchestrator Handoff Warning] Failed to generate walkthrough: {e}")
 
+def invoke_subagent(subagent_type: str, sub_prompt: str, workspace_dir: str) -> str:
+    """
+    Spawns a background subagent (e.g. 'research', 'tester', 'docs') to execute parallel sub-tasks.
+    """
+    print(f"[Subagent Engine 🐝] Spawning background subagent [{subagent_type}]...")
+    try:
+        llm = get_llm()
+        sub_system = f"You are a specialized Subagent ({subagent_type}) working concurrently on a task."
+        full_p = f"{sub_system}\n\nTask:\n{sub_prompt}"
+        resp = invoke_llm(llm, full_p, bypass_cache=True)
+        out = resp.content if hasattr(resp, 'content') else str(resp)
+        print(f"[Subagent Engine 🐝] Subagent [{subagent_type}] completed task.")
+        return out
+    except Exception as e:
+        print(f"[Subagent Engine Warning] Subagent [{subagent_type}] failed: {e}")
+        return f"Subagent error: {e}"
+
 def get_memory_context_string(prompt: str) -> str:
     """
     Recalls top relevant episodic memories and persistent workspace rules (/learn) for a prompt.

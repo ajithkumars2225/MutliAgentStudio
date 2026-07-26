@@ -56,6 +56,13 @@
             </nav>
 
             <div class="header-actions" style="display: flex; align-items: center; gap: 0.6rem;">
+                <!-- Export Workspace Zip Button -->
+                <div class="studio-icon-btn-wrap" style="position: relative;">
+                    <button id="download-zip-btn" class="studio-icon-btn" aria-label="Export Workspace Zip" style="height: 32px; padding: 0 0.65rem; border-radius: 6px; background: rgba(0, 223, 216, 0.12); color: var(--accent-cyan); border: 1px solid rgba(0, 223, 216, 0.3); font-size: 0.74rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.35rem;">
+                        📦 <span>Export Zip</span>
+                    </button>
+                    <div class="studio-tooltip">📦 Download Workspace as .ZIP</div>
+                </div>
                 <!-- Terminal Show / Hide Icon Button with Tooltip -->
                 <div class="studio-icon-btn-wrap" style="position: relative;">
                     <button id="top-terminal-toggle-btn" class="studio-icon-btn active" aria-label="Toggle Terminal Show/Hide" style="width: 32px; height: 32px; border-radius: 6px; background: rgba(0, 223, 216, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 223, 216, 0.3);">
@@ -142,12 +149,22 @@
                                     
                                     <!-- BOTTOM REGION: Fixed Action Toolbar Region -->
                                     <div class="input-action-toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.6rem; background: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.04);">
-                                        <!-- LEFT: New Chat Icon Button -->
-                                        <div class="studio-icon-btn-wrap" style="position: relative;">
-                                            <button id="new-create-btn" class="studio-icon-btn" title="New Chat — Start fresh session" aria-label="New Chat" style="width: 28px; height: 28px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                                            </button>
-                                            <div class="studio-tooltip">🆕 New Chat</div>
+                                        <!-- LEFT: Action Buttons -->
+                                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                            <div class="studio-icon-btn-wrap" style="position: relative;">
+                                                <button id="new-create-btn" class="studio-icon-btn" title="New Chat — Start fresh session" aria-label="New Chat" style="width: 28px; height: 28px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                                                </button>
+                                                <div class="studio-tooltip">🆕 New Chat</div>
+                                            </div>
+                                            
+                                            <!-- Speech-to-Text Voice Dictation Button -->
+                                            <div class="studio-icon-btn-wrap" style="position: relative;">
+                                                <button id="voice-input-btn" class="studio-icon-btn" title="Speech-to-Prompt Voice Input" aria-label="Voice Input" style="width: 28px; height: 28px; border-radius: 6px; background: rgba(0, 223, 216, 0.08); border: 1px solid rgba(0, 223, 216, 0.25); color: var(--accent-cyan); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;">
+                                                    🎙️
+                                                </button>
+                                                <div class="studio-tooltip">🎙️ Speech-to-Text Dictation</div>
+                                            </div>
                                         </div>
                                         
                                         <!-- RIGHT: Dynamic Run Send Button -->

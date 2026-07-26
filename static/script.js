@@ -2830,6 +2830,77 @@ if (closeGitPopoverBtn) {
     });
 }
 
+// ── One-Click Workspace Zip Export Handler ──────────────────────────────────
+const downloadZipBtn = document.getElementById("download-zip-btn");
+if (downloadZipBtn) {
+    downloadZipBtn.addEventListener("click", () => {
+        showCopyToast("📦 Preparing Workspace .ZIP download...");
+        window.location.href = "/api/workspace/zip";
+    });
+}
+
+// ── Speech-to-Text Voice Dictation Handler ─────────────────────────────────
+const voiceInputBtn = document.getElementById("voice-input-btn");
+if (voiceInputBtn) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        let isListening = false;
+
+        voiceInputBtn.addEventListener("click", () => {
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                    isListening = true;
+                    voiceInputBtn.style.background = "rgba(239, 68, 68, 0.2)";
+                    voiceInputBtn.style.color = "#ef4444";
+                    voiceInputBtn.style.borderColor = "rgba(239, 68, 68, 0.4)";
+                    showCopyToast("🎙️ Listening... Speak your requirement now.");
+                } catch (e) {
+                    console.error("Speech recognition error:", e);
+                }
+            }
+        });
+
+        recognition.onresult = (event) => {
+            let transcript = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript;
+            }
+            if (promptInput) {
+                promptInput.value = transcript;
+                promptInput.dispatchEvent(new Event("input"));
+            }
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            voiceInputBtn.style.background = "rgba(0, 223, 216, 0.08)";
+            voiceInputBtn.style.color = "var(--accent-cyan)";
+            voiceInputBtn.style.borderColor = "rgba(0, 223, 216, 0.25)";
+            showCopyToast("🎙️ Speech dictation completed.");
+        };
+
+        recognition.onerror = () => {
+            isListening = false;
+            voiceInputBtn.style.background = "rgba(0, 223, 216, 0.08)";
+            voiceInputBtn.style.color = "var(--accent-cyan)";
+            voiceInputBtn.style.borderColor = "rgba(0, 223, 216, 0.25)";
+            showCopyToast("⚠️ Speech recognition unavailable or blocked.");
+        };
+    } else {
+        voiceInputBtn.addEventListener("click", () => {
+            appAlert("Web Speech API is not supported in this browser. Please use Google Chrome or Edge for voice dictation.");
+        });
+    }
+}
+
 // Outside click listener to close Git popover drawer
 document.addEventListener("click", (e) => {
     if (gitPopoverPanel && gitPopoverPanel.style.display === "flex") {

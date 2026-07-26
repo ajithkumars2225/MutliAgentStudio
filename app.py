@@ -845,6 +845,68 @@ def open_workspace(req: OpenWorkspaceRequest):
 def get_active_workspace_route():
     return {"active_workspace": database.get_active_workspace()}
 
+@app.get("/api/workspace/zip")
+def download_workspace_zip():
+    """
+    Zips active workspace files into a clean archive buffer and returns a downloadable .zip stream.
+    """
+    workspace_dir = database.get_active_workspace()
+    if not os.path.exists(workspace_dir):
+        raise HTTPException(status_code=404, detail="Workspace directory not found")
+
+    zip_buffer = io.BytesIO()
+    exclude_dirs = {".git", ".venv", "venv", "__pycache__", "node_modules", "dist", "build"}
+    exclude_files = {".env", "developer_studio.db"}
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for root, dirs, files in os.walk(workspace_dir):
+            dirs[:] = [d for d in dirs if d not in exclude_dirs]
+            for file in files:
+                if file in exclude_files:
+                    continue
+                abs_path = os.path.join(root, file)
+                rel_path = os.path.relpath(abs_path, workspace_dir)
+                zip_file.write(abs_path, rel_path)
+
+    zip_buffer.seek(0)
+    folder_name = os.path.basename(workspace_dir) or "workspace"
+    filename = f"{folder_name}_project.zip"
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+class PushGitHubRequest(BaseModel):
+    remote_url: str
+    branch: Optional[str] = "main"
+    commit_message: Optional[str] = "Pushed from Multi-Agent Developer Studio v2.5"
+
+@app.post("/api/git/push-github")
+def push_to_github(req: PushGitHubRequest):
+    """
+    Pushes active workspace commits directly to a remote GitHub / Git repository.
+    """
+    workspace_dir = database.get_active_workspace()
+    from utils import git_init, git_commit
+    git_init(workspace_dir)
+    git_commit(workspace_dir, req.commit_message or "Pushed from Multi-Agent Developer Studio")
+    
+    try:
+        check_remote = subprocess.run(["git", "remote", "get-url", "origin"], cwd=workspace_dir, capture_output=True, text=True, check=False)
+        if check_remote.returncode == 0:
+            subprocess.run(["git", "remote", "set-url", "origin", req.remote_url], cwd=workspace_dir, check=False)
+        else:
+            subprocess.run(["git", "remote", "add", "origin", req.remote_url], cwd=workspace_dir, check=False)
+            
+        push_res = subprocess.run(["git", "push", "-u", "origin", req.branch or "main"], cwd=workspace_dir, capture_output=True, text=True, check=False)
+        if push_res.returncode == 0:
+            return {"status": "success", "message": f"Successfully pushed workspace to {req.remote_url}"}
+        else:
+            return {"status": "error", "message": push_res.stderr or push_res.stdout}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/api/git/status")
 def get_git_status_route():
     from utils import git_get_status
