@@ -1,6 +1,7 @@
 import os
 import sys
 import io
+import zipfile
 import json
 import threading
 from typing import Optional
