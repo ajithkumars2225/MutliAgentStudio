@@ -850,7 +850,7 @@ def generate_walkthrough_if_missing(workspace_dir: str, state: dict):
         
     print("\n[Orchestrator Handoff 📄] Generating final walkthrough_agent.md handoff documentation...")
     try:
-        from utils import get_llm, scan_workspace, invoke_llm
+        from utils import scan_workspace
         from database import get_setting
         
         provider = get_setting("llm_provider", "google")
