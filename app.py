@@ -26,6 +26,7 @@ except Exception:
 # ──────────────────────────────────────────────────────────────────────────
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
