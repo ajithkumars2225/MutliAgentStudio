@@ -2683,11 +2683,37 @@ function updateGitControlData() {
                 modifiedList.forEach(line => {
                     if (!line || line.trim() === "") return;
                     const fileDiv = document.createElement("div");
-                    fileDiv.textContent = line;
-                    if (line.startsWith("M") || line.includes("modified:")) fileDiv.style.color = "var(--warning)";
-                    else if (line.startsWith("A") || line.startsWith("??") || line.includes("new file:")) fileDiv.style.color = "var(--success)";
-                    else if (line.startsWith("D") || line.includes("deleted:")) fileDiv.style.color = "var(--danger)";
-                    else fileDiv.style.color = "var(--text-secondary)";
+                    fileDiv.style.display = "flex";
+                    fileDiv.style.justifyContent = "space-between";
+                    fileDiv.style.alignItems = "center";
+                    fileDiv.style.cursor = "pointer";
+                    fileDiv.style.padding = "2px 4px";
+                    fileDiv.style.borderRadius = "4px";
+                    fileDiv.style.transition = "background 0.15s ease";
+                    fileDiv.title = "Click to Compare Visual Side-by-Side Diff";
+
+                    fileDiv.addEventListener("mouseenter", () => fileDiv.style.background = "rgba(255, 255, 255, 0.05)");
+                    fileDiv.addEventListener("mouseleave", () => fileDiv.style.background = "transparent");
+
+                    const nameSpan = document.createElement("span");
+                    nameSpan.textContent = line;
+
+                    if (line.startsWith("M") || line.includes("modified:")) nameSpan.style.color = "var(--warning)";
+                    else if (line.startsWith("A") || line.startsWith("??") || line.includes("new file:")) nameSpan.style.color = "var(--success)";
+                    else if (line.startsWith("D") || line.includes("deleted:")) nameSpan.style.color = "var(--danger)";
+                    else nameSpan.style.color = "var(--text-secondary)";
+
+                    const compareBadge = document.createElement("span");
+                    compareBadge.textContent = "🔍 Compare";
+                    compareBadge.style.fontSize = "0.65rem";
+                    compareBadge.style.color = "var(--accent-cyan)";
+                    compareBadge.style.opacity = "0.8";
+
+                    const filePathOnly = line.replace(/^[\sMAD\?:]+/, '').trim();
+                    fileDiv.addEventListener("click", () => openFileDiffModal(filePathOnly));
+
+                    fileDiv.appendChild(nameSpan);
+                    fileDiv.appendChild(compareBadge);
                     el.appendChild(fileDiv);
                 });
             } else {
@@ -2853,6 +2879,45 @@ if (gitGithubPushBtn) {
         });
     });
 }
+
+// ── Visual Side-by-Side Code Diff Compare Modal Handler ─────────────────────
+function openFileDiffModal(filepath) {
+    const diffModal = document.getElementById("file-diff-modal");
+    const filenameLabel = document.getElementById("diff-modal-filename");
+    const origPre = document.getElementById("diff-modal-original-text");
+    const modPre = document.getElementById("diff-modal-modified-text");
+
+    if (!diffModal) return;
+
+    if (filenameLabel) filenameLabel.textContent = filepath;
+    if (origPre) origPre.textContent = "Loading original Git HEAD content...";
+    if (modPre) modPre.textContent = "Loading modified workspace content...";
+
+    diffModal.style.display = "flex";
+
+    fetch(`/api/git/file-diff?filepath=${encodeURIComponent(filepath)}`)
+    .then(r => r.json())
+    .then(res => {
+        if (origPre) origPre.textContent = res.original_content || "[Empty file]";
+        if (modPre) modPre.textContent = res.modified_content || "[Empty file]";
+    })
+    .catch(err => {
+        if (origPre) origPre.textContent = "Error loading original content: " + err;
+        if (modPre) modPre.textContent = "Error loading modified content: " + err;
+    });
+}
+
+const closeFileDiffBtn = document.getElementById("close-file-diff-btn");
+const closeFileDiffBtnFooter = document.getElementById("close-file-diff-btn-footer");
+const fileDiffModal = document.getElementById("file-diff-modal");
+
+[closeFileDiffBtn, closeFileDiffBtnFooter].forEach(btn => {
+    if (btn) {
+        btn.addEventListener("click", () => {
+            if (fileDiffModal) fileDiffModal.style.display = "none";
+        });
+    }
+});
 
 // Bind triggers
 if (gitStatusBadge) {

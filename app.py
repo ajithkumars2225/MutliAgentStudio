@@ -920,6 +920,42 @@ def get_git_diff_route():
     from utils import git_get_diff
     workspace_dir = database.get_active_workspace()
     return {"diff": git_get_diff(workspace_dir)}
+
+@app.get("/api/git/file-diff")
+def get_file_diff_route(filepath: str):
+    """
+    Returns original HEAD content vs modified workspace file content for side-by-side visual diff comparison.
+    """
+    workspace_dir = database.get_active_workspace()
+    abs_path = os.path.join(workspace_dir, filepath)
+    
+    modified_content = ""
+    if os.path.exists(abs_path):
+        try:
+            with open(abs_path, "r", encoding="utf-8", errors="ignore") as f:
+                modified_content = f.read()
+        except Exception:
+            modified_content = "[Unable to read modified file]"
+
+    original_content = ""
+    try:
+        head_res = subprocess.run(["git", "show", f"HEAD:{filepath}"], cwd=workspace_dir, capture_output=True, text=True, check=False)
+        if head_res.returncode == 0:
+            original_content = head_res.stdout
+        else:
+            original_content = "[New File — Not in Git HEAD]"
+    except Exception:
+        original_content = "[New File]"
+
+    diff_res = subprocess.run(["git", "diff", "--", filepath], cwd=workspace_dir, capture_output=True, text=True, check=False)
+    raw_diff = diff_res.stdout if diff_res.returncode == 0 else ""
+
+    return {
+        "filepath": filepath,
+        "original_content": original_content,
+        "modified_content": modified_content,
+        "raw_diff": raw_diff
+    }
 @app.get("/api/symbols")
 def get_symbols_endpoint():
     from ast_engine import EnterpriseASTEngine
