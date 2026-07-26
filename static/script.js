@@ -2839,29 +2839,41 @@ if (downloadZipBtn) {
     });
 }
 
-// ── Speech-to-Text Voice Dictation Handler ─────────────────────────────────
+// ── Speech-to-Text Voice Dictation Handler (Continuous Manual Toggle Mode) ──
 const voiceInputBtn = document.getElementById("voice-input-btn");
 if (voiceInputBtn) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
         let isListening = false;
+        let userStoppedManually = false;
+        let finalTranscript = "";
 
         voiceInputBtn.addEventListener("click", () => {
             if (isListening) {
-                recognition.stop();
+                userStoppedManually = true;
+                isListening = false;
+                try { recognition.stop(); } catch (e) {}
+                voiceInputBtn.style.background = "rgba(0, 223, 216, 0.08)";
+                voiceInputBtn.style.color = "var(--accent-cyan)";
+                voiceInputBtn.style.borderColor = "rgba(0, 223, 216, 0.25)";
+                voiceInputBtn.classList.remove("recording-pulse");
+                showCopyToast("⏹️ Voice dictation stopped.");
             } else {
                 try {
+                    userStoppedManually = false;
+                    finalTranscript = promptInput ? promptInput.value : "";
                     recognition.start();
                     isListening = true;
-                    voiceInputBtn.style.background = "rgba(239, 68, 68, 0.2)";
+                    voiceInputBtn.style.background = "rgba(239, 68, 68, 0.25)";
                     voiceInputBtn.style.color = "#ef4444";
-                    voiceInputBtn.style.borderColor = "rgba(239, 68, 68, 0.4)";
-                    showCopyToast("🎙️ Listening... Speak your requirement now.");
+                    voiceInputBtn.style.borderColor = "rgba(239, 68, 68, 0.5)";
+                    voiceInputBtn.classList.add("recording-pulse");
+                    showCopyToast("🎙️ Continuous Voice Dictation Active — Speak freely (Click button again to Stop)");
                 } catch (e) {
                     console.error("Speech recognition error:", e);
                 }
@@ -2869,30 +2881,47 @@ if (voiceInputBtn) {
         });
 
         recognition.onresult = (event) => {
-            let transcript = "";
+            let interimTranscript = "";
             for (let i = event.resultIndex; i < event.results.length; ++i) {
-                transcript += event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += (finalTranscript ? " " : "") + event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
             }
             if (promptInput) {
-                promptInput.value = transcript;
+                const combined = finalTranscript + (interimTranscript ? (finalTranscript ? " " : "") + interimTranscript : "");
+                promptInput.value = combined;
                 promptInput.dispatchEvent(new Event("input"));
             }
         };
 
         recognition.onend = () => {
-            isListening = false;
-            voiceInputBtn.style.background = "rgba(0, 223, 216, 0.08)";
-            voiceInputBtn.style.color = "var(--accent-cyan)";
-            voiceInputBtn.style.borderColor = "rgba(0, 223, 216, 0.25)";
-            showCopyToast("🎙️ Speech dictation completed.");
+            if (!userStoppedManually && isListening) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    isListening = false;
+                    voiceInputBtn.style.background = "rgba(0, 223, 216, 0.08)";
+                    voiceInputBtn.style.color = "var(--accent-cyan)";
+                    voiceInputBtn.style.borderColor = "rgba(0, 223, 216, 0.25)";
+                    voiceInputBtn.classList.remove("recording-pulse");
+                }
+            }
         };
 
-        recognition.onerror = () => {
-            isListening = false;
-            voiceInputBtn.style.background = "rgba(0, 223, 216, 0.08)";
-            voiceInputBtn.style.color = "var(--accent-cyan)";
-            voiceInputBtn.style.borderColor = "rgba(0, 223, 216, 0.25)";
-            showCopyToast("⚠️ Speech recognition unavailable or blocked.");
+        recognition.onerror = (e) => {
+            if (e.error === 'no-speech' && !userStoppedManually && isListening) {
+                return;
+            }
+            if (e.error !== 'aborted' && !userStoppedManually) {
+                isListening = false;
+                voiceInputBtn.style.background = "rgba(0, 223, 216, 0.08)";
+                voiceInputBtn.style.color = "var(--accent-cyan)";
+                voiceInputBtn.style.borderColor = "rgba(0, 223, 216, 0.25)";
+                voiceInputBtn.classList.remove("recording-pulse");
+                showCopyToast("⚠️ Speech dictation error: " + (e.error || "unknown"));
+            }
         };
     } else {
         voiceInputBtn.addEventListener("click", () => {
