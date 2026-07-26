@@ -2881,42 +2881,42 @@ if (gitGithubPushBtn) {
 }
 
 // ── Main Workspace Editor Tabs Handler (File Editor / Visual Code Compare / Live Preview) ──
-const tabEditor = document.getElementById("tab-editor");
-const tabDiff = document.getElementById("tab-diff");
-const tabPreview = document.getElementById("tab-preview");
-const editorTabContent = document.getElementById("editor-tab-content");
-const diffTabContent = document.getElementById("diff-tab-content");
-const previewTabContent = document.getElementById("preview-tab-content");
+const workspaceTabEditor = document.getElementById("tab-editor");
+const workspaceTabDiff = document.getElementById("tab-diff");
+const workspaceTabPreview = document.getElementById("tab-preview");
+const ideEditorTabContent = document.getElementById("editor-tab-content");
+const ideDiffTabContent = document.getElementById("diff-tab-content");
+const idePreviewTabContent = document.getElementById("preview-tab-content");
 
 function activateEditorTab(tabName) {
-    if (tabEditor) {
-        tabEditor.classList.toggle("active", tabName === "editor");
-        tabEditor.style.borderBottomColor = tabName === "editor" ? "var(--accent-blue)" : "transparent";
-        tabEditor.style.color = tabName === "editor" ? "var(--text-primary)" : "var(--text-secondary)";
+    if (workspaceTabEditor) {
+        workspaceTabEditor.classList.toggle("active", tabName === "editor");
+        workspaceTabEditor.style.borderBottomColor = tabName === "editor" ? "var(--accent-blue)" : "transparent";
+        workspaceTabEditor.style.color = tabName === "editor" ? "var(--text-primary)" : "var(--text-secondary)";
     }
-    if (tabDiff) {
-        tabDiff.classList.toggle("active", tabName === "diff");
-        tabDiff.style.borderBottomColor = tabName === "diff" ? "var(--accent-cyan)" : "transparent";
-        tabDiff.style.color = tabName === "diff" ? "var(--text-primary)" : "var(--text-secondary)";
+    if (workspaceTabDiff) {
+        workspaceTabDiff.classList.toggle("active", tabName === "diff");
+        workspaceTabDiff.style.borderBottomColor = tabName === "diff" ? "var(--accent-cyan)" : "transparent";
+        workspaceTabDiff.style.color = tabName === "diff" ? "var(--text-primary)" : "var(--text-secondary)";
     }
-    if (tabPreview) {
-        tabPreview.classList.toggle("active", tabName === "preview");
-        tabPreview.style.borderBottomColor = tabName === "preview" ? "var(--accent-purple)" : "transparent";
-        tabPreview.style.color = tabName === "preview" ? "var(--text-primary)" : "var(--text-secondary)";
+    if (workspaceTabPreview) {
+        workspaceTabPreview.classList.toggle("active", tabName === "preview");
+        workspaceTabPreview.style.borderBottomColor = tabName === "preview" ? "var(--accent-purple)" : "transparent";
+        workspaceTabPreview.style.color = tabName === "preview" ? "var(--text-primary)" : "var(--text-secondary)";
     }
 
-    if (editorTabContent) editorTabContent.style.display = tabName === "editor" ? "flex" : "none";
-    if (diffTabContent) diffTabContent.style.display = tabName === "diff" ? "flex" : "none";
-    if (previewTabContent) previewTabContent.style.display = tabName === "preview" ? "flex" : "none";
+    if (ideEditorTabContent) ideEditorTabContent.style.display = tabName === "editor" ? "flex" : "none";
+    if (ideDiffTabContent) ideDiffTabContent.style.display = tabName === "diff" ? "flex" : "none";
+    if (idePreviewTabContent) idePreviewTabContent.style.display = tabName === "preview" ? "flex" : "none";
 
     if (tabName === "editor" && codeEditor) {
         codeEditor.refresh();
     }
 }
 
-if (tabEditor) tabEditor.addEventListener("click", () => activateEditorTab("editor"));
-if (tabDiff) tabDiff.addEventListener("click", () => activateEditorTab("diff"));
-if (tabPreview) tabPreview.addEventListener("click", () => activateEditorTab("preview"));
+if (workspaceTabEditor) workspaceTabEditor.addEventListener("click", () => activateEditorTab("editor"));
+if (workspaceTabDiff) workspaceTabDiff.addEventListener("click", () => activateEditorTab("diff"));
+if (workspaceTabPreview) workspaceTabPreview.addEventListener("click", () => activateEditorTab("preview"));
 
 // ── Visual Side-by-Side Code Diff Compare Handler ─────────────────────────
 function openFileDiffModal(filepath) {
