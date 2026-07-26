@@ -969,8 +969,9 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     capture_output=True,
                     text=True,
                     cwd=str(base_path),
+                    stdin=subprocess.DEVNULL,
                     check=False,
-                    timeout=30
+                    timeout=12
                 )
                 output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
                 logs.append(output_text)
@@ -980,13 +981,9 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
                 output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
-                logs.append(f"Deployment script reached timeout (launched background app server).\n{output_text}")
+                logs.append(f"Deployment script reached 12s timeout (launched background application server).\n{output_text}")
                 has_build_errors = any(err_term in output_text.upper() for err_term in ["BUILD FAILED", "BUILD ERROR", "COMPILATION FAILED", "ERROR CS", "NPM ERR!"])
-                if has_build_errors:
-                    logs.append("❌ [Deployment Guard] Build failed inside deployment script execution! Marking deployment as FAILED.")
-                    success = False
-                else:
-                    success = True
+                success = not has_build_errors
             
         elif deploy_sh.exists() and not sys.platform.startswith("win"):
             logs.append("Running deployment shell script (deploy.sh)...")
@@ -996,8 +993,9 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     capture_output=True,
                     text=True,
                     cwd=str(base_path),
+                    stdin=subprocess.DEVNULL,
                     check=False,
-                    timeout=30
+                    timeout=12
                 )
                 output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
                 logs.append(output_text)
@@ -1007,13 +1005,9 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
                 output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
-                logs.append(f"Deployment script reached timeout (launched background app server).\n{output_text}")
+                logs.append(f"Deployment script reached 12s timeout (launched background application server).\n{output_text}")
                 has_build_errors = any(err_term in output_text.upper() for err_term in ["BUILD FAILED", "BUILD ERROR", "COMPILATION FAILED", "ERROR CS", "NPM ERR!"])
-                if has_build_errors:
-                    logs.append("❌ [Deployment Guard] Build failed inside deployment script execution! Marking deployment as FAILED.")
-                    success = False
-                else:
-                    success = True
+                success = not has_build_errors
             
         elif deploy_py.exists():
             logs.append("Running deployment Python script (deploy.py)...")
@@ -1023,8 +1017,9 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     capture_output=True,
                     text=True,
                     cwd=str(base_path),
+                    stdin=subprocess.DEVNULL,
                     check=False,
-                    timeout=30
+                    timeout=12
                 )
                 output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
                 logs.append(output_text)
@@ -1034,13 +1029,9 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
                 output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
-                logs.append(f"Deployment script reached timeout (launched background app server).\n{output_text}")
+                logs.append(f"Deployment script reached 12s timeout (launched background application server).\n{output_text}")
                 has_build_errors = any(err_term in output_text.upper() for err_term in ["BUILD FAILED", "BUILD ERROR", "COMPILATION FAILED", "ERROR CS", "NPM ERR!"])
-                if has_build_errors:
-                    logs.append("❌ [Deployment Guard] Build failed inside deployment script execution! Marking deployment as FAILED.")
-                    success = False
-                else:
-                    success = True
+                success = not has_build_errors
         else:
             logs.append("No custom deployment script detected.")
             logs.append("Performing default deployment verification...")

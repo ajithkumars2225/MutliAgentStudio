@@ -1812,11 +1812,22 @@ Write the deployment scripts:"""
         try:
             with open(deploy_bat, "r", encoding="utf-8", errors="ignore") as f:
                 bat_content = f.read()
-            sanitized = re.sub(r'^\s*pause\s*$', '@echo Script execution completed.', bat_content, flags=re.MULTILINE | re.IGNORECASE)
+            # Sanitize pause prompts & ensure background web servers use 'start /b' to avoid stdout blocking
+            lines = bat_content.splitlines()
+            sanitized_lines = []
+            for line in lines:
+                l_strip = line.strip()
+                if l_strip.lower().startswith("pause"):
+                    sanitized_lines.append("@echo Deployment completed.")
+                elif any(cmd in l_strip.lower() for cmd in ["dotnet run", "python app.py", "node app.js", "npm start", "npx http-server", "python -m http.server"]) and not l_strip.lower().startswith("start"):
+                    sanitized_lines.append(f"start /b {l_strip}")
+                else:
+                    sanitized_lines.append(line)
+            sanitized = "\n".join(sanitized_lines)
             if sanitized != bat_content:
                 with open(deploy_bat, "w", encoding="utf-8") as f:
                     f.write(sanitized)
-                print("[Deployment Guard 🛡️] Automatically sanitized deploy.bat to remove blocking pause prompts.")
+                print("[Deployment Guard 🛡️] Automatically sanitized deploy.bat for non-blocking background execution.")
         except Exception as e:
             print(f"[Deployment Guard Warning] Failed to sanitize deploy.bat: {e}")
             
