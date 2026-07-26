@@ -1687,7 +1687,19 @@ def deployment_node(state: dict) -> dict:
     llm = get_llm()
     
     custom_prompts = load_custom_prompts()
-    default_deployer = "You are a DevOps and Deployment Engineer.\nFor the application built under these requirements, write:\n1. A local deployment script:\n   - On Windows systems, write a `deploy.bat` file.\n   - For other platforms, write a `deploy.sh` script or a python script `deploy.py`.\n   - CRITICAL: Target the main application `.csproj` file directly in the current workspace directory (e.g. `dotnet build EmployeeListApp.csproj --configuration Release` and `start /b dotnet run --project EmployeeListApp.csproj --urls http://localhost:5000`). Do NOT include `cd SubfolderName` if the .csproj is in root. Do NOT build test projects in deploy.bat.\n   - IMPORTANT: Script commands must be non-blocking. If starting web applications (e.g. dotnet run, npm start), use non-blocking/background flags (`start /b` on Windows) or build checks. Do NOT include `pause` or interactive input prompts.\n2. A CI/CD Pipeline configuration file:\n   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.\n   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines.\n   - Both pipelines should be configured to install dependencies, run linting/compilation checks, execute your unit tests, and trigger static security/vulnerability scans."
+    default_deployer = """You are a DevOps and Deployment Engineer.
+For the application built under these requirements, write:
+1. A local deployment script:
+   - On Windows systems, write a `deploy.bat` file.
+   - For other platforms, write a `deploy.sh` script or `deploy.py`.
+   - CRITICAL: Target the main application file directly in the current workspace directory (e.g. `dotnet build EmployeeListApp.csproj --configuration Release` and `start /b dotnet run --project EmployeeListApp.csproj --urls http://localhost:5000`). Do NOT include `cd SubfolderName` if main file is in root.
+   - IMPORTANT: Script commands must be non-blocking using `start /b` on Windows. Do NOT include `pause` or interactive prompts.
+2. A CI/CD Pipeline configuration file:
+   - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.
+   - Also generate a GitHub Actions workflow (`.github/workflows/ci.yml`) to support GitHub repository pipelines with remote deployment steps.
+3. Remote Cloud & Container Deployment:
+   - Generate a production `Dockerfile` and `docker-compose.yml` for remote containerized deployment (Azure App Service, AWS ECS/EC2, Docker Hub).
+   - Generate a remote SSH deployment script (`deploy_remote.sh`) for deploying via SSH/SCP to Linux/AWS EC2 servers."""
     deployer_header = (custom_prompts.get("deployer") or "").strip() or default_deployer
     
     prompt = f"""{deployer_header}
@@ -1712,6 +1724,16 @@ Generate each file in this exact format:
 ---FILE: .github/workflows/ci.yml---
 ```yaml
 ... GitHub Actions YAML config ...
+```
+
+---FILE: Dockerfile---
+```dockerfile
+... Docker build and run config ...
+```
+
+---FILE: deploy_remote.sh---
+```bash
+... Remote SSH deployment script ...
 ```
 
 Write the deployment scripts:"""
