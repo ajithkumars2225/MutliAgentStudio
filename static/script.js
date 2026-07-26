@@ -2923,29 +2923,66 @@ if (tabEditor) tabEditor.addEventListener("click", () => switchMainEditorTab("ed
 if (tabPreview) tabPreview.addEventListener("click", () => switchMainEditorTab("preview"));
 if (tabDiff) tabDiff.addEventListener("click", () => switchMainEditorTab("diff"));
 
-// ── In-Editor Side-by-Side Code Diff Compare Tab Handler ───────────────────
+// ── Side-by-Side Code Diff Compare Handler (Tab + Popup Modal) ─────────────
 function openFileDiffModal(filepath) {
+    if (!filepath) return;
+
+    // 1. Activate & Populate In-Editor Diff Tab
     switchMainEditorTab("diff");
+    const tabFilenameLabel = document.getElementById("diff-active-filename");
+    const tabOrigPre = document.getElementById("tab-diff-original-text");
+    const tabModPre = document.getElementById("tab-diff-modified-text");
 
-    const filenameLabel = document.getElementById("diff-active-filename");
-    const origPre = document.getElementById("tab-diff-original-text");
-    const modPre = document.getElementById("tab-diff-modified-text");
+    if (tabFilenameLabel) tabFilenameLabel.textContent = filepath;
+    if (tabOrigPre) tabOrigPre.textContent = "Loading original Git HEAD content...";
+    if (tabModPre) tabModPre.textContent = "Loading modified workspace content...";
 
-    if (filenameLabel) filenameLabel.textContent = filepath;
-    if (origPre) origPre.textContent = "Loading original Git HEAD content...";
-    if (modPre) modPre.textContent = "Loading modified workspace content...";
+    // 2. Activate & Populate Fullscreen Overlay Modal
+    const diffModal = document.getElementById("file-diff-modal");
+    const modalFilenameLabel = document.getElementById("diff-modal-filename");
+    const modalOrigPre = document.getElementById("diff-modal-original-text");
+    const modalModPre = document.getElementById("diff-modal-modified-text");
 
+    if (diffModal) {
+        diffModal.style.display = "flex";
+        if (modalFilenameLabel) modalFilenameLabel.textContent = filepath;
+        if (modalOrigPre) modalOrigPre.textContent = "Loading original Git HEAD content...";
+        if (modalModPre) modalModPre.textContent = "Loading modified workspace content...";
+    }
+
+    // Fetch original vs modified content from backend API
     fetch(`/api/git/file-diff?filepath=${encodeURIComponent(filepath)}`)
     .then(r => r.json())
     .then(res => {
-        if (origPre) origPre.textContent = res.original_content || "[Empty file]";
-        if (modPre) modPre.textContent = res.modified_content || "[Empty file]";
+        const origText = res.original_content || "[Empty file / New file]";
+        const modText = res.modified_content || "[Empty file]";
+
+        if (tabOrigPre) tabOrigPre.textContent = origText;
+        if (tabModPre) tabModPre.textContent = modText;
+
+        if (modalOrigPre) modalOrigPre.textContent = origText;
+        if (modalModPre) modalModPre.textContent = modText;
     })
     .catch(err => {
-        if (origPre) origPre.textContent = "Error loading original content: " + err;
-        if (modPre) modPre.textContent = "Error loading modified content: " + err;
+        const errMsg = "Error loading diff content: " + err;
+        if (tabOrigPre) tabOrigPre.textContent = errMsg;
+        if (tabModPre) tabModPre.textContent = errMsg;
+        if (modalOrigPre) modalOrigPre.textContent = errMsg;
+        if (modalModPre) modalModPre.textContent = errMsg;
     });
 }
+
+const closeFileDiffBtn = document.getElementById("close-file-diff-btn");
+const closeFileDiffBtnFooter = document.getElementById("close-file-diff-btn-footer");
+const fileDiffModalEl = document.getElementById("file-diff-modal");
+
+[closeFileDiffBtn, closeFileDiffBtnFooter].forEach(btn => {
+    if (btn) {
+        btn.addEventListener("click", () => {
+            if (fileDiffModalEl) fileDiffModalEl.style.display = "none";
+        });
+    }
+});
 
 // Bind triggers
 if (gitStatusBadge) {
