@@ -407,26 +407,24 @@ providerSelect.addEventListener("change", () => {
 });
 
 // Synchronize client-side cache dynamically when inputs change
-if (modelInput) {
-    modelInput.addEventListener("input", () => {
-        const val = providerSelect ? providerSelect.value : "gemini";
-        if (val === "gemini") currentLoadedSettings.gemini_model = modelInput.value.trim();
-        else if (val === "openai") currentLoadedSettings.openai_model = modelInput.value.trim();
-        else if (val === "ollama") currentLoadedSettings.ollama_model = modelInput.value.trim();
-        else if (val === "claude") currentLoadedSettings.claude_model = modelInput.value.trim();
-        else if (val === "groq") currentLoadedSettings.groq_model = modelInput.value.trim();
-        else if (val === "deepseek") currentLoadedSettings.deepseek_model = modelInput.value.trim();
-        else if (val === "together") currentLoadedSettings.together_model = modelInput.value.trim();
-        else if (val === "mistral") currentLoadedSettings.mistral_model = modelInput.value.trim();
-        else if (val === "cohere") currentLoadedSettings.cohere_model = modelInput.value.trim();
-        else if (val === "xai") currentLoadedSettings.xai_model = modelInput.value.trim();
-        else if (val === "azure") currentLoadedSettings.azure_model = modelInput.value.trim();
-        else if (val === "bedrock") currentLoadedSettings.bedrock_model = modelInput.value.trim();
-        else if (val === "zai") currentLoadedSettings.zai_model = modelInput.value.trim();
-        else if (val === "omnirouter") currentLoadedSettings.omnirouter_model = modelInput.value.trim();
-        else if (val === "nvidia") currentLoadedSettings.nvidia_model = modelInput.value.trim();
-    });
-}
+modelInput.addEventListener("input", () => {
+    const val = providerSelect.value;
+    if (val === "gemini") currentLoadedSettings.gemini_model = modelInput.value.trim();
+    else if (val === "openai") currentLoadedSettings.openai_model = modelInput.value.trim();
+    else if (val === "ollama") currentLoadedSettings.ollama_model = modelInput.value.trim();
+    else if (val === "claude") currentLoadedSettings.claude_model = modelInput.value.trim();
+    else if (val === "groq") currentLoadedSettings.groq_model = modelInput.value.trim();
+    else if (val === "deepseek") currentLoadedSettings.deepseek_model = modelInput.value.trim();
+    else if (val === "together") currentLoadedSettings.together_model = modelInput.value.trim();
+    else if (val === "mistral") currentLoadedSettings.mistral_model = modelInput.value.trim();
+    else if (val === "cohere") currentLoadedSettings.cohere_model = modelInput.value.trim();
+    else if (val === "xai") currentLoadedSettings.xai_model = modelInput.value.trim();
+    else if (val === "azure") currentLoadedSettings.azure_model = modelInput.value.trim();
+    else if (val === "bedrock") currentLoadedSettings.bedrock_model = modelInput.value.trim();
+    else if (val === "zai") currentLoadedSettings.zai_model = modelInput.value.trim();
+    else if (val === "omnirouter") currentLoadedSettings.omnirouter_model = modelInput.value.trim();
+    else if (val === "nvidia") currentLoadedSettings.nvidia_model = modelInput.value.trim();
+});
 
 if (openrouterModelSelect) {
     openrouterModelSelect.addEventListener("change", () => {
@@ -443,36 +441,32 @@ if (openrouterCustomModelInput) {
     });
 }
 
-if (apiKeyInput) {
-    apiKeyInput.addEventListener("input", () => {
-        const val = providerSelect ? providerSelect.value : "gemini";
-        if (val === "gemini") currentLoadedSettings.gemini_api_key = apiKeyInput.value.trim();
-        else if (val === "openai") currentLoadedSettings.openai_api_key = apiKeyInput.value.trim();
-        else if (val === "claude") currentLoadedSettings.anthropic_api_key = apiKeyInput.value.trim();
-        else if (val === "openrouter") currentLoadedSettings.openrouter_api_key = apiKeyInput.value.trim();
-        else if (val === "groq") currentLoadedSettings.groq_api_key = apiKeyInput.value.trim();
-        else if (val === "deepseek") currentLoadedSettings.deepseek_api_key = apiKeyInput.value.trim();
-        else if (val === "together") currentLoadedSettings.together_api_key = apiKeyInput.value.trim();
-        else if (val === "mistral") currentLoadedSettings.mistral_api_key = apiKeyInput.value.trim();
-        else if (val === "cohere") currentLoadedSettings.cohere_api_key = apiKeyInput.value.trim();
-        else if (val === "xai") currentLoadedSettings.xai_api_key = apiKeyInput.value.trim();
-        else if (val === "azure") currentLoadedSettings.azure_api_key = apiKeyInput.value.trim();
-        else if (val === "zai") currentLoadedSettings.zai_api_key = apiKeyInput.value.trim();
-        else if (val === "omnirouter") currentLoadedSettings.omnirouter_api_key = apiKeyInput.value.trim();
-        else if (val === "nvidia") currentLoadedSettings.nvidia_api_key = apiKeyInput.value.trim();
-    });
-}
+apiKeyInput.addEventListener("input", () => {
+    const val = providerSelect.value;
+    if (val === "gemini") currentLoadedSettings.gemini_api_key = apiKeyInput.value.trim();
+    else if (val === "openai") currentLoadedSettings.openai_api_key = apiKeyInput.value.trim();
+    else if (val === "claude") currentLoadedSettings.anthropic_api_key = apiKeyInput.value.trim();
+    else if (val === "openrouter") currentLoadedSettings.openrouter_api_key = apiKeyInput.value.trim();
+    else if (val === "groq") currentLoadedSettings.groq_api_key = apiKeyInput.value.trim();
+    else if (val === "deepseek") currentLoadedSettings.deepseek_api_key = apiKeyInput.value.trim();
+    else if (val === "together") currentLoadedSettings.together_api_key = apiKeyInput.value.trim();
+    else if (val === "mistral") currentLoadedSettings.mistral_api_key = apiKeyInput.value.trim();
+    else if (val === "cohere") currentLoadedSettings.cohere_api_key = apiKeyInput.value.trim();
+    else if (val === "xai") currentLoadedSettings.xai_api_key = apiKeyInput.value.trim();
+    else if (val === "azure") currentLoadedSettings.azure_api_key = apiKeyInput.value.trim();
+    else if (val === "zai") currentLoadedSettings.zai_api_key = apiKeyInput.value.trim();
+    else if (val === "omnirouter") currentLoadedSettings.omnirouter_api_key = apiKeyInput.value.trim();
+    else if (val === "nvidia") currentLoadedSettings.nvidia_api_key = apiKeyInput.value.trim();
+});
 
-if (baseUrlInput) {
-    baseUrlInput.addEventListener("input", () => {
-        const val = providerSelect ? providerSelect.value : "gemini";
-        if (val === "ollama") currentLoadedSettings.ollama_base_url = baseUrlInput.value.trim();
-        else if (val === "openrouter") currentLoadedSettings.openrouter_base_url = baseUrlInput.value.trim();
-        else if (val === "azure") currentLoadedSettings.azure_endpoint = baseUrlInput.value.trim();
-        else if (val === "bedrock") currentLoadedSettings.bedrock_region = baseUrlInput.value.trim();
-        else if (val === "omnirouter") currentLoadedSettings.omnirouter_base_url = baseUrlInput.value.trim();
-    });
-}
+baseUrlInput.addEventListener("input", () => {
+    const val = providerSelect.value;
+    if (val === "ollama") currentLoadedSettings.ollama_base_url = baseUrlInput.value.trim();
+    else if (val === "openrouter") currentLoadedSettings.openrouter_base_url = baseUrlInput.value.trim();
+    else if (val === "azure") currentLoadedSettings.azure_endpoint = baseUrlInput.value.trim();
+    else if (val === "bedrock") currentLoadedSettings.bedrock_region = baseUrlInput.value.trim();
+    else if (val === "omnirouter") currentLoadedSettings.omnirouter_base_url = baseUrlInput.value.trim();
+});
 
 if (approvalModeSelect) {
     approvalModeSelect.addEventListener("change", () => {
@@ -512,20 +506,16 @@ if (semanticCacheToggle) {
 }
 
 // Slider iteration value label
-if (iterationsSlider) {
-    iterationsSlider.addEventListener("input", () => {
-        if (iterationsVal) iterationsVal.textContent = iterationsSlider.value;
-    });
-}
+iterationsSlider.addEventListener("input", () => {
+    iterationsVal.textContent = iterationsSlider.value;
+});
 
 // Clear console
-if (clearLogsBtn) {
-    clearLogsBtn.addEventListener("click", () => {
-        if (term) term.clear();
-        if (termConsole) termConsole.clear();
-        lastLogCount = 0;
-    });
-}
+clearLogsBtn.addEventListener("click", () => {
+    if (term) term.clear();
+    if (termConsole) termConsole.clear();
+    lastLogCount = 0;
+});
 
 // Keyboard Navigation (Arrow Keys / PageUp / PageDown) for Terminal Console Logs
 const consoleLogsBox = document.getElementById("console-logs-container");
@@ -2890,106 +2880,94 @@ if (gitGithubPushBtn) {
     });
 }
 
-// ── Workspace Main Editor Tabs: File Editor vs Live Preview vs Code Diff ──
+// ── Main Workspace Editor Tabs Handler (File Editor / Visual Code Compare / Live Preview) ──
 const tabEditor = document.getElementById("tab-editor");
-const tabPreview = document.getElementById("tab-preview");
 const tabDiff = document.getElementById("tab-diff");
-
+const tabPreview = document.getElementById("tab-preview");
 const editorTabContent = document.getElementById("editor-tab-content");
-const previewTabContent = document.getElementById("preview-tab-content");
 const diffTabContent = document.getElementById("diff-tab-content");
+const previewTabContent = document.getElementById("preview-tab-content");
 
-function switchMainEditorTab(tabName) {
-    if (tabName === "editor") {
-        if (tabEditor) { tabEditor.classList.add("active"); tabEditor.style.borderBottomColor = "var(--accent-blue)"; tabEditor.style.color = "var(--text-primary)"; }
-        if (tabPreview) { tabPreview.classList.remove("active"); tabPreview.style.borderBottomColor = "transparent"; tabPreview.style.color = "var(--text-secondary)"; }
-        if (tabDiff) { tabDiff.classList.remove("active"); tabDiff.style.borderBottomColor = "transparent"; tabDiff.style.color = "var(--text-secondary)"; }
+function activateEditorTab(tabName) {
+    if (tabEditor) {
+        tabEditor.classList.toggle("active", tabName === "editor");
+        tabEditor.style.borderBottomColor = tabName === "editor" ? "var(--accent-blue)" : "transparent";
+        tabEditor.style.color = tabName === "editor" ? "var(--text-primary)" : "var(--text-secondary)";
+    }
+    if (tabDiff) {
+        tabDiff.classList.toggle("active", tabName === "diff");
+        tabDiff.style.borderBottomColor = tabName === "diff" ? "var(--accent-cyan)" : "transparent";
+        tabDiff.style.color = tabName === "diff" ? "var(--text-primary)" : "var(--text-secondary)";
+    }
+    if (tabPreview) {
+        tabPreview.classList.toggle("active", tabName === "preview");
+        tabPreview.style.borderBottomColor = tabName === "preview" ? "var(--accent-purple)" : "transparent";
+        tabPreview.style.color = tabName === "preview" ? "var(--text-primary)" : "var(--text-secondary)";
+    }
 
-        if (editorTabContent) editorTabContent.style.display = "flex";
-        if (previewTabContent) previewTabContent.style.display = "none";
-        if (diffTabContent) diffTabContent.style.display = "none";
+    if (editorTabContent) editorTabContent.style.display = tabName === "editor" ? "flex" : "none";
+    if (diffTabContent) diffTabContent.style.display = tabName === "diff" ? "flex" : "none";
+    if (previewTabContent) previewTabContent.style.display = tabName === "preview" ? "flex" : "none";
 
-        if (codeEditor) codeEditor.refresh();
-    } else if (tabName === "preview") {
-        if (tabPreview) { tabPreview.classList.add("active"); tabPreview.style.borderBottomColor = "var(--accent-blue)"; tabPreview.style.color = "var(--text-primary)"; }
-        if (tabEditor) { tabEditor.classList.remove("active"); tabEditor.style.borderBottomColor = "transparent"; tabEditor.style.color = "var(--text-secondary)"; }
-        if (tabDiff) { tabDiff.classList.remove("active"); tabDiff.style.borderBottomColor = "transparent"; tabDiff.style.color = "var(--text-secondary)"; }
-
-        if (editorTabContent) editorTabContent.style.display = "none";
-        if (previewTabContent) previewTabContent.style.display = "flex";
-        if (diffTabContent) diffTabContent.style.display = "none";
-    } else if (tabName === "diff") {
-        if (tabDiff) { tabDiff.classList.add("active"); tabDiff.style.borderBottomColor = "var(--accent-cyan)"; tabDiff.style.color = "var(--text-primary)"; }
-        if (tabEditor) { tabEditor.classList.remove("active"); tabEditor.style.borderBottomColor = "transparent"; tabEditor.style.color = "var(--text-secondary)"; }
-        if (tabPreview) { tabPreview.classList.remove("active"); tabPreview.style.borderBottomColor = "transparent"; tabPreview.style.color = "var(--text-secondary)"; }
-
-        if (editorTabContent) editorTabContent.style.display = "none";
-        if (previewTabContent) previewTabContent.style.display = "none";
-        if (diffTabContent) diffTabContent.style.display = "flex";
+    if (tabName === "editor" && codeEditor) {
+        codeEditor.refresh();
     }
 }
 
-if (tabEditor) tabEditor.addEventListener("click", () => switchMainEditorTab("editor"));
-if (tabPreview) tabPreview.addEventListener("click", () => switchMainEditorTab("preview"));
-if (tabDiff) tabDiff.addEventListener("click", () => switchMainEditorTab("diff"));
+if (tabEditor) tabEditor.addEventListener("click", () => activateEditorTab("editor"));
+if (tabDiff) tabDiff.addEventListener("click", () => activateEditorTab("diff"));
+if (tabPreview) tabPreview.addEventListener("click", () => activateEditorTab("preview"));
 
-// ── Side-by-Side Code Diff Compare Handler (Tab + Popup Modal) ─────────────
+// ── Visual Side-by-Side Code Diff Compare Handler ─────────────────────────
 function openFileDiffModal(filepath) {
-    if (!filepath) return;
+    activateEditorTab("diff");
 
-    // 1. Activate & Populate In-Editor Diff Tab
-    switchMainEditorTab("diff");
-    const tabFilenameLabel = document.getElementById("diff-active-filename");
-    const tabOrigPre = document.getElementById("tab-diff-original-text");
-    const tabModPre = document.getElementById("tab-diff-modified-text");
+    const inlineFilename = document.getElementById("diff-inline-filename");
+    const inlineOrig = document.getElementById("diff-inline-original");
+    const inlineMod = document.getElementById("diff-inline-modified");
 
-    if (tabFilenameLabel) tabFilenameLabel.textContent = filepath;
-    if (tabOrigPre) tabOrigPre.textContent = "Loading original Git HEAD content...";
-    if (tabModPre) tabModPre.textContent = "Loading modified workspace content...";
-
-    // 2. Activate & Populate Fullscreen Overlay Modal
     const diffModal = document.getElementById("file-diff-modal");
-    const modalFilenameLabel = document.getElementById("diff-modal-filename");
-    const modalOrigPre = document.getElementById("diff-modal-original-text");
-    const modalModPre = document.getElementById("diff-modal-modified-text");
+    const filenameLabel = document.getElementById("diff-modal-filename");
+    const origPre = document.getElementById("diff-modal-original-text");
+    const modPre = document.getElementById("diff-modal-modified-text");
 
-    if (diffModal) {
-        diffModal.style.display = "flex";
-        if (modalFilenameLabel) modalFilenameLabel.textContent = filepath;
-        if (modalOrigPre) modalOrigPre.textContent = "Loading original Git HEAD content...";
-        if (modalModPre) modalModPre.textContent = "Loading modified workspace content...";
-    }
+    if (inlineFilename) inlineFilename.textContent = filepath;
+    if (inlineOrig) inlineOrig.textContent = "Loading original Git HEAD content...";
+    if (inlineMod) inlineMod.textContent = "Loading modified workspace content...";
 
-    // Fetch original vs modified content from backend API
+    if (filenameLabel) filenameLabel.textContent = filepath;
+    if (origPre) origPre.textContent = "Loading original Git HEAD content...";
+    if (modPre) modPre.textContent = "Loading modified workspace content...";
+
     fetch(`/api/git/file-diff?filepath=${encodeURIComponent(filepath)}`)
     .then(r => r.json())
     .then(res => {
-        const origText = res.original_content || "[Empty file / New file]";
-        const modText = res.modified_content || "[Empty file]";
+        const origContent = res.original_content || "[Empty file]";
+        const modContent = res.modified_content || "[Empty file]";
 
-        if (tabOrigPre) tabOrigPre.textContent = origText;
-        if (tabModPre) tabModPre.textContent = modText;
+        if (inlineOrig) inlineOrig.textContent = origContent;
+        if (inlineMod) inlineMod.textContent = modContent;
 
-        if (modalOrigPre) modalOrigPre.textContent = origText;
-        if (modalModPre) modalModPre.textContent = modText;
+        if (origPre) origPre.textContent = origContent;
+        if (modPre) modPre.textContent = modContent;
     })
     .catch(err => {
-        const errMsg = "Error loading diff content: " + err;
-        if (tabOrigPre) tabOrigPre.textContent = errMsg;
-        if (tabModPre) tabModPre.textContent = errMsg;
-        if (modalOrigPre) modalOrigPre.textContent = errMsg;
-        if (modalModPre) modalModPre.textContent = errMsg;
+        const errMsg = "Error loading content: " + err;
+        if (inlineOrig) inlineOrig.textContent = errMsg;
+        if (inlineMod) inlineMod.textContent = errMsg;
+        if (origPre) origPre.textContent = errMsg;
+        if (modPre) modPre.textContent = errMsg;
     });
 }
 
 const closeFileDiffBtn = document.getElementById("close-file-diff-btn");
 const closeFileDiffBtnFooter = document.getElementById("close-file-diff-btn-footer");
-const fileDiffModalEl = document.getElementById("file-diff-modal");
+const fileDiffModal = document.getElementById("file-diff-modal");
 
 [closeFileDiffBtn, closeFileDiffBtnFooter].forEach(btn => {
     if (btn) {
         btn.addEventListener("click", () => {
-            if (fileDiffModalEl) fileDiffModalEl.style.display = "none";
+            if (fileDiffModal) fileDiffModal.style.display = "none";
         });
     }
 });
