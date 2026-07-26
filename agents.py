@@ -1419,7 +1419,12 @@ CRITICAL ARCHITECTURAL & DATABASE REQUIREMENTS:
 3. AUTOMATED PLAYWRIGHT E2E & UNIT TESTING:
    - Write an automated Playwright or E2E UI test spec (`tests/ui.spec.ts` or `ui_test.py` or `UITests.cs`) that tests CRUD flows, navigation, and table rendering.
 
-4. 100% OPERATIONAL ZERO-PLACEHOLDER CODE:
+4. STRICT COMPILATION & SYNTAX INTEGRITY (ZERO ERRORS GUARANTEE):
+   - Every single file MUST be complete and self-contained with ALL required using directives or import statements.
+   - For C# (.NET MVC/API): Always include `using System;`, `using System.Collections.Generic;`, `using System.Linq;`, `using System.Threading.Tasks;`, `using Microsoft.AspNetCore.Mvc;`, `using Microsoft.EntityFrameworkCore;`.
+   - Ensure class names (e.g. `DbInitializer`, `ApplicationDbContext`, `EmployeeController`) are declared EXACTLY ONCE across the workspace. Do NOT output duplicate class definitions in multiple files.
+   - All controller constructors must correctly inject required services (`ApplicationDbContext`, `ILogger`).
+   - Ensure all opening braces `{`, brackets `[`, and parens `(` are properly closed.
    - Write complete, production-ready code. Do NOT use placeholders, `// TODO`, `...`, or missing namespaces."""
     custom_prompts = load_custom_prompts()
     programmer_header = (custom_prompts.get("programmer") or "").strip() or default_programmer
@@ -1498,8 +1503,8 @@ Write all necessary code now:"""
     save_codebase(new_files, workspace_dir)
     
     # ── Internal Pre-Submission Compilation & Syntax Self-Verification Guard ──
-    from utils import run_local_tests
-    build_success, build_logs = run_local_tests(workspace_dir)
+    from utils import run_local_build
+    build_success, build_logs = run_local_build(workspace_dir)
     max_heal_attempts = 2
     heal_count = 0
     while not build_success and new_files and heal_count < max_heal_attempts:
@@ -1533,7 +1538,7 @@ For EACH file to fix, output it in this exact format:
             retry_files = parse_code_files(retry_code)
             if retry_files:
                 save_codebase(retry_files, workspace_dir)
-                build_success, build_logs = run_local_tests(workspace_dir)
+                build_success, build_logs = run_local_build(workspace_dir)
                 if build_success:
                     print("[Implement Engineer 🎯] Successfully auto-corrected compilation errors prior to QA stage!")
         except Exception as e:

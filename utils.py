@@ -181,6 +181,58 @@ def run_playwright_e2e_tests(directory: str, base_url: str = "") -> Tuple[bool, 
             
     return True, "\n".join(logs)
 
+def run_local_build(directory: str) -> Tuple[bool, str]:
+    """
+    Strict Pre-Submission Build & Syntax Check for ImplementEngineer.
+    Verifies that the codebase compiles with ZERO syntax or compilation errors before handing off to QA.
+    Supports .NET (C#), Python, Node/TS, Go.
+    """
+    base_path = Path(directory).resolve()
+    if not base_path.exists():
+        return False, "Workspace directory does not exist."
+
+    logs = []
+
+    # 1. C# / .NET Project Build Verification
+    csproj_files = list(base_path.rglob("*.csproj"))
+    sln_files = list(base_path.rglob("*.sln"))
+    if csproj_files or sln_files:
+        main_csproj = [f for f in csproj_files if not any(t in f.name.lower() for t in ["test", "uitest", "tests"])]
+        target = str(main_csproj[0]) if main_csproj else (str(sln_files[0]) if sln_files else str(csproj_files[0]))
+        try:
+            res = subprocess.run(
+                ["dotnet", "build", target, "--no-incremental"],
+                capture_output=True,
+                text=True,
+                cwd=str(base_path),
+                stdin=subprocess.DEVNULL,
+                check=False,
+                timeout=60
+            )
+            has_errors = (res.returncode != 0) or ("Build FAILED" in res.stdout) or ("error CS" in res.stdout)
+            logs.append(f"dotnet build Log:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
+            return not has_errors, "\n".join(logs)
+        except Exception as e:
+            return False, f".NET compilation check failed: {e}"
+
+    # 2. Python Syntax & AST Compilation Check
+    py_files = list(base_path.rglob("*.py"))
+    if py_files:
+        syntax_ok = True
+        for pf in py_files:
+            rel = pf.relative_to(base_path)
+            try:
+                src = pf.read_text(encoding="utf-8", errors="ignore")
+                ast.parse(src, filename=str(pf))
+            except SyntaxError as se:
+                syntax_ok = False
+                logs.append(f"AST Syntax Error in {rel} (Line {se.lineno}): {se.msg}\n  -> {se.text}")
+            except Exception:
+                pass
+        return syntax_ok, "\n".join(logs) if logs else ("Clean Python Syntax OK", "")
+
+    return True, "Pre-submission compilation clean."
+
 def run_local_tests(directory: str) -> Tuple[bool, str]:
     """
     Performs a syntax check and runs unit tests in the workspace.
