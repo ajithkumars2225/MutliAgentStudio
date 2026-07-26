@@ -407,24 +407,26 @@ providerSelect.addEventListener("change", () => {
 });
 
 // Synchronize client-side cache dynamically when inputs change
-modelInput.addEventListener("input", () => {
-    const val = providerSelect.value;
-    if (val === "gemini") currentLoadedSettings.gemini_model = modelInput.value.trim();
-    else if (val === "openai") currentLoadedSettings.openai_model = modelInput.value.trim();
-    else if (val === "ollama") currentLoadedSettings.ollama_model = modelInput.value.trim();
-    else if (val === "claude") currentLoadedSettings.claude_model = modelInput.value.trim();
-    else if (val === "groq") currentLoadedSettings.groq_model = modelInput.value.trim();
-    else if (val === "deepseek") currentLoadedSettings.deepseek_model = modelInput.value.trim();
-    else if (val === "together") currentLoadedSettings.together_model = modelInput.value.trim();
-    else if (val === "mistral") currentLoadedSettings.mistral_model = modelInput.value.trim();
-    else if (val === "cohere") currentLoadedSettings.cohere_model = modelInput.value.trim();
-    else if (val === "xai") currentLoadedSettings.xai_model = modelInput.value.trim();
-    else if (val === "azure") currentLoadedSettings.azure_model = modelInput.value.trim();
-    else if (val === "bedrock") currentLoadedSettings.bedrock_model = modelInput.value.trim();
-    else if (val === "zai") currentLoadedSettings.zai_model = modelInput.value.trim();
-    else if (val === "omnirouter") currentLoadedSettings.omnirouter_model = modelInput.value.trim();
-    else if (val === "nvidia") currentLoadedSettings.nvidia_model = modelInput.value.trim();
-});
+if (modelInput) {
+    modelInput.addEventListener("input", () => {
+        const val = providerSelect ? providerSelect.value : "gemini";
+        if (val === "gemini") currentLoadedSettings.gemini_model = modelInput.value.trim();
+        else if (val === "openai") currentLoadedSettings.openai_model = modelInput.value.trim();
+        else if (val === "ollama") currentLoadedSettings.ollama_model = modelInput.value.trim();
+        else if (val === "claude") currentLoadedSettings.claude_model = modelInput.value.trim();
+        else if (val === "groq") currentLoadedSettings.groq_model = modelInput.value.trim();
+        else if (val === "deepseek") currentLoadedSettings.deepseek_model = modelInput.value.trim();
+        else if (val === "together") currentLoadedSettings.together_model = modelInput.value.trim();
+        else if (val === "mistral") currentLoadedSettings.mistral_model = modelInput.value.trim();
+        else if (val === "cohere") currentLoadedSettings.cohere_model = modelInput.value.trim();
+        else if (val === "xai") currentLoadedSettings.xai_model = modelInput.value.trim();
+        else if (val === "azure") currentLoadedSettings.azure_model = modelInput.value.trim();
+        else if (val === "bedrock") currentLoadedSettings.bedrock_model = modelInput.value.trim();
+        else if (val === "zai") currentLoadedSettings.zai_model = modelInput.value.trim();
+        else if (val === "omnirouter") currentLoadedSettings.omnirouter_model = modelInput.value.trim();
+        else if (val === "nvidia") currentLoadedSettings.nvidia_model = modelInput.value.trim();
+    });
+}
 
 if (openrouterModelSelect) {
     openrouterModelSelect.addEventListener("change", () => {
@@ -441,32 +443,36 @@ if (openrouterCustomModelInput) {
     });
 }
 
-apiKeyInput.addEventListener("input", () => {
-    const val = providerSelect.value;
-    if (val === "gemini") currentLoadedSettings.gemini_api_key = apiKeyInput.value.trim();
-    else if (val === "openai") currentLoadedSettings.openai_api_key = apiKeyInput.value.trim();
-    else if (val === "claude") currentLoadedSettings.anthropic_api_key = apiKeyInput.value.trim();
-    else if (val === "openrouter") currentLoadedSettings.openrouter_api_key = apiKeyInput.value.trim();
-    else if (val === "groq") currentLoadedSettings.groq_api_key = apiKeyInput.value.trim();
-    else if (val === "deepseek") currentLoadedSettings.deepseek_api_key = apiKeyInput.value.trim();
-    else if (val === "together") currentLoadedSettings.together_api_key = apiKeyInput.value.trim();
-    else if (val === "mistral") currentLoadedSettings.mistral_api_key = apiKeyInput.value.trim();
-    else if (val === "cohere") currentLoadedSettings.cohere_api_key = apiKeyInput.value.trim();
-    else if (val === "xai") currentLoadedSettings.xai_api_key = apiKeyInput.value.trim();
-    else if (val === "azure") currentLoadedSettings.azure_api_key = apiKeyInput.value.trim();
-    else if (val === "zai") currentLoadedSettings.zai_api_key = apiKeyInput.value.trim();
-    else if (val === "omnirouter") currentLoadedSettings.omnirouter_api_key = apiKeyInput.value.trim();
-    else if (val === "nvidia") currentLoadedSettings.nvidia_api_key = apiKeyInput.value.trim();
-});
+if (apiKeyInput) {
+    apiKeyInput.addEventListener("input", () => {
+        const val = providerSelect ? providerSelect.value : "gemini";
+        if (val === "gemini") currentLoadedSettings.gemini_api_key = apiKeyInput.value.trim();
+        else if (val === "openai") currentLoadedSettings.openai_api_key = apiKeyInput.value.trim();
+        else if (val === "claude") currentLoadedSettings.anthropic_api_key = apiKeyInput.value.trim();
+        else if (val === "openrouter") currentLoadedSettings.openrouter_api_key = apiKeyInput.value.trim();
+        else if (val === "groq") currentLoadedSettings.groq_api_key = apiKeyInput.value.trim();
+        else if (val === "deepseek") currentLoadedSettings.deepseek_api_key = apiKeyInput.value.trim();
+        else if (val === "together") currentLoadedSettings.together_api_key = apiKeyInput.value.trim();
+        else if (val === "mistral") currentLoadedSettings.mistral_api_key = apiKeyInput.value.trim();
+        else if (val === "cohere") currentLoadedSettings.cohere_api_key = apiKeyInput.value.trim();
+        else if (val === "xai") currentLoadedSettings.xai_api_key = apiKeyInput.value.trim();
+        else if (val === "azure") currentLoadedSettings.azure_api_key = apiKeyInput.value.trim();
+        else if (val === "zai") currentLoadedSettings.zai_api_key = apiKeyInput.value.trim();
+        else if (val === "omnirouter") currentLoadedSettings.omnirouter_api_key = apiKeyInput.value.trim();
+        else if (val === "nvidia") currentLoadedSettings.nvidia_api_key = apiKeyInput.value.trim();
+    });
+}
 
-baseUrlInput.addEventListener("input", () => {
-    const val = providerSelect.value;
-    if (val === "ollama") currentLoadedSettings.ollama_base_url = baseUrlInput.value.trim();
-    else if (val === "openrouter") currentLoadedSettings.openrouter_base_url = baseUrlInput.value.trim();
-    else if (val === "azure") currentLoadedSettings.azure_endpoint = baseUrlInput.value.trim();
-    else if (val === "bedrock") currentLoadedSettings.bedrock_region = baseUrlInput.value.trim();
-    else if (val === "omnirouter") currentLoadedSettings.omnirouter_base_url = baseUrlInput.value.trim();
-});
+if (baseUrlInput) {
+    baseUrlInput.addEventListener("input", () => {
+        const val = providerSelect ? providerSelect.value : "gemini";
+        if (val === "ollama") currentLoadedSettings.ollama_base_url = baseUrlInput.value.trim();
+        else if (val === "openrouter") currentLoadedSettings.openrouter_base_url = baseUrlInput.value.trim();
+        else if (val === "azure") currentLoadedSettings.azure_endpoint = baseUrlInput.value.trim();
+        else if (val === "bedrock") currentLoadedSettings.bedrock_region = baseUrlInput.value.trim();
+        else if (val === "omnirouter") currentLoadedSettings.omnirouter_base_url = baseUrlInput.value.trim();
+    });
+}
 
 if (approvalModeSelect) {
     approvalModeSelect.addEventListener("change", () => {
@@ -506,16 +512,20 @@ if (semanticCacheToggle) {
 }
 
 // Slider iteration value label
-iterationsSlider.addEventListener("input", () => {
-    iterationsVal.textContent = iterationsSlider.value;
-});
+if (iterationsSlider) {
+    iterationsSlider.addEventListener("input", () => {
+        if (iterationsVal) iterationsVal.textContent = iterationsSlider.value;
+    });
+}
 
 // Clear console
-clearLogsBtn.addEventListener("click", () => {
-    if (term) term.clear();
-    if (termConsole) termConsole.clear();
-    lastLogCount = 0;
-});
+if (clearLogsBtn) {
+    clearLogsBtn.addEventListener("click", () => {
+        if (term) term.clear();
+        if (termConsole) termConsole.clear();
+        lastLogCount = 0;
+    });
+}
 
 // Keyboard Navigation (Arrow Keys / PageUp / PageDown) for Terminal Console Logs
 const consoleLogsBox = document.getElementById("console-logs-container");
