@@ -2207,3 +2207,71 @@ select option {
     width: 100% !important;
 }
 
+/* AGENT LIVE CHAT MARKDOWN BODY STYLING */
+.agent-chat-markdown-body h1,
+.agent-chat-markdown-body h2,
+.agent-chat-markdown-body h3,
+.agent-chat-markdown-body h4 {
+    color: var(--accent-cyan);
+    margin-top: 0.6rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.agent-chat-markdown-body p {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.agent-chat-markdown-body code {
+    background: rgba(0, 0, 0, 0.4);
+    color: #38bdf8;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.76rem;
+}
+
+.agent-chat-markdown-body pre {
+    background: #090d16;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 0.6rem;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+}
+
+.agent-chat-markdown-body pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.agent-chat-markdown-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    font-size: 0.76rem;
+}
+
+.agent-chat-markdown-body th,
+.agent-chat-markdown-body td {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+}
+
+.agent-chat-markdown-body th {
+    background: rgba(0, 223, 216, 0.1);
+    color: var(--accent-cyan);
+}
+
+.agent-chat-markdown-body ul, .agent-chat-markdown-body ol {
+    margin: 0.4rem 0 0.4rem 1.2rem;
+    padding: 0;
+}
+
+.agent-chat-markdown-body li {
+    margin-bottom: 0.3rem;
+}
+

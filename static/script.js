@@ -4056,58 +4056,26 @@ function formatAgentSummaryForChat(agentName, action, content) {
     const displayName = nameMap[agentName] || agentName;
     const statusBadge = `<span style="background: rgba(0, 223, 216, 0.15); color: #00dfd8; font-size: 0.65rem; padding: 2px 7px; border-radius: 10px; border: 1px solid rgba(0, 223, 216, 0.3); font-weight: bold; margin-left: 8px;">✅ COMPLETED</span>`;
     
-    let text = String(content).trim();
-    let bullets = [];
-
-    if (agentName === "BusinessAnalyst" || agentName === "analyst") {
-        bullets = [
-            `🎯 <strong>Specifications Defined</strong>: Formulated IEEE-standard functional & non-functional technical requirements.`,
-            `📋 <strong>Functional Scope</strong>: Planned CRUD operations, paginated table listing, search/filter, and default data seeding.`,
-            `🛡️ <strong>Quality Standards</strong>: Enforced input validation, PostgreSQL direct connection, and responsive glassmorphism UI rules.`
-        ];
-    } else if (agentName === "ImpactAnalyzer" || agentName === "architect") {
-        let fileMatches = text.match(/\.(cs|csproj|json|cshtml|js|css|ts|py)/g);
-        let fileCount = fileMatches ? fileMatches.length : 25;
-        bullets = [
-            `🌐 <strong>Architecture Plan</strong>: Evaluated codebase scope and designed modular folder architecture.`,
-            `📁 <strong>Identified Files</strong>: Mapped <strong>${fileCount}</strong> core files across Models, Views, Controllers, and Data layers.`,
-            `⚡ <strong>Tech Stack Mapped</strong>: Configured Entity Framework Core, PostgreSQL driver, and Playwright UI test suite.`
-        ];
-    } else if (agentName === "ImplementEngineer" || agentName === "coder") {
-        let fileSaveMatches = text.match(/Saved:|Created:|Updated:/g);
-        let fileCount = fileSaveMatches ? fileSaveMatches.length : "all required";
-        bullets = [
-            `⚙️ <strong>Code Generation</strong>: Written complete production-ready source code with zero placeholders.`,
-            `📁 <strong>Created Files</strong>: Created/Updated <strong>${fileCount}</strong> project files including Models, Controllers, Views, and Services.`,
-            `🛡️ <strong>Pre-Submission Verification</strong>: Verified compilation — zero syntax errors before handing over to QA.`
-        ];
-    } else if (agentName === "Tester" || agentName === "tester") {
-        bullets = [
-            `🧪 <strong>QA & Unit Verification</strong>: Executed automated build and unit test suites.`,
-            `🌐 <strong>Playwright E2E UI Audit</strong>: Tested DOM navigation, form submissions, and CRUD table rendering.`,
-            `🛡️ <strong>Security Audit</strong>: Conducted static code analysis for SQL injection and exposed credentials.`
-        ];
-    } else if (agentName === "Deployer" || agentName === "deployer") {
-        bullets = [
-            `🚀 <strong>Live Deployment</strong>: Generated and executed deployment scripts (<code>deploy.bat</code> / <code>deploy.sh</code>).`,
-            `🩺 <strong>Health Check Ping</strong>: Verified HTTP live server ping & page responsiveness.`,
-            `🌐 <strong>Application Link</strong>: Live application verified & operational.`
-        ];
+    const rawContent = String(content).trim();
+    let parsedBody = "";
+    if (typeof marked !== "undefined") {
+        try {
+            parsedBody = marked.parse(rawContent);
+        } catch (e) {
+            parsedBody = `<pre style="white-space: pre-wrap; font-size: 0.78rem;">${escapeHtml(rawContent)}</pre>`;
+        }
     } else {
-        bullets = [
-            `Task completed successfully.`
-        ];
+        parsedBody = `<pre style="white-space: pre-wrap; font-size: 0.78rem;">${escapeHtml(rawContent)}</pre>`;
     }
 
-    const bulletList = bullets.map(b => `<li style="margin-bottom: 0.35rem;">${b}</li>`).join("");
-    return `<div style="font-family: var(--font-sans);">
-<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.3rem; margin-bottom: 0.4rem;">
-    <strong style="color: var(--accent-cyan); font-size: 0.85rem;">${icon} ${displayName}</strong>
+    return `<div class="agent-live-chat-card" style="font-family: var(--font-sans); background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; margin: 0.4rem 0;">
+<div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.4rem; margin-bottom: 0.6rem;">
+    <strong style="color: var(--accent-cyan); font-size: 0.88rem; display: flex; align-items: center; gap: 0.4rem;">${icon} ${displayName}</strong>
     ${statusBadge}
 </div>
-<ul style="margin: 0.3rem 0 0 1rem; padding: 0; color: var(--text-primary); font-size: 0.78rem; line-height: 1.5;">
-    ${bulletList}
-</ul>
+<div class="agent-chat-markdown-body" style="color: var(--text-primary); font-size: 0.8rem; line-height: 1.6;">
+    ${parsedBody}
+</div>
 </div>`;
 }
 
