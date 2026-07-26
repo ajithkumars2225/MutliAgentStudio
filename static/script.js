@@ -2880,20 +2880,60 @@ if (gitGithubPushBtn) {
     });
 }
 
-// ── Visual Side-by-Side Code Diff Compare Modal Handler ─────────────────────
-function openFileDiffModal(filepath) {
-    const diffModal = document.getElementById("file-diff-modal");
-    const filenameLabel = document.getElementById("diff-modal-filename");
-    const origPre = document.getElementById("diff-modal-original-text");
-    const modPre = document.getElementById("diff-modal-modified-text");
+// ── Workspace Main Editor Tabs: File Editor vs Live Preview vs Code Diff ──
+const tabEditor = document.getElementById("tab-editor");
+const tabPreview = document.getElementById("tab-preview");
+const tabDiff = document.getElementById("tab-diff");
 
-    if (!diffModal) return;
+const editorTabContent = document.getElementById("editor-tab-content");
+const previewTabContent = document.getElementById("preview-tab-content");
+const diffTabContent = document.getElementById("diff-tab-content");
+
+function switchMainEditorTab(tabName) {
+    if (tabName === "editor") {
+        if (tabEditor) { tabEditor.classList.add("active"); tabEditor.style.borderBottomColor = "var(--accent-blue)"; tabEditor.style.color = "var(--text-primary)"; }
+        if (tabPreview) { tabPreview.classList.remove("active"); tabPreview.style.borderBottomColor = "transparent"; tabPreview.style.color = "var(--text-secondary)"; }
+        if (tabDiff) { tabDiff.classList.remove("active"); tabDiff.style.borderBottomColor = "transparent"; tabDiff.style.color = "var(--text-secondary)"; }
+
+        if (editorTabContent) editorTabContent.style.display = "flex";
+        if (previewTabContent) previewTabContent.style.display = "none";
+        if (diffTabContent) diffTabContent.style.display = "none";
+
+        if (codeEditor) codeEditor.refresh();
+    } else if (tabName === "preview") {
+        if (tabPreview) { tabPreview.classList.add("active"); tabPreview.style.borderBottomColor = "var(--accent-blue)"; tabPreview.style.color = "var(--text-primary)"; }
+        if (tabEditor) { tabEditor.classList.remove("active"); tabEditor.style.borderBottomColor = "transparent"; tabEditor.style.color = "var(--text-secondary)"; }
+        if (tabDiff) { tabDiff.classList.remove("active"); tabDiff.style.borderBottomColor = "transparent"; tabDiff.style.color = "var(--text-secondary)"; }
+
+        if (editorTabContent) editorTabContent.style.display = "none";
+        if (previewTabContent) previewTabContent.style.display = "flex";
+        if (diffTabContent) diffTabContent.style.display = "none";
+    } else if (tabName === "diff") {
+        if (tabDiff) { tabDiff.classList.add("active"); tabDiff.style.borderBottomColor = "var(--accent-cyan)"; tabDiff.style.color = "var(--text-primary)"; }
+        if (tabEditor) { tabEditor.classList.remove("active"); tabEditor.style.borderBottomColor = "transparent"; tabEditor.style.color = "var(--text-secondary)"; }
+        if (tabPreview) { tabPreview.classList.remove("active"); tabPreview.style.borderBottomColor = "transparent"; tabPreview.style.color = "var(--text-secondary)"; }
+
+        if (editorTabContent) editorTabContent.style.display = "none";
+        if (previewTabContent) previewTabContent.style.display = "none";
+        if (diffTabContent) diffTabContent.style.display = "flex";
+    }
+}
+
+if (tabEditor) tabEditor.addEventListener("click", () => switchMainEditorTab("editor"));
+if (tabPreview) tabPreview.addEventListener("click", () => switchMainEditorTab("preview"));
+if (tabDiff) tabDiff.addEventListener("click", () => switchMainEditorTab("diff"));
+
+// ── In-Editor Side-by-Side Code Diff Compare Tab Handler ───────────────────
+function openFileDiffModal(filepath) {
+    switchMainEditorTab("diff");
+
+    const filenameLabel = document.getElementById("diff-active-filename");
+    const origPre = document.getElementById("tab-diff-original-text");
+    const modPre = document.getElementById("tab-diff-modified-text");
 
     if (filenameLabel) filenameLabel.textContent = filepath;
     if (origPre) origPre.textContent = "Loading original Git HEAD content...";
     if (modPre) modPre.textContent = "Loading modified workspace content...";
-
-    diffModal.style.display = "flex";
 
     fetch(`/api/git/file-diff?filepath=${encodeURIComponent(filepath)}`)
     .then(r => r.json())
@@ -2906,18 +2946,6 @@ function openFileDiffModal(filepath) {
         if (modPre) modPre.textContent = "Error loading modified content: " + err;
     });
 }
-
-const closeFileDiffBtn = document.getElementById("close-file-diff-btn");
-const closeFileDiffBtnFooter = document.getElementById("close-file-diff-btn-footer");
-const fileDiffModal = document.getElementById("file-diff-modal");
-
-[closeFileDiffBtn, closeFileDiffBtnFooter].forEach(btn => {
-    if (btn) {
-        btn.addEventListener("click", () => {
-            if (fileDiffModal) fileDiffModal.style.display = "none";
-        });
-    }
-});
 
 // Bind triggers
 if (gitStatusBadge) {

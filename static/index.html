@@ -269,6 +269,9 @@
                                     <button id="tab-preview" class="workspace-tab" style="background: none; border: none; padding: 0.6rem 1rem; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; outline: none;">
                                         🌐 Live Web Preview
                                     </button>
+                                    <button id="tab-diff" class="workspace-tab" style="background: none; border: none; padding: 0.6rem 1rem; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; outline: none;">
+                                        🔍 Code Diff Compare
+                                    </button>
                                 </div>
                                 
                                 <div id="editor-tab-content" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
@@ -293,6 +296,31 @@
                                         <button id="preview-open-tab" class="text-btn icon-btn" title="Open in new tab" style="padding: 0.35rem 0.7rem; font-size: 0.8rem; border-radius: 4px;">↗️ Open Tab</button>
                                     </div>
                                     <iframe id="preview-iframe" src="" style="flex: 1; width: 100%; border: none; background: #fff; border-bottom-left-radius: 8px;"></iframe>
+                                </div>
+
+                                <div id="diff-tab-content" style="display: none; flex-direction: column; flex: 1; height: 100%; min-height: 0;">
+                                    <div class="code-view-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="font-size: 0.8rem;">🔍</span>
+                                            <span id="diff-active-filename" style="font-family: monospace; font-size: 0.82rem; color: var(--accent-cyan);">Select a modified file from Source Control to compare</span>
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; flex: 1; min-height: 0; padding: 0.5rem; background: var(--bg-darker);">
+                                        <!-- Left: Original Git HEAD -->
+                                        <div style="display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;">
+                                            <div style="padding: 0.35rem 0.6rem; background: rgba(239, 68, 68, 0.12); border-bottom: 1px solid rgba(239, 68, 68, 0.25); font-size: 0.74rem; font-weight: 600; color: #ef4444;">
+                                                🔴 Original Content (Git HEAD)
+                                            </div>
+                                            <pre id="tab-diff-original-text" style="flex: 1; margin: 0; padding: 0.6rem; font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.4; overflow: auto; white-space: pre-wrap; word-break: break-all; color: #cbd5e1;"></pre>
+                                        </div>
+                                        <!-- Right: Modified Workspace File -->
+                                        <div style="display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;">
+                                            <div style="padding: 0.35rem 0.6rem; background: rgba(16, 185, 129, 0.12); border-bottom: 1px solid rgba(16, 185, 129, 0.25); font-size: 0.74rem; font-weight: 600; color: #10b981;">
+                                                🟢 Modified Content (Agent Workspace Code)
+                                            </div>
+                                            <pre id="tab-diff-modified-text" style="flex: 1; margin: 0; padding: 0.6rem; font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.4; overflow: auto; white-space: pre-wrap; word-break: break-all; color: #cbd5e1;"></pre>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
