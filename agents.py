@@ -1002,7 +1002,8 @@ Request:
 Requirements Document:"""
     
     check_pause()
-    response = invoke_llm(llm, prompt)
+    has_feedback = "[BA Revision Feedback]" in state.get("prompt", "")
+    response = invoke_llm(llm, prompt, bypass_cache=has_feedback)
     check_pause()
     reqs = response.content if hasattr(response, 'content') else str(response)
     
@@ -1102,6 +1103,13 @@ Impact Assessment:"""
     output = response.content if hasattr(response, 'content') else str(response)
     
     files_to_modify = parse_impact_files(output)
+    if not files_to_modify:
+        # Robust fallback: Extract file paths from output using regex if JSON block was omitted
+        file_candidates = re.findall(r'[\w\-/]+\.(?:cs|cshtml|csproj|py|js|ts|html|css|json|sql)', output)
+        files_to_modify = list(set([f for f in file_candidates if not f.startswith("http") and ("/" in f or "." in f)]))
+        if not files_to_modify and state.get("codebase"):
+            files_to_modify = list(state["codebase"].keys())[:10]
+        print(f"[Impact Analyzer Fallback 🛡️] Extracted fallback target files to modify: {files_to_modify}")
     print(f"[Impact Analyzer] Identified files to create/edit: {files_to_modify}")
     
     file_list_str = "\n".join([f"- {f}" for f in files_to_modify])
@@ -1519,7 +1527,27 @@ For EACH file to fix, output it in this exact format:
     updated_metadata = scan_workspace(workspace_dir)
     
     if not new_files:
-        print("[Implement Engineer Warning] No files parsed from LLM output. Verify format.")
+        print("[Implement Engineer ⚠️] No files parsed from LLM output. Triggering instant format enforcement retry...")
+        format_retry_prompt = f"""{programmer_header}
+
+CRITICAL FORMAT REQUIREMENT: You MUST output all code files using the exact format:
+---FILE: relative/path/to/file.ext---
+```language
+... code ...
+```
+
+Re-output all required files for these specifications:
+{state['requirements']}"""
+        try:
+            retry_resp = invoke_llm(llm, format_retry_prompt, bypass_cache=True)
+            retry_code = retry_resp.content if hasattr(retry_resp, 'content') else str(retry_resp)
+            new_files = parse_code_files(retry_code)
+            if new_files:
+                save_codebase(new_files, workspace_dir)
+                build_success, build_logs = run_local_tests(workspace_dir)
+                updated_metadata = scan_workspace(workspace_dir)
+        except Exception as e:
+            print(f"[Implement Engineer Warning] Format enforcement retry failed: {e}")
         
     res = {
         "codebase": updated_metadata,
@@ -1704,6 +1732,20 @@ Write the deployment scripts:"""
     # Save deploy script to workspace
     save_codebase(deploy_files, workspace_dir)
     
+    # Sanitize deploy.bat/deploy.sh script to remove interactive pause commands
+    deploy_bat = os.path.join(workspace_dir, "deploy.bat")
+    if os.path.exists(deploy_bat):
+        try:
+            with open(deploy_bat, "r", encoding="utf-8", errors="ignore") as f:
+                bat_content = f.read()
+            sanitized = re.sub(r'^\s*pause\s*$', '@echo Script execution completed.', bat_content, flags=re.MULTILINE | re.IGNORECASE)
+            if sanitized != bat_content:
+                with open(deploy_bat, "w", encoding="utf-8") as f:
+                    f.write(sanitized)
+                print("[Deployment Guard 🛡️] Automatically sanitized deploy.bat to remove blocking pause prompts.")
+        except Exception as e:
+            print(f"[Deployment Guard Warning] Failed to sanitize deploy.bat: {e}")
+            
     # Interactive Gate: Check if user approves running deployment script
     check_pause()
     deployment_spec = ""
