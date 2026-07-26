@@ -1012,9 +1012,9 @@ function pollStatus() {
                     const newSteps = data.transcript.slice(lastRenderedTranscriptIndex);
                     newSteps.forEach(step => {
                         const agentName = step.agent || step.node || "Agent";
-                        const action = step.action || "Completed Stage";
+                        const action = step.action || step.type || "Completed Stage";
                         const content = step.content || "";
-                        if (content && agentName !== "Orchestrator") {
+                        if (content) {
                             const summaryMarkdown = formatAgentSummaryForChat(agentName, action, content);
                             appendChatMessage("assistant", summaryMarkdown);
                         }
@@ -1028,6 +1028,41 @@ function pollStatus() {
     .catch(err => {
         console.error("Polling error:", err);
     });
+}
+
+function formatAgentSummaryForChat(agentName, action, content) {
+    let icon = "🤖";
+    let title = agentName;
+
+    const nameLower = (agentName || "").toLowerCase();
+    if (nameLower.includes("orchestrator") || nameLower.includes("router")) {
+        icon = "🧭";
+        title = "Orchestrator Router";
+    } else if (nameLower.includes("analyst") || nameLower.includes("business")) {
+        icon = "📋";
+        title = "Business Analyst Agent";
+    } else if (nameLower.includes("impact")) {
+        icon = "⚡";
+        title = "Impact & Risk Analyzer Agent";
+    } else if (nameLower.includes("implement") || nameLower.includes("coder") || nameLower.includes("programmer")) {
+        icon = "💻";
+        title = "Implementation Engineer Agent";
+    } else if (nameLower.includes("tester") || nameLower.includes("qa")) {
+        icon = "🧪";
+        title = "QA Testing & Security Auditor Agent";
+    } else if (nameLower.includes("deploy")) {
+        icon = "🚀";
+        title = "Deployment Agent";
+    } else if (nameLower.includes("visual") || nameLower.includes("auditor")) {
+        icon = "📸";
+        title = "Visual UI Auditor Agent";
+    }
+
+    if (content.startsWith("#") || content.startsWith("###")) {
+        return content;
+    }
+
+    return `### ${icon} ${title} (${action})\n\n${content}`;
 }
 
 function updateStatusIndicator(status) {

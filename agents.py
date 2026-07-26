@@ -1576,7 +1576,9 @@ Re-output all required files for these specifications:
         "iterations": state["iterations"] + 1,
         "errors": "" if build_success else f"Pre-submission build verification failed after auto-correction attempts:\n{build_logs}"
     }
-    from utils import save_studio_state
+    from utils import save_studio_state, append_transcript_step
+    file_list_md = "\n".join([f"- `{f}`" for f in new_files.keys()]) if new_files else "- Code files updated in workspace"
+    append_transcript_step(workspace_dir, "ImplementEngineer", "CODE_GENERATION", f"### 💻 Implementation Engineer Summary\nSuccessfully generated/updated **{len(new_files)} file(s)** in workspace:\n{file_list_md}\n\n* **Pre-Submission Build Check**: {'✅ 0 Compilation Errors (Clean)' if build_success else '⚠️ Auto-correcting syntax errors'}", {"files": list(new_files.keys())})
     next_agent_node = "Tester" if build_success else "ImplementEngineer"
     save_studio_state(workspace_dir, {**state, **res, "next_agent": next_agent_node})
     return res
@@ -1693,7 +1695,10 @@ def tester_node(state: dict) -> dict:
         "codebase": updated_metadata,
         "incidents": state["incidents"]
     }
-    from utils import save_studio_state
+    from utils import save_studio_state, append_transcript_step
+    sec_count = len(security_results.get("vulnerabilities", []))
+    status_str = "✅ ALL TESTS PASSED" if success else "❌ TEST SUITE FAILURE"
+    append_transcript_step(workspace_dir, "Tester", "QA_VERIFICATION", f"### 🧪 QA Testing & Security Audit Results\n**Status:** {status_str}\n* **Security Vulnerabilities**: {sec_count} issue(s) detected\n\n```text\n{test_logs[-1500:]}\n```", {"success": success})
     next_node = "Deployer" if success else "ImplementEngineer"
     save_studio_state(workspace_dir, {**state, **res, "next_agent": next_node})
     return res
@@ -1835,6 +1840,10 @@ Write the deployment scripts:"""
     
     # Re-scan to capture deploy script in codebase metadata
     updated_metadata = scan_workspace(workspace_dir)
+    
+    from utils import append_transcript_step
+    dep_status = "✅ DEPLOYMENT SUCCESSFUL & ACTIVE" if success else "❌ DEPLOYMENT FAILED"
+    append_transcript_step(workspace_dir, "Deployer", "DEPLOYMENT", f"### 🚀 Deployment Agent Execution Summary\n**Status:** {dep_status}\n\n```text\n{deploy_logs[-1500:]}\n```", {"success": success})
     
     if not success:
         print(f"[Deployment Agent ❌] Deployment or HTTP health check failed. Re-routing to ImplementEngineer to self-heal...")
