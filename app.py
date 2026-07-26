@@ -1027,6 +1027,13 @@ class UpdateSettingsRequest(BaseModel):
     # Free Tier Quota Pacing settings
     enable_free_limit: Optional[str] = None
     free_limit_rpm: Optional[int] = None
+    # Remote Deployment Config
+    deploy_target_mode: Optional[str] = None
+    remote_host: Optional[str] = None
+    remote_user: Optional[str] = None
+    remote_port: Optional[str] = None
+    app_port: Optional[str] = None
+    remote_dir: Optional[str] = None
 
 @app.post("/api/settings")
 def update_settings(req: UpdateSettingsRequest):

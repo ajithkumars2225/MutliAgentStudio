@@ -460,6 +460,7 @@
                 <!-- Left Sidebar Navigation -->
                 <aside class="settings-sidebar glass-card" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(5, 8, 15, 0.4); flex-shrink: 0; height: 100%; box-sizing: border-box;">
                     <button class="settings-tab-btn active" data-target="settings-sec-llm" style="text-align: left; background: rgba(255, 255, 255, 0.05); border: none; padding: 0.7rem 0.9rem; color: var(--text-primary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; border-left: 2px solid var(--accent-cyan); transition: all 0.2s ease;">⚙️ LLM Config</button>
+                    <button class="settings-tab-btn" data-target="settings-sec-deploy" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">🚀 Remote Deployment</button>
                     <button class="settings-tab-btn" data-target="settings-sec-personas" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">📝 Custom Personas</button>
                     <button class="settings-tab-btn" data-target="settings-sec-cache" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">🧠 Semantic Cache</button>
                     <button class="settings-tab-btn" data-target="settings-sec-network" style="text-align: left; background: none; border: none; padding: 0.7rem 0.9rem; color: var(--text-secondary); cursor: pointer; border-radius: 4px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;">🌐 Network</button>
@@ -643,6 +644,65 @@
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 5: Remote Deployment Settings -->
+                        <div id="settings-sec-deploy" class="settings-section-content" style="display: none;">
+                            <div style="display: flex; flex-direction: column; gap: 1.4rem;">
+                                
+                                <div style="display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                                    <span style="font-size: 0.85rem;">🚀</span>
+                                    <label style="font-weight: 700; font-size: 0.82rem; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.5px;">Deployment Target &amp; Remote Server Credentials</label>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="deploy-target-mode-select">Target Deployment Mode</label>
+                                    <select id="deploy-target-mode-select" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.85rem; outline: none; width: 100%;">
+                                        <option value="local">Local Server Execution (deploy.bat / deploy.sh) [Default]</option>
+                                        <option value="remote_ssh">Remote SSH Linux Server (AWS EC2 / DigitalOcean / Linode)</option>
+                                        <option value="docker">Docker Production Container (Dockerfile + docker-compose)</option>
+                                        <option value="azure">Azure DevOps / Azure App Service Pipeline</option>
+                                        <option value="github_actions">GitHub Actions Automated Cloud Deploy</option>
+                                    </select>
+                                </div>
+
+                                <div id="remote-ssh-config-panel" style="display: flex; flex-direction: column; gap: 1rem; background: rgba(0,223,216,0.02); border: 1px solid rgba(0,223,216,0.15); border-radius: 8px; padding: 1rem;">
+                                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--accent-cyan); border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.3rem;">
+                                        🔑 Remote Server Connection Details
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div class="form-group">
+                                            <label for="remote-host-input">Remote Host / Server IP</label>
+                                            <input type="text" id="remote-host-input" placeholder="e.g. 192.168.1.100 or ec2-xx.amazonaws.com" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.82rem; outline: none; width: 100%;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="remote-user-input">SSH Username</label>
+                                            <input type="text" id="remote-user-input" value="ubuntu" placeholder="e.g. ubuntu, root, azureuser" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.82rem; outline: none; width: 100%;">
+                                        </div>
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                                        <div class="form-group">
+                                            <label for="remote-port-input">SSH Port</label>
+                                            <input type="number" id="remote-port-input" value="22" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.82rem; outline: none; width: 100%;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="app-port-input">Target App Port</label>
+                                            <input type="number" id="app-port-input" value="5000" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.82rem; outline: none; width: 100%;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="remote-dir-input">Remote Directory</label>
+                                            <input type="text" id="remote-dir-input" value="/var/www/app" style="background-color: var(--bg-darker); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.82rem; outline: none; width: 100%;">
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4;">
+                                        💡 <strong>How it works:</strong> When set to Remote SSH or Docker, the <code>Deployer</code> agent will automatically embed these configured IPs and ports into <code>deploy_remote.sh</code> and <code>docker-compose.yml</code> so you don't need to specify them in every prompt!
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 

@@ -1702,7 +1702,27 @@ For the application built under these requirements, write:
    - Generate a remote SSH deployment script (`deploy_remote.sh`) for deploying via SSH/SCP to Linux/AWS EC2 servers."""
     deployer_header = (custom_prompts.get("deployer") or "").strip() or default_deployer
     
+    import database
+    deploy_target_mode = database.get_setting("deploy_target_mode", "local")
+    remote_host = database.get_setting("remote_host", "")
+    remote_user = database.get_setting("remote_user", "ubuntu")
+    remote_port = database.get_setting("remote_port", "22")
+    app_port = database.get_setting("app_port", "5000")
+    remote_dir = database.get_setting("remote_dir", "/var/www/app")
+    
+    deploy_config_str = f"""
+=== USER CONFIGURED DEPLOYMENT TARGET SETTINGS ===
+Target Deployment Mode: {deploy_target_mode.upper()}
+Remote Server Host/IP: {remote_host or 'Not configured'}
+Remote SSH User: {remote_user}
+Remote SSH Port: {remote_port}
+Application Port: {app_port}
+Remote Directory: {remote_dir}
+=================================================
+"""
+    
     prompt = f"""{deployer_header}
+{deploy_config_str}
 
 Requirements:
 {state['requirements']}

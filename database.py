@@ -128,6 +128,15 @@ def init_db():
         "semantic_cache": "true",
         "enable_free_limit": "false",
         "free_limit_rpm": "15",
+        "network_host": "0.0.0.0",
+        "network_port": "8000",
+        "network_cors_origins": "*",
+        "deploy_target_mode": "local",
+        "remote_host": "",
+        "remote_user": "ubuntu",
+        "remote_port": "22",
+        "app_port": "5000",
+        "remote_dir": "/var/www/app",
         "active_workspace": os.path.abspath(os.path.join(os.getcwd(), "workspace"))
     }
     

@@ -1901,6 +1901,21 @@ function saveSettingsOnUIChange() {
         }
     }
 
+    // Remote Deployment settings
+    const deployTargetSelect = document.getElementById('deploy-target-mode-select');
+    const remoteHostInput = document.getElementById('remote-host-input');
+    const remoteUserInput = document.getElementById('remote-user-input');
+    const remotePortInput = document.getElementById('remote-port-input');
+    const appPortInput = document.getElementById('app-port-input');
+    const remoteDirInput = document.getElementById('remote-dir-input');
+
+    if (deployTargetSelect) currentLoadedSettings.deploy_target_mode = deployTargetSelect.value;
+    if (remoteHostInput) currentLoadedSettings.remote_host = remoteHostInput.value.trim();
+    if (remoteUserInput) currentLoadedSettings.remote_user = remoteUserInput.value.trim();
+    if (remotePortInput) currentLoadedSettings.remote_port = remotePortInput.value.trim();
+    if (appPortInput) currentLoadedSettings.app_port = appPortInput.value.trim();
+    if (remoteDirInput) currentLoadedSettings.remote_dir = remoteDirInput.value.trim();
+
     fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2042,6 +2057,15 @@ function loadSettings() {
                 saveSettingsOnUIChange();
             });
         }
+
+        // Remote Deployment settings auto-save bindings
+        [deployTargetSelect, remoteHostInput, remoteUserInput, remotePortInput, appPortInput, remoteDirInput].forEach(el => {
+            if (el && !el._bound) {
+                el._bound = true;
+                el.addEventListener('change', saveSettingsOnUIChange);
+                if (el.tagName === 'INPUT') el.addEventListener('input', saveSettingsOnUIChange);
+            }
+        });
 
         isInitialSettingsLoad = false;
     })
