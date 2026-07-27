@@ -971,7 +971,7 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     cwd=str(base_path),
                     stdin=subprocess.DEVNULL,
                     check=False,
-                    timeout=12
+                    timeout=60
                 )
                 output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
                 logs.append(output_text)
@@ -981,7 +981,7 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
                 output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
-                logs.append(f"Deployment script reached 12s timeout (launched background application server).\n{output_text}")
+                logs.append(f"Deployment script reached 60s timeout (launched background application server).\n{output_text}")
                 has_build_errors = any(err_term in output_text.upper() for err_term in ["BUILD FAILED", "BUILD ERROR", "COMPILATION FAILED", "ERROR CS", "NPM ERR!"])
                 success = not has_build_errors
             
@@ -995,7 +995,7 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     cwd=str(base_path),
                     stdin=subprocess.DEVNULL,
                     check=False,
-                    timeout=12
+                    timeout=60
                 )
                 output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
                 logs.append(output_text)
@@ -1005,7 +1005,7 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
                 output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
-                logs.append(f"Deployment script reached 12s timeout (launched background application server).\n{output_text}")
+                logs.append(f"Deployment script reached 60s timeout (launched background application server).\n{output_text}")
                 has_build_errors = any(err_term in output_text.upper() for err_term in ["BUILD FAILED", "BUILD ERROR", "COMPILATION FAILED", "ERROR CS", "NPM ERR!"])
                 success = not has_build_errors
             
@@ -1019,7 +1019,7 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                     cwd=str(base_path),
                     stdin=subprocess.DEVNULL,
                     check=False,
-                    timeout=12
+                    timeout=60
                 )
                 output_text = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
                 logs.append(output_text)
@@ -1029,7 +1029,7 @@ def run_deployment(directory: str) -> Tuple[bool, str]:
                 out = te.stdout if isinstance(te.stdout, str) else (te.stdout.decode() if te.stdout else "")
                 err = te.stderr if isinstance(te.stderr, str) else (te.stderr.decode() if te.stderr else "")
                 output_text = f"STDOUT:\n{out}\nSTDERR:\n{err}"
-                logs.append(f"Deployment script reached 12s timeout (launched background application server).\n{output_text}")
+                logs.append(f"Deployment script reached 60s timeout (launched background application server).\n{output_text}")
                 has_build_errors = any(err_term in output_text.upper() for err_term in ["BUILD FAILED", "BUILD ERROR", "COMPILATION FAILED", "ERROR CS", "NPM ERR!"])
                 success = not has_build_errors
         else:
@@ -1280,7 +1280,7 @@ def git_get_diff(directory: str) -> str:
 def detect_preview_url(deploy_logs: str) -> str:
     """
     Inspects terminal deployment output to discover port or web server links.
-    Returns the matched URL if found, otherwise empty string.
+    Returns the matched URL if found, otherwise infers standard default port for detected frameworks.
     """
     if not deploy_logs:
         return ""
@@ -1289,8 +1289,18 @@ def detect_preview_url(deploy_logs: str) -> str:
     match = re.search(pattern, deploy_logs, re.IGNORECASE)
     if match:
         url = match.group(1)
-        # Normalize 0.0.0.0 to localhost for web client access convenience
         return url.replace("0.0.0.0", "localhost")
+        
+    logs_lower = deploy_logs.lower()
+    if "uvicorn" in logs_lower or "fastapi" in logs_lower:
+        return "http://localhost:8000"
+    elif "dotnet" in logs_lower or "asp.net" in logs_lower:
+        return "http://localhost:5000"
+    elif "node" in logs_lower or "express" in logs_lower or "react" in logs_lower:
+        return "http://localhost:3000"
+    elif "flask" in logs_lower:
+        return "http://localhost:5000"
+
     return ""
 
 def save_studio_state(workspace_dir: str, state: dict):

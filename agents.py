@@ -1718,8 +1718,10 @@ def deployment_node(state: dict) -> dict:
 For the application built under these requirements, write:
 1. A local deployment script:
    - On Windows systems, write a `deploy.bat` file.
-   - For other platforms, write a `deploy.sh` script or `deploy.py`.
-   - CRITICAL: Target the main application file directly in the current workspace directory (e.g. `dotnet build EmployeeListApp.csproj --configuration Release` and `start /b dotnet run --project EmployeeListApp.csproj --urls http://localhost:5000`). Do NOT include `cd SubfolderName` if main file is in root.
+   - For Python apps: Use `python -m pip install -r requirements.txt` directly. Do NOT recreate `venv` if it already exists. Launch the web server non-blocking on explicit port 8000/5000 (e.g. `start /b uvicorn app:app --host 0.0.0.0 --port 8000` or `start /b python app.py`).
+   - For .NET apps: Target project file directly (`start /b dotnet run --project App.csproj --urls http://localhost:5000`).
+   - For Node.js apps: Launch `start /b npm start` or `start /b node server.js`.
+   - CRITICAL: Target the main application file directly in the current workspace directory. Do NOT include `cd SubfolderName` if main file is in root.
    - IMPORTANT: Script commands must be non-blocking using `start /b` on Windows. Do NOT include `pause` or interactive prompts.
 2. A CI/CD Pipeline configuration file:
    - Generate an Azure DevOps pipeline config (`azure-pipelines.yml`) to support Azure DevOps/TFS.
